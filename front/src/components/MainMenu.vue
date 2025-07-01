@@ -1,9 +1,11 @@
 <template>
   <v-container>
-    <v-responsive
-      ><v-row
-        ><v-col v-for="(card, index) in buttonMenu" :key="index">
-          
+    <v-responsive>
+      <v-row>
+        <v-col
+          v-for="(card, index) in buttonMenu"
+          :key="index"
+        >
           <v-card
             v-bind="props"
             class="py-11 px-8 d-flex flex-column align-center cursor-pointer"
@@ -11,13 +13,15 @@
             color="primary"
             @click="handleRoute(index)"
           >
-            <v-icon :icon="iconArray[index]" size="80"></v-icon>
+            <v-icon
+              :icon="iconArray[index]"
+              size="80"
+            />
             {{ $t(card) }}
           </v-card>
-       
-        </v-col></v-row
-      ></v-responsive
-    >
+        </v-col>
+      </v-row>
+    </v-responsive>
   </v-container>
 </template>
 

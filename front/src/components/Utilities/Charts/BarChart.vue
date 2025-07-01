@@ -1,10 +1,15 @@
 <template>
-    <v-card class="pa-8 bg-grey-lighten-4">
-        <overlay-component :overlayTrigger="triggerOverlay"/>
+  <v-card class="pa-8 bg-grey-lighten-6">
+    <overlay-component :overlay-trigger="triggerOverlay" />
     <div id="chart">
-        <apexchart type="bar" height="350" :options="chartOptions" :series="series"></apexchart>
+      <apexchart
+        type="bar"
+        height="350"
+        :options="chartOptions"
+        :series="series"
+      />
     </div>
-    </v-card>
+  </v-card>
 </template>
 
 <script setup>
@@ -28,13 +33,13 @@ const props = defineProps({
 
 const series = ref([{
     name:"Income",
-    data: [(props.monthly.sums.income/1000), 12, 34, 65, 88]
+    //data: [(props.monthly.sums.income/1000), 12, 34, 65, 88]
 }, {
     name: "Tzedaka",
-    data: [(props.monthly.sums.masser/1000), 44, 56, 76, 54]
+    //data: [(props.monthly.sums.masser/1000), 44, 56, 76, 54]
 }, {
     name: "Expenses",
-    data: [(props.monthly.sums.expenses/1000), 23, 67, 33, 64]
+    //data: [(props.monthly.sums.expenses/1000), 23, 67, 33, 64]
 }])
 const chartOptions = ({
     chart: {

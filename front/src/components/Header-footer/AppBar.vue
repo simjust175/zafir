@@ -9,6 +9,7 @@
       scroll-behavior="hide"
       scroll-threshold="340"
     >
+      <v-img />
       <!-- <v-app-bar-nav-icon></v-app-bar-nav-icon> -->
 
       <!-- <v-toolbar-title>
@@ -22,7 +23,7 @@
       <div class="d-flex align-center justify-space-between mx-8">
         <!-- <language-switch @updateLocale="$emit('updateLocale', $event)"/> -->
         <v-btn
-          v-if="loggedIn"
+          v-if="loginState.token"
           icon
         >
           <v-icon @click="activateDialog = !activateDialog">
@@ -36,7 +37,7 @@
           class="mx-4 component"
           @click.stop="$router.push('/register')"
         >
-          {{ t('Login') }}
+          Login
         </v-btn>
       </div>
       <main-dialog
@@ -54,7 +55,8 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import { useTheme } from "vuetify";
-import store from "../../storage/index.js";
+import { setLogin } from "@/stores/loginState"
+const loginState = setLogin()
 //import LanguageSwitch from "./LanguageSwitch.vue"
 import { useRouter } from 'vue-router';
 
@@ -66,12 +68,8 @@ function toggleTheme() {
   theme.global.name.value = theme.global.current.value.dark ? "light" : "dark";
 }
 
-import { useLocale } from 'vuetify'
-const { t } = useLocale()
-
 const activateDialog = ref(false)
 const emit = defineEmits(["updateLocale"]);
-const emitLocale = (lang) => emit("updateLocale", lang);
 const themeStateIcon = computed(() =>
   theme.global.current.value.dark
     ? "mdi-weather-night"
@@ -82,25 +80,24 @@ const props = defineProps({
   loggedInStat: Boolean,
 });
 
-
-const loggedIn = ref(store.state.loggedInStat);
+const loggedIn = ref()
 
 watch(
-  () => loggedIn,
+  () => loginState.token,
   (newVal) => {
     loggedIn.value = newVal;
   }
 );
-watch(
-  () => props.loggedInStat,
-  (newVal) => {
-    loggedIn.value = newVal;
-  }
-);
+// watch(
+//   () => props.loggedInStat,
+//   (newVal) => {
+//     loggedIn.value = newVal;
+//   }
+// );
 
 const logout = async () => {
   console.log("entered logout");
-  const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${localStorage.getItem("user_email")}`, {
+  const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userName}`, {
       method: "POST",
       headers: {
           "Content-Type": "application/json"
@@ -110,9 +107,8 @@ const logout = async () => {
   console.log("logout", data);
   if (data.Success) {
       localStorage.removeItem("token");
-      localStorage.removeItem("user_email")
-      store.commit("updateLoggedIn", false, "")
-      loggedIn.value = false;
+      localStorage.removeItem("user_email") 
+      loginState.token = false;
       router.push("/register")
   }
 }

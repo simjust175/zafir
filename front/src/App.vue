@@ -1,9 +1,16 @@
 <template>
   <v-app>
-      <v-main class="bg-grey-lighten-3" >
-        <AppBar :language="current" @updateLocale="changeLocale($event)" :loggedInStat="loggedIn"/>
-        <navigation-bar :language="current" v-if="loggedIn && isHomeRoute"/>
-        <router-view />
+    <v-main class="bg-grey-lighten-3">
+      <AppBar
+        :language="current"
+        :logged-in-stat="loggedIn"
+        @update-locale="changeLocale($event)"
+      />
+      <navigation-bar
+        v-if="loggedIn && isHomeRoute"
+        :language="current"
+      />
+      <router-view />
       
       <footer class="bg-red">
         <footer-component />
@@ -14,21 +21,13 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import { useLocale } from "vuetify";
+// import { useLocale } from "vuetify";
 import FooterComponent from "@/components/Header-footer/FooterComponent.vue";
-import store from "./storage";
 import { useRouter } from 'vue-router';
-
+import { setLogin } from "@/stores/loginState"
+const loginState = setLogin()
 const router = useRouter();
 
-const { current } = useLocale();
-
-function changeLocale(locale) {
-  console.log("current before", current.value);
-  current.value = locale;
-  console.log("locale", locale, "current after", current.value);
-  store.commit("updateLang", locale);
-}
 
 const loggedIn = ref(false)
 const loggedInInfo = {
@@ -47,19 +46,19 @@ async function validateToken() {
     body: JSON.stringify(loggedInInfo),
   });
   const isTokenValid = await res.json();
-  console.log("is it valid", isTokenValid.Success ? true : false);
   return isTokenValid.Success ? true : false;
 }
 
 const loading = ref(true);
 onMounted(async () => {
   const isValid = await validateToken();
+  loginState.token = isValid //set the state in the Pinia store
   if (!isValid) {
     console.log("is valid", isValid);
     router.push("/register")
   } else {
     loggedIn.value = true
-    store.commit("updateLoggedIn", true, loggedInInfo.user_email)
+    router.push("/")
   }
   loading.value = true;
   setTimeout(() => {

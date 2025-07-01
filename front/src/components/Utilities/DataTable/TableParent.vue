@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/valid-v-slot -->
 <template>
   <v-card
     class="pa-4"
@@ -22,7 +23,7 @@
           flat
         >
           <v-toolbar-title v-if="!actionStat">
-            Charity details
+            Invoices
           </v-toolbar-title>
           <v-toolbar-title v-else>
             <v-icon
@@ -35,11 +36,6 @@
             />
           </v-toolbar-title>
 
-          <v-divider
-            class="mx-4"
-            inset
-            vertical
-          />
           <v-spacer />
           <v-text-field
             v-if="actionStat"
@@ -56,7 +52,7 @@
           <v-icon
             v-if="!actionStat"
             icon="mdi-arrow-expand"
-            :class="{ 'mr-5': props.language === 'en', 'ml-5': props.language === 'he' }"
+            class="mr-5"
             color="blue-darken-1"
             @click="$router.push('/table')"
           />
@@ -79,46 +75,58 @@
       <template #item.actions="{ item }">
         <div
           v-show="actionStat"
-          class="d-flex"
+          class="d-flex align-center justify-lg-space-between"
         >
           <v-icon
-            class="me-2"
-            size="small"
+            class="ml-4"
+            size="22"
             color="blue"
             @click="editItem(item)"
           >
             mdi-pencil
           </v-icon>
           <v-icon
-            size="small"
+            size="22"
             color="red"
-            class="ml-2"
+            class="ml-4"
             @click="deleteItem(item)"
           >
             mdi-delete
+          </v-icon>
+          <v-icon
+            size="22"
+            color="green"
+            class="ml-4"
+            @click="sendItem(item)"
+          >
+            mdi-send
           </v-icon>
         </div>
       </template>
 
       <template #no-data>
-        <empty-state @refresh="initialize()" class="my-12"/>
+        <empty-state
+          class="my-12"
+          @refresh="initialize()"
+        />
       </template>
 
-      <template #item.integrity="{ value }">
+      <!-- <template #item.integrity="{ value }">
         <v-chip :color="getColor(value)">
           {{ value }}
         </v-chip>
-      </template>
+      </template> -->
       <template #item.amount="{ item }">
-        <span>{{ getCurrencySymbol(item.currency) + item.amount }}</span>
+        <span>€{{ item.amount }}</span>
       </template>
-      <template #item.currency="{ item }">
-        <span>{{ item.currency.toUpperCase() }}</span>
-      </template>
+    
       <template #item.created_at="{ item }">
         {{ new Date(item.created_at).toLocaleDateString() }}
       </template>
-      <template #item.method="{ value }">
+      <template #item.includesBtw="{ item }">
+        {{ item.includesBtw ? "included" : "excluded" }}
+      </template>
+      <!-- <template #item.method="{ value }">
         <v-chip
           v-if="actionStat"
           :color="methodColor(value)"
@@ -137,20 +145,24 @@
           />
           {{ t(value) }}
         </div>
-      </template>
+      </template> -->
     </v-data-table>
   </v-card>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, nextTick, defineProps, defineEmits } from "vue";
+import { ref, computed, watch, onMounted, nextTick, defineProps, defineEmits } from "vue";
 import DialogComponent from "./DialogComponent.vue";
 import DeleteDialogComponent from "./DeleteDialogComponent.vue";
 import EmptyState from "../EmptyState.vue";
+import { invoices  } from "@/stores/invoiceState";
+const invoiceArray = invoices()
+import socket from "@/socket.js";
+
 
 const emit = defineEmits(["amountUpdate"])
 const props = defineProps({
-  amountArray: { type: Array, default: () => [] },
+  invoices: { type: Array, default: () => [] },
   language: String,
   actionStat: Boolean,
   employee: Number
@@ -162,56 +174,35 @@ const dialogDelete = ref(false);
 const actionStat = ref(props.actionStat);
 const heightPerWindow = computed(()=> actionStat.value ? "" : 405)
 
-import { useLocale } from 'vuetify'
-const { t } = useLocale()
 
 const headers = computed(() => {
   const baseHeaders = [
-    { title: t('date'), key: 'created_at' },
-    { title: t("Category"), key: "method" },
-    { title: t("Amount"), key: "amount" },
-    { title: t("Currency"), key: "currency" },
-    { title: t("Description"), key: "description" },
+    { title: 'date', key: 'created_at' },
+    { title: "Issuer", key: "issuer" },
+    { title: "Amount", key: "amount" },
+    { title: "Btw", key: "includesBtw" },
+    { title: "", key: "actions", sortable: false },
   ];
-  if (actionStat.value) {
-    baseHeaders.push({ title: t("Level of Integrity"), key: "integrity" });
-    baseHeaders.push({ title: t("Charity method"), key: "charity_method" });
-    baseHeaders.push({ title: t("Actions"), key: "actions", sortable: false });
-  }
   return baseHeaders;
 });
 
 const arrowIcon = computed(() => `mdi-arrow-${props.language === 'he' ? 'right' : 'left'}` );
-const currencySymbols = reactive({
-  EUR: "€",
-  GBP: "£",
-  ILS: "₪",
-  FRANC: "₣",
-  USD: "$",
-  default: "?",
-});
-
-const getCurrencySymbol = (currency) => currencySymbols[currency.toUpperCase()] || currencySymbols.default
 
 const dbContents = ref([]);
 const loading = ref(true); // Initialize with true to show loading state.
 const editedIndex = ref(-1);
 const editedItem = ref({
   date: "",
-  method: "",
+  issuer: "",
   amount: 0,
-  currency: "",
-  integrity: 0,
-  description: "",
+  btw: "",
 });
 
 const defaultItem = {
   date: "",
-  method: "",
+  issuer: "",
   amount: 0,
-  currency: "",
-  integrity: 0,
-  description: "",
+  btw: ""
 };
 
 const formTitle = computed(() =>
@@ -221,20 +212,27 @@ const formTitle = computed(() =>
 // Automatically initialize data when the component is mounted.
 onMounted(() => {
   initialize();
+  socket.on("new-invoice", (invoice) => {
+  console.log("📩 New invoice received", invoice);
+  dbContents.value = [invoice, ...dbContents.value];
+  invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
 });
+});
+
+
 
 const initialize = () => {
   loading.value = true;
   setTimeout(() => {
-    dbContents.value = [...props.amountArray];
+    dbContents.value = [...props.invoices];
     emit("amountUpdate")// Simulate async data loading.
     loading.value = false; // Set loading to false once data is loaded.
   }, 500); // Optional delay to simulate loading.
 };
 
-// Watch for changes in the `amountArray` prop and initialize if it updates.
+// Watch for changes in the `invoices` prop and initialize if it updates.
 watch(
-  () => props.amountArray,
+  () => props.invoices,
   (newArray) => {
     if (newArray) {
       initialize();
@@ -242,6 +240,7 @@ watch(
   },
   { immediate: true } // Trigger the watcher immediately on mount.
 );
+
 
 const editItem = (item) => {
   editedIndex.value = dbContents.value.indexOf(item);
@@ -254,6 +253,11 @@ const deleteItem = (item) => {
   editedItem.value = { ...item };
   dialogDelete.value = true;
 };
+
+const sendItem = (item) => {
+  console.log("sending 📨📨📨📨📨", dbContents.value.indexOf(item), {...item});
+};
+
 
 const deleteItemConfirm = () => {
   dbContents.value.splice(editedIndex.value, 1);
@@ -285,6 +289,13 @@ const save = () => {
   }
   close();
 };
+
+// onMounted(() => {
+//   socket.on("new-invoice", (invoice) => {
+//     console.log("📩 New invoice received", invoice);
+//     dbContents.value.unshift(invoice); // Insert at top of your reactive array
+//   });
+// });
 
 const colors = {
   1: "red-darken-2",

@@ -1,16 +1,17 @@
 <template>
   <v-container fluid>
     <overlay-component
-      v-if="Object.values(props.monthly.sums).length < 1"
+      
       :overlay-trigger="triggerOverlay"
     />
+    <!-- v-if="Object.values(props.monthly.sums).length < 1" -->
     <main-dialog
       :activate-dialog="activateDialog"
       title="Confirm Log-out"
-      :text="$t('confirm_dialog')"
+      text="confirm_dialog"
     />
     <v-container
-      class="fill-height fill-width bg-grey-lighten-2 pa-6"
+      class="fill-height fill-width bg-grey-lighten-4 pa-6"
       fluid
     >
       <v-responsive
@@ -44,7 +45,7 @@
             />
             <v-spacer class="mt-5" /> -->
             <table-parent
-              :invoices="invoiceArray"
+              :invoices="invoices"
               :action-stat="false"
               height="100%"
               class="overflow-y-auto scrollbar-style"
@@ -60,32 +61,34 @@
           >
             <div>
               <progress-bar
-                :label="$t('Monthly goal')"
+                label="somthing"
                 :percentage="monthlyPercent"
                 :days-left="daysLeft"
-                :masser-given="monthly.sums.masser"
-                :masser-to-give="monthly.sums.income"
+             
                 :currency="currency"
                 period="monthly"
               />
+              <!-- :masser-given="monthly.sums.masser"
+              :masser-to-give="monthly.sums.income" -->
             </div>
             <div class="mt-3">
               <progress-bar
                 color="blue"
-                :label="$t('Left from past months')"
+                label="Left from past months"
                 :percentage="monthlyPercent"
                 :days-left="daysLeft"
-                :masser-given="monthly.sums.masser"
-                :masser-to-give="monthly.sums.income"
+               
                 :currency="currency"
                 period="yearly"
               />
+              <!-- :masser-given="monthly.sums?.masser"
+              :masser-to-give="monthly.sums?.income" -->
             </div>
             <div class="mt-5">
               <pie-chart
                 v-if="barMethodSelected"
                 :option-methods="chartOptions"
-                :amount-array="amountArray"
+                :amount-array="invoices"
               />
               <sparklines-dashboard
                 v-else
@@ -95,7 +98,7 @@
             <div class="mt-5">
               <bar-chart
                 :option-methods="chartOptions"
-                :amount-array="amountArray"
+                :amount-array="invoices"
                 :monthly="monthly"
               />
               <!-- <sparklines-dashboard  /> -->
@@ -124,7 +127,7 @@ const props = defineProps({
   currencyInUse: String,
   monthly: Object,
   daysLeft: Number,
-  amountArray: Array,
+  invoices: Array,
   language: String,
 });
 
@@ -136,29 +139,13 @@ const monthlyPercent = ref(0);
 const currency = ref("$");
 //const dateConverter = ref();
 
-const updateValues = () => {
-  monthlyPercent.value = Math.round(
-    (props.monthly.sums.masser / (props.monthly.sums.income / 10)) * 100
-  );
-  currency.value = getCurrencySymbol(props.currencyInUse);
-};
+// const updateValues = () => {
+//   monthlyPercent.value = Math.round(
+//     (props.monthly.sums.masser / (props.monthly.sums.income / 10)) * 100
+//   );
+// };
 
 //const updateChartOptions = (options) => (chartOptions.value = options);
-
-const getCurrencySymbol = (currencyInUse) => {
-  switch (currencyInUse) {
-    case "EUR":
-      return "€";
-    case "GBP":
-      return "£";
-    case "ILS":
-      return "₪";
-    case "FRANC":
-      return "₣";
-    default:
-      return "$";
-  }
-};
 
 const triggerOverlayFunction = () => {
   triggerOverlay.value = true;
@@ -170,9 +157,11 @@ const triggerOverlayFunction = () => {
 
 onMounted(() => {
   triggerOverlayFunction();
-  updateValues();
-}),
-  watch(() => props.monthly, updateValues, { immediate: true });
+  //updateValues();
+})
+//,
+  //watch(() => props.monthly, updateValues,
+   //{ immediate: true });
 </script>
 
 <style>

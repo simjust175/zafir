@@ -13,10 +13,10 @@ class AmountService {
     }
 
     static async getService({token}) {
-        const [{user_id}] = await Amount.ValidateByToken(token);
-        if (!user_id) throw new Error("not the correct user");
+        // const [{user_id}] = await Amount.ValidateByToken(token);
+        // if (!user_id) throw new Error("not the correct user");
         try {
-            const getAmounts = await Amount.GetAmounts(user_id);
+            const getAmounts = await Amount.GetAmounts(); //user_id
             if (!getAmounts) return null;
             return getAmounts;
         } catch (error) {

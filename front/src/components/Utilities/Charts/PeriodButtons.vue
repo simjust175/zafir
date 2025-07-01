@@ -1,8 +1,23 @@
 <template>
-    <v-btn-toggle v-model="selectedPeriod" color="primary" class="bg-white" rounded="xl" variant="outlined" group mandatory>
-        <v-btn value="monthly">{{ $t('Monthly') }} </v-btn>
-        <v-btn value="yearly" class="px-7"> {{ $t('Yearly') }} </v-btn>
-    </v-btn-toggle>
+  <v-btn-toggle
+    v-model="selectedPeriod"
+    color="primary"
+    class="bg-white"
+    rounded="xl"
+    variant="outlined"
+    group
+    mandatory
+  >
+    <v-btn value="monthly">
+      Monthly
+    </v-btn>
+    <v-btn
+      value="yearly"
+      class="px-7"
+    >
+      Yearly
+    </v-btn>
+  </v-btn-toggle>
 </template>
 
 <script setup>
