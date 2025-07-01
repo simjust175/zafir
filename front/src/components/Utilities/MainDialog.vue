@@ -2,6 +2,7 @@
   <v-dialog
     v-model="dialog"
     max-width="400"
+    
   >
     <v-card rounded="lg">
       <!-- <v-card-title class="d-flex justify-space-between align-center">
