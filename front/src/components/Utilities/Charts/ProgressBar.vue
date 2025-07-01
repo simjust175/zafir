@@ -1,19 +1,29 @@
 <template>
-    <v-card class="bg-grey-lighten-3 pa-4 fill-height" height="500" theme="light">
-        <div class="d-flex justify-space-between text-grey-darken-4 text-subtitle-2">
-            <div>{{ props.label }}</div>
-            <div>{{ Math.round(props.percentage) }}%</div>
-        </div>
-        <div class="py-3">
-            <v-progress-linear v-model="props.percentage" height="9" color="blue" rounded
-                class="auto-draw"></v-progress-linear>
-        </div>
-        <div class="d-flex justify-space-between">
-            <div>{{ currency }}{{ props.masserGiven }}/ {{ currency }}{{ props.masserToGive / 10 }}</div>
-            <div :class="dayColor">{{ daysLeftDisplay }}</div>
-        </div>
-
-    </v-card>
+  <v-card
+    class="bg-grey-lighten-6 pa-4 fill-height"
+    height="500"
+    theme="light"
+  >
+    <div class="d-flex justify-space-between text-grey-darken-4 text-subtitle-2">
+      <div>{{ props.label }}</div>
+      <div>{{ Math.round(props.percentage) }}%</div>
+    </div>
+    <div class="py-3">
+      <v-progress-linear
+        v-model="props.percentage"
+        height="9"
+        color="blue"
+        rounded
+        class="auto-draw"
+      />
+    </div>
+    <div class="d-flex justify-space-between">
+      <div>{{ currency }}{{ props.masserGiven }}/ {{ currency }}{{ props.masserToGive / 10 }}</div>
+      <div :class="dayColor">
+        {{ daysLeftDisplay }}
+      </div>
+    </div>
+  </v-card>
 </template>
 
 <script setup>

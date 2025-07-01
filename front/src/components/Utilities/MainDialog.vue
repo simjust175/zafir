@@ -1,5 +1,8 @@
 <template>
-  <v-dialog v-model="dialog" max-width="400">
+  <v-dialog
+    v-model="dialog"
+    max-width="400"
+  >
     <v-card rounded="lg">
       <!-- <v-card-title class="d-flex justify-space-between align-center">
         <div class="text-h5 text-medium-emphasis ps-2">
@@ -12,16 +15,27 @@
       <!-- <v-divider class="mb-4"></v-divider> -->
 
       <v-card-text class="px-6">
-        {{ $t(props.text) }}
+        {{ props.text }}
       </v-card-text>
 
       <!-- <v-divider class="mt-2"></v-divider> -->
 
       <v-card-actions class="d-flex justify-end">
-        <v-btn class="text-none" rounded="xl" :text="$t('Cancel')" @click="dialog = false"></v-btn>
+        <v-btn
+          class="text-none"
+          rounded="xl"
+          text="Cancel"
+          @click="dialog = false"
+        />
 
-        <v-btn class="text-none" color="primary" rounded="lg" :text="$t('OK')" variant="outlined"
-          @click="emitConfirmed"></v-btn>
+        <v-btn
+          class="text-none"
+          color="primary"
+          rounded="lg"
+          text="OK"
+          variant="outlined"
+          @click="emitConfirmed"
+        />
       </v-card-actions>
     </v-card>
   </v-dialog>

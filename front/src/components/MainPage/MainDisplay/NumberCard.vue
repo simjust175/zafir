@@ -13,7 +13,7 @@
           </div>
           <div :class="widgetContentReverse">
             <div class="widget-numbers text-white">
-              {{ props.currency }}<span id="income">{{ stillToGive }}</span>
+              {{ props }}<span id="income">{{ stillToGive }}</span>
             </div>
           </div>
         </div>
@@ -33,7 +33,7 @@
           </div>
           <div :class="widgetContentReverse">
             <div class="widget-numbers text-white">
-              {{ props.currency }}<span id="masser">{{ props.monthly.sums.masser }}</span>
+              {{ props }}<span id="masser">{{ props.monthly.sums.masser }}</span>
             </div>
           </div>
         </div>

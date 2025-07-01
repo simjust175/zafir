@@ -1,16 +1,35 @@
 <template>
-  <v-card class="mx-auto text-center pa-8" color="grey-lighten-3" dark>
-    <div id="chart" class="pa-2" width="70%">
-
+  <v-card
+    class="mx-auto text-center pa-8"
+    color="grey-lighten-6"
+    dark
+  >
+    <div
+      id="chart"
+      class="pa-2"
+      width="70%"
+    >
       <div class="d-flex justify-space-between">
-        <h4 class="text-start">{{ period }} integrity distribution</h4>
+        <h4 class="text-start">
+          {{ period }}
+        </h4>
         <!-- {{ integrityArray }} -->
-        <v-btn append-icon="mdi mdi-arrow-right-bold-outline" variant="tonal" color="primary"
-          rounded="md">Integrity</v-btn>
+        <v-btn
+          append-icon="mdi mdi-arrow-right-bold-outline"
+          variant="tonal"
+          color="primary"
+          rounded="md"
+        >
+          next
+        </v-btn>
       </div>
 
-      <apexchart type="donut" :options="chartOptionsWithDelay" :series="series"></apexchart>
-      <period-buttons @periodUpdate="period = $event" />
+      <apexchart
+        type="donut"
+        :options="chartOptionsWithDelay"
+        :series="series"
+      />
+      <period-buttons @period-update="period = $event" />
     </div>
   </v-card>
 </template>

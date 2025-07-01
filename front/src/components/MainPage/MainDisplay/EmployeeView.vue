@@ -1,26 +1,51 @@
 <template>
-    <overlay-component :overlayTrigger="triggerOverlay" v-if="Object.values(props.monthly.sums).length < 1"/>
-    <v-container class="fill-height fill-width bg-grey-lighten-2 pa-6" fluid>
-      <v-responsive class="fill-height fill-width" width="100%">
-        <!-- Top Row: Number Cards -->
+  <overlay-component
+    v-if="Object.values(props.monthly.sums).length < 1"
+    :overlay-trigger="triggerOverlay"
+  />
+  <v-container
+    class="fill-height fill-width bg-grey-lighten-2 pa-6"
+    fluid
+  >
+    <v-responsive
+      class="fill-height fill-width"
+      width="100%"
+    >
+      <!-- Top Row: Number Cards -->
   
-        <!-- Main Content: Left (Form) and Right (Progress Bars + Pie Chart) -->
-        <v-row class="d-flex">
-          <!-- Left: Main Form -->
-          <v-col cols="12" md="6">
-            <main-form v-bind="$attrs" @methodUpdate="updateChartOptions" :language="props.language"/>
-          </v-col>
+      <!-- Main Content: Left (Form) and Right (Progress Bars + Pie Chart) -->
+      <v-row class="d-flex">
+        <!-- Left: Main Form -->
+        <v-col
+          cols="12"
+          md="6"
+        >
+          <main-form
+            v-bind="$attrs"
+            :language="props.language"
+            @method-update="updateChartOptions"
+          />
+        </v-col>
   
-          <!-- Right: Progress Bars and Pie Chart -->
-          <v-col cols="12" md="6" sm="12">
-            <table-parent :amountArray="amountArray" :language="language" :actionStat="false" height="612" employee="2" class="overflow-y-auto scrollbar-style"/>
-          </v-col>
-        </v-row>
-
-      </v-responsive>
-    </v-container>
-  
-  </template>
+        <!-- Right: Progress Bars and Pie Chart -->
+        <v-col
+          cols="12"
+          md="6"
+          sm="12"
+        >
+          <table-parent
+            :amount-array="amountArray"
+            :language="language"
+            :action-stat="false"
+            height="612"
+            employee="2"
+            class="overflow-y-auto scrollbar-style"
+          />
+        </v-col>
+      </v-row>
+    </v-responsive>
+  </v-container>
+</template>
   
   
   <script setup>

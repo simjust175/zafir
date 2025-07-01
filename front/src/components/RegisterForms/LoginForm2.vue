@@ -60,7 +60,8 @@
 import LoginInput2 from "./LoginInput2.vue";
 import { ref, reactive, watch } from "vue";
 import { useRouter } from "vue-router";
-import store from "@/storage";
+import { setLogin } from "@/stores/loginState"
+const loginState = setLogin()
 
 const alertActivate = ref(false);
 const router = useRouter();
@@ -99,8 +100,9 @@ const login = async () => {
     localStorage.setItem("token", token);
     localStorage.setItem("id", user_id);
     emit("loggedIn");
-    store.commit("updateLoggedIn", { loggedStat: true, userEmail: credentials.user_email })
-    console.log("store 🏪🏬🛒", store.state);
+    //store.commit("updateLoggedIn", { loggedStat: true, userEmail: credentials.user_email })
+    loginState.token = true;
+    loginState.userName = credentials.user_email
     router.push("/");
   } catch (error) {
     console.log(error); 

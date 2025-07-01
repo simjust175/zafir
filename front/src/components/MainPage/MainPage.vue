@@ -1,11 +1,9 @@
 <template>
+  <navigation-bar lang="en"/>
   <main-display
     v-if="!loading && admin"
-    :monthly="monthly"
-    :days-left="daysLeftMonth"
     :currency-in-use="currencyInUse"
-    :amount-array="amountArray"
-    :language="language"
+    :invoices="amountArray"
     @new-amount-posted="getAmounts()"
   />
   <employee-view
@@ -21,8 +19,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
-import store from "../../storage/index.js";
+import { ref, onMounted } from "vue";
+// import store from "../../storage/index.js";
+import { invoices  } from "@/stores/invoiceState";
+const invoiceArray = invoices()
 
 const monthly = ref({
   date: {},
@@ -66,7 +66,7 @@ const getAmounts = async () => {
   console.log("Starting to fetch...");
   const tokenFromLocalStorage = localStorage.getItem("token");
   if (!tokenFromLocalStorage) return console.log("NO token??");
-  const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/test`, {
+  const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/get`, {
     // method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -75,11 +75,11 @@ const getAmounts = async () => {
   })
   const data = await res.json();
 
-  console.log("datatatatatatatttt", data);
+  console.log("It/'s all /'bout the data:", data.amounts);
   
- //mountArray.value = data.extracted
+ amountArray.value = [...data.amounts]
   // monthly.value.sums = { income: sumArray(sumCalc(data.amounts, 'income')), masser: sumArray(sumCalc(data.amounts, 'charity')), expenses: sumArray(sumCalc(data.amounts, 'expense')) }
-  // store.commit("updateDbContent", data.amounts);
+  invoiceArray.dbResponse = data.amounts;
 }
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> }(o){ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  \\

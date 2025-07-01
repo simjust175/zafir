@@ -279,3 +279,9 @@ const stringy = "number three"
 
 let myFirstArray = ["simcha", "yanky", "chaim", "duvi", "yochonon"];
 console.log("my arrray", myFirstArray[1, 2]);
+const func1 = (cb)=>{
+    console.log("func1 activated");
+    cb()
+}
+
+func1(()=> console.log("hello"))

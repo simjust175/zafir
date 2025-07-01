@@ -5,11 +5,9 @@ const route = express.Router();
 import AmountControllers from "../Controllers/amountControllers.js";
 //import auth from "../middleware/auth.js"
 
-
-
 route.post("/post", AmountControllers.postAmount);
 
-route.post("/get", AmountControllers.getAmounts);
+route.get("/get", AmountControllers.getAmounts);
 
 //~ES5~ module.exports = route
 export default route;
