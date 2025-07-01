@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import pdf from "pdf-parse/lib/pdf-parse.js";
+import analyze from "./gpt.js";
 
 dotenv.config();
 
@@ -66,7 +67,8 @@ function extractPrice(text) {
       result.includesBTW = true;
     }
   }
-
+  console.log("res", result);
+  
   return result.amount ? result : null;
 }
 
@@ -107,7 +109,7 @@ function handleNewEmails(imap) {
         msg.on("body", (stream) => {
           simpleParser(stream)
             .then(async (parsed) => {
-              const results = [];
+              let results = []; //it is a LET !!!
 
               for (const att of parsed.attachments || []) {
                 if (att.contentType === "application/pdf") {
@@ -118,11 +120,15 @@ function handleNewEmails(imap) {
                   try {
                     const pdfData = await pdf(att.content);
                     const issuer = parsed.from?.value?.[0]?.address;
-                    const extracted = extractPrice(pdfData.text);
+                    //const extracted = extractPrice(pdfData.text);
+                    const extracted = await analyze(pdfData.text)
+                    console.log("extract rrr", extracted);
+                    
 
                     if (extracted) {
-                      const { amount, btw, includesBTW } = extracted;
-                      results.push({ issuer, amount, btw, includesBTW });
+                      //const { amount, btw, includesBTW } = extracted;
+                      //results.push({ issuer, amount, btw, includesBTW });
+                      results = {...extracted}
                       hasProcessed = true;
                     }
                   } catch (err) {
@@ -193,4 +199,6 @@ function startListening(postToDb) {
   imap.connect();
 }
 
+
+//startListening()
 export default startListening;

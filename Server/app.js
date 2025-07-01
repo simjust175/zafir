@@ -1,6 +1,5 @@
-// ----------- Imports -----------
 import express from "express";
-import http from "http"; // <-- For creating server
+import http from "http";
 import { Server as SocketIOServer } from "socket.io";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -11,10 +10,11 @@ import AmountServices from "./Services/amountService.js";
 import startListening from "./email-service/imap.js";
 
 dotenv.config();
+console.log("listen", startListening);
 
 // ----------- Server Setup -----------
 const app = express();
-const server = http.createServer(app); // 👈 Replace app.listen later
+const server = http.createServer(app);
 
 const io = new SocketIOServer(server, {
   cors: { origin: "*" },
@@ -35,7 +35,8 @@ const postInvoices = async (inv) => {
   try {
     console.log("📦 Posting invoice to DB:", inv);
     await AmountServices.postService(inv);
-
+    console.log("await");
+    
     // 🔊 Push invoice to connected clients
     io.emit("new-invoice", inv);
   } catch (error) {
@@ -44,7 +45,7 @@ const postInvoices = async (inv) => {
 };
 
 // ----------- Start IMAP Email Listener -----------
-startListening(postInvoices);
+startListening(async(inv)=> await postInvoices(inv));
 
 // ----------- WebSocket Logging -----------
 io.on("connection", (socket) => {
@@ -58,5 +59,5 @@ io.on("connection", (socket) => {
 // ----------- Start Server -----------
 const port = process.env.PORT || 1221;
 server.listen(port, () => {
-  console.log("🚀 Zafir management running on port", port);
+  console.log("🚀 Zafir management running on port - ", port);
 });
