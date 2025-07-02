@@ -34,7 +34,7 @@
         </v-tabs-window-item>
 
         <v-tabs-window-item value="option-2">
-          <div class="bg-blue pa-12" />
+          <manage-users />
         </v-tabs-window-item>
       </v-tabs-window>
     </div>

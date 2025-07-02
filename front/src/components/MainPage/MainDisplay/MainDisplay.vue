@@ -68,8 +68,6 @@
                 :currency="currency"
                 period="monthly"
               />
-              <!-- :masser-given="monthly.sums.masser"
-              :masser-to-give="monthly.sums.income" -->
             </div>
             <div class="mt-3">
               <progress-bar
