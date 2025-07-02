@@ -34,9 +34,10 @@
         @click="openExpandedTable"
       />
       <v-list-item
-        prepend-icon="mdi-finance"
-        :title="titles.charts[lang]"
-        value="charts"
+        prepend-icon="mdi-account-plus-outline"
+        title="Add user"
+        value="user"
+        @click="router.push('/users')"
       />
       <v-list-item
         prepend-icon="mdi-percent"

@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/valid-v-slot -->
 <template>
   <v-card
-    class="pa-4"
+    class="pa-3"
     :class="{'pt-2':actionStat}"
   >
     <v-data-table
@@ -78,16 +78,15 @@
           class="d-flex align-center justify-lg-space-between"
         >
           <v-icon
-            class="ml-4"
             size="22"
-            color="blue"
+            color="primary"
             @click="editItem(item)"
           >
             mdi-pencil
           </v-icon>
           <v-icon
             size="22"
-            color="red"
+            color="error"
             class="ml-4"
             @click="deleteItem(item)"
           >
@@ -95,7 +94,7 @@
           </v-icon>
           <v-icon
             size="22"
-            color="green"
+            color="success"
             class="ml-4"
             @click="sendItem(item)"
           >
@@ -125,6 +124,9 @@
       </template>
       <template #item.includesBtw="{ item }">
         {{ item.includesBtw ? "included" : "excluded" }}
+      </template>
+      <template #item.btwPercent="{ item }">
+        {{ item.btwPercent ? `${item.btwPercent}%` : "" }}
       </template>
       <!-- <template #item.method="{ value }">
         <v-chip
@@ -181,6 +183,7 @@ const headers = computed(() => {
     { title: "Issuer", key: "issuer" },
     { title: "Amount", key: "amount" },
     { title: "Btw", key: "includesBtw" },
+    { title: "(%)", key: "btwPercent" },
     { title: "", key: "actions", sortable: false },
   ];
   return baseHeaders;

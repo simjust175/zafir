@@ -4,6 +4,8 @@
     color="primary"
     class="bg-white"
     rounded="xl"
+    slim
+    density="compact"
     variant="outlined"
     group
     mandatory

@@ -10,18 +10,18 @@
       width="70%"
     >
       <div class="d-flex justify-space-between">
-        <h4 class="text-start">
+        <h5 class="text-start">
           {{ period }}
-        </h4>
+        </h5>
         <!-- {{ integrityArray }} -->
-        <v-btn
+        <!-- <v-btn
           append-icon="mdi mdi-arrow-right-bold-outline"
           variant="tonal"
           color="primary"
           rounded="md"
         >
           next
-        </v-btn>
+        </v-btn> -->
       </div>
 
       <apexchart
