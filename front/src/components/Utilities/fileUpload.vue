@@ -1,13 +1,13 @@
 <template>
   <v-dialog v-model="dialog">
     <v-card
-      class="py-5"
+      class="py-5 px-4"
       width="500"
       elevation="2"
     >
       <v-icon
         icon="mdi-close"
-        class="mt-0 ml-3 cursor-pointer"
+        class="mt-0 ml-0 mb-4 cursor-pointer"
         @click="$emit('close')"
       />
       <v-row
