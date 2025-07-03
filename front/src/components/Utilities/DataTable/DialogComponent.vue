@@ -61,6 +61,26 @@
                 label="Btw"
               />
             </v-col>
+            <v-col
+              cols="6"
+              md="6"
+              sm="6"
+            >
+              <v-text-field
+                v-model="editedItem.btwPercent"
+                label="%"
+              />
+            </v-col>
+            <v-col
+              cols="6"
+              md="6"
+              sm="6"
+            >
+              <v-text-field
+                v-model="editedItem.margin"
+                label="Margin"
+              />
+            </v-col>
           </v-row>
         </v-container>
       </v-card-text>
@@ -87,7 +107,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, computed } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps({
   dialogProp: Boolean,

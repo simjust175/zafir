@@ -1,249 +1,236 @@
-<!-- eslint-disable vue/valid-v-slot -->
 <template>
-  <v-card
-    class="pa-3"
-    :class="{'pt-2':actionStat}"
+  <v-container
+    :class="{ 'pt-0': !actionStat }"
+    fluid
   >
-    <v-data-table
-      :headers="headers"
-      :items="dbContents"
-      :search="search"
-      :sort-by="[{ key: 'created_at', order: 'desc' }]"
-      hide-default-footer
-      :max-height="heightPerWindow"
-      :loading="dbContents.length === 0 ? loading : null"
-      loading-text="Loading... Please wait"
+    <v-card
+      class="pa-6"
+     
+      elevation="3"
     >
-      <template #loading>
-        <v-skeleton-loader type="table-row@10" />
-      </template>
-      <template #top>
-        <v-toolbar
-          class="bg-grey-lighten-5"
-          flat
-        >
-          <v-toolbar-title v-if="!actionStat">
-            Invoices
-          </v-toolbar-title>
-          <v-toolbar-title v-else>
-            <v-icon
+      <v-data-table
+        :headers="headers"
+        :items="groupedInvoices"
+        item-value="issuer"
+        :search="search"
+        :sort-by="[{ key: 'created_at', order: 'desc' }]"
+        hide-default-footer
+        :max-height="heightPerWindow"
+        :loading="dbContents.length === 0 ? loading : null"
+        loading-text="Loading... Please wait"
+        @click:row="openInvoiceDialog"
+      >
+        <template #loading>
+          <v-skeleton-loader type="table-row@10" />
+        </template>
+
+        <template #top>
+          <v-toolbar
+            class="bg-grey-lighten-5"
+            flat
+          >
+            <v-toolbar-title>
+              <v-icon
+                v-if="actionStat"
+                class="mb-4 mr-2"
+                icon="mdi-arrow-left-circle"
+                size="large"
+                @click="$router.push('/')"
+              />
+              {{ actionStat ? 'Invoices' : 'All Invoices' }}
+            </v-toolbar-title>
+
+            <v-spacer />
+
+            <v-text-field
               v-if="actionStat"
-              class="mb-4"
-              :icon="arrowIcon"
-              size="large"
-              left
-              @click="$router.push('/')"
+              v-model="search"
+              density="compact"
+              class="pr-4 rounded-b-pill"
+              label="Search"
+              prepend-inner-icon="mdi-magnify"
+              variant="outlined"
+              hide-details
+              single-line
             />
-          </v-toolbar-title>
 
-          <v-spacer />
-          <v-text-field
-            v-if="actionStat"
-            v-model="search"
-            density="compact"
-            class="pr-4 rounded-b-pill"
-            label="Search"
-            prepend-inner-icon="mdi-magnify"
-            variant="outlined"
-            hide-details
-            single-line
-          />
+            <v-icon
+              v-if="!actionStat"
+              icon="mdi-arrow-expand"
+              class="mr-5"
+              color="blue-darken-1"
+              @click="$router.push('/table')"
+            />
 
-          <v-icon
-            v-if="!actionStat"
-            icon="mdi-arrow-expand"
-            class="mr-5"
-            color="blue-darken-1"
-            @click="$router.push('/table')"
-          />
+            <DialogComponent
+              :dialog-prop="dialogProp"
+              :edited-item="editedItem"
+              :form-title="formTitle"
+              @close="close"
+              @save="save"
+            />
 
-          <DialogComponent
-            :dialog-prop="dialogProp"
-            :edited-item="editedItem"
-            :form-title="formTitle"
-            @close="close"
-            @save="save"
-          />
-          <DeleteDialogComponent
-            :dialog-delete="dialogDelete"
-            @close-delete="closeDelete"
-            @delete-item-confirm="deleteItemConfirm"
-          />
-        </v-toolbar>
-      </template>
+            <DeleteDialogComponent
+              :dialog-delete="dialogDelete"
+              @close-delete="closeDelete"
+              @delete-item-confirm="deleteItemConfirm"
+            />
+            <InvoiceDetails
+              :invoices="selectedInvoices"
+              :active="activateInvoiceDetailDialog"
+              :sending-id="sendingId"
+              @close="activateInvoiceDetailDialog = false"
+              @edit="editItem"
+              @delete="deleteItem"
+            />
+          </v-toolbar>
+        </template>
 
-      <template #item.actions="{ item }">
-        <div
-          v-show="actionStat"
-          class="d-flex align-center justify-lg-space-between"
-        >
-          <v-icon
-            size="22"
-            color="primary"
-            @click="editItem(item)"
-          >
-            mdi-pencil
-          </v-icon>
-          <v-icon
-            size="22"
-            color="error"
-            class="ml-4"
-            @click="deleteItem(item)"
-          >
-            mdi-delete
-          </v-icon>
+        <template #item.created_at="{ item }">
+          {{ new Date(item.created_at).toLocaleDateString() }}
+        </template>
+        <template #item.totalAmount="{ item }">
+          €{{ item.totalAmount.toFixed(2) }}
+        </template>
+        <template #item.totalWithMargin="{ item }">
+          €{{ item.totalWithMargin.toFixed(2) }}
+        </template>
+        <template #item.totalMargin="{ item }">
+          {{ item.totalMargin.toFixed(2) }}%
+        </template>
+
+        <template #item.actions="{ item }">
           <v-icon
             size="22"
             color="success"
-            class="ml-4"
-            @click="sendItem(item)"
+            class="ml-3"
+            @click.stop="sendInvoice(item)"
           >
             mdi-send
           </v-icon>
-        </div>
-      </template>
+        </template>
 
-      <template #no-data>
-        <empty-state
-          class="my-12"
-          @refresh="initialize()"
-        />
-      </template>
-
-      <!-- <template #item.integrity="{ value }">
-        <v-chip :color="getColor(value)">
-          {{ value }}
-        </v-chip>
-      </template> -->
-      <template #item.amount="{ item }">
-        <span>€{{ item.amount }}</span>
-      </template>
-    
-      <template #item.created_at="{ item }">
-        {{ new Date(item.created_at).toLocaleDateString() }}
-      </template>
-      <template #item.includesBtw="{ item }">
-        {{ item.includesBtw ? "included" : "excluded" }}
-      </template>
-      <template #item.btwPercent="{ item }">
-        {{ item.btwPercent ? `${item.btwPercent}%` : "" }}
-      </template>
-      <!-- <template #item.method="{ value }">
-        <v-chip
-          v-if="actionStat"
-          :color="methodColor(value)"
-          :prepend-icon="methodIcon(value)"
-          label
-        >
-          {{ t(value) }}
-        </v-chip>
-        <div
-          v-else
-          class="d-flex"
-        >
-          <v-icon
-            :color="methodColor(value)"
-            :icon="methodIcon(value)"
+        <template #no-data>
+          <empty-state
+            class="my-12"
+            @refresh="initialize()"
           />
-          {{ t(value) }}
-        </div>
-      </template> -->
-    </v-data-table>
-  </v-card>
+        </template>
+      </v-data-table>
+
+    <!-- Dialog to show InvoiceDetails -->
+    
+    <!-- <v-card>
+        <v-toolbar color="primary" dark flat>
+          <v-toolbar-title>Invoice Details for {{ selectedIssuer }}</v-toolbar-title>
+          <v-spacer />
+          <v-btn icon @click="detailsDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+
+        <v-card-text> -->
+    </v-card>
+  </v-container>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick, defineProps, defineEmits } from "vue";
-import DialogComponent from "./DialogComponent.vue";
-import DeleteDialogComponent from "./DeleteDialogComponent.vue";
-import EmptyState from "../EmptyState.vue";
-import { invoices  } from "@/stores/invoiceState";
-const invoiceArray = invoices()
-import socket from "@/socket.js";
+import { ref, computed, watch, onMounted, nextTick, defineProps, defineEmits } from 'vue';
+import DialogComponent from './DialogComponent.vue';
+import DeleteDialogComponent from './DeleteDialogComponent.vue';
+import EmptyState from '../EmptyState.vue';
+import { invoices as invoiceStore } from '@/stores/invoiceState';
+import socket from '@/socket.js';
 
-
-const emit = defineEmits(["amountUpdate"])
+const emit = defineEmits(['amountUpdate']);
 const props = defineProps({
   invoices: { type: Array, default: () => [] },
   language: String,
   actionStat: Boolean,
-  employee: Number
+  employee: Number,
 });
 
-const search = ref("");
+const invoiceArray = invoiceStore();
+const search = ref('');
 const dialogProp = ref(false);
 const dialogDelete = ref(false);
+const activateInvoiceDetailDialog = ref(false)
 const actionStat = ref(props.actionStat);
-const heightPerWindow = computed(()=> actionStat.value ? "" : 405)
+const heightPerWindow = computed(() => (actionStat.value ? '' : 405));
 
-
-const headers = computed(() => {
-  const baseHeaders = [
-    { title: 'date', key: 'created_at' },
-    { title: "Issuer", key: "issuer" },
-    { title: "Amount", key: "amount" },
-    { title: "Btw", key: "includesBtw" },
-    { title: "(%)", key: "btwPercent" },
-    { title: "", key: "actions", sortable: false },
-  ];
-  return baseHeaders;
-});
-
-const arrowIcon = computed(() => `mdi-arrow-${props.language === 'he' ? 'right' : 'left'}` );
+const headers = computed(() => [
+  { title: 'Issuer', key: 'issuer' },
+  { title: 'Total', key: 'totalAmount' },
+  { title: 'Margin', key: 'totalMargin' },
+  { title: 'Total + Margin', key: 'totalWithMargin' },
+  { title: '', key: 'actions', sortable: false },
+]);
 
 const dbContents = ref([]);
-const loading = ref(true); // Initialize with true to show loading state.
+const loading = ref(true);
 const editedIndex = ref(-1);
-const editedItem = ref({
-  date: "",
-  issuer: "",
-  amount: 0,
-  btw: "",
+const editedItem = ref({});
+const defaultItem = { issuer: '', amount: 0, created_at: '', includesBtw: false, btwPercent: null, margin: 0 };
+const formTitle = computed(() => (editedIndex.value === -1 ? 'New Item' : 'Edit Item'));
+const sendingId = ref(null);
+
+const groupedInvoices = computed(() => {
+  const groups = {};
+  dbContents.value.forEach(inv => {
+    const issuer = inv.issuer || 'Unknown';
+    if (!groups[issuer]) groups[issuer] = [];
+    groups[issuer].push(inv);
+  });
+
+  return Object.keys(groups).map(issuer => {
+    const invoices = groups[issuer];
+    const totalAmount = invoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
+    const totalMargin = invoices.reduce((sum, inv) => sum + Number(inv.margin || 0), 0);
+    return {
+      issuer,
+      invoices,
+      totalAmount,
+      totalMargin,
+      totalWithMargin: totalAmount + totalMargin,
+    };
+  });
 });
 
-const defaultItem = {
-  date: "",
-  issuer: "",
-  amount: 0,
-  btw: ""
+// Dialog state and selected data
+const detailsDialog = ref(false);
+const selectedInvoices = ref([]);
+const selectedIssuer = ref('');
+
+const openInvoiceDialog = (event, group) => {
+  activateInvoiceDetailDialog.value = !activateInvoiceDetailDialog.value  
+  if (!group || !group.item) return;
+  selectedInvoices.value = group.item.invoices;
+  selectedIssuer.value = group.item.issuer;
+  detailsDialog.value = true;
 };
 
-const formTitle = computed(() =>
-  editedIndex.value === -1 ? "New Item" : "Edit Item"
-);
-
-// Automatically initialize data when the component is mounted.
 onMounted(() => {
   initialize();
-  socket.on("new-invoice", (invoice) => {
-  console.log("📩 New invoice received", invoice);
-  dbContents.value = [invoice, ...dbContents.value];
-  invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
+  socket.on('new-invoice', (invoice) => {
+    dbContents.value = [invoice, ...dbContents.value];
+    invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
+  });
 });
-});
-
-
 
 const initialize = () => {
   loading.value = true;
   setTimeout(() => {
     dbContents.value = [...props.invoices];
-    emit("amountUpdate")// Simulate async data loading.
-    loading.value = false; // Set loading to false once data is loaded.
-  }, 500); // Optional delay to simulate loading.
+    emit('amountUpdate');
+    loading.value = false;
+  }, 500);
 };
 
-// Watch for changes in the `invoices` prop and initialize if it updates.
 watch(
   () => props.invoices,
-  (newArray) => {
-    if (newArray) {
-      initialize();
-    }
-  },
-  { immediate: true } // Trigger the watcher immediately on mount.
+  () => initialize(),
+  { immediate: true }
 );
-
 
 const editItem = (item) => {
   editedIndex.value = dbContents.value.indexOf(item);
@@ -257,10 +244,11 @@ const deleteItem = (item) => {
   dialogDelete.value = true;
 };
 
-const sendItem = (item) => {
-  console.log("sending 📨📨📨📨📨", dbContents.value.indexOf(item), {...item});
+const sendInvoice = async (item) => {
+  sendingId.value = item.id;
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  sendingId.value = null;
 };
-
 
 const deleteItemConfirm = () => {
   dbContents.value.splice(editedIndex.value, 1);
@@ -284,40 +272,13 @@ const closeDelete = () => {
 };
 
 const save = () => {
-  //PATCH EDIT && CALL GET()
   if (editedIndex.value > -1) {
     Object.assign(dbContents.value[editedIndex.value], editedItem.value);
   } else {
-    dbContents.value.push(editedItem.value);
+    dbContents.value.push({ ...editedItem.value });
   }
   close();
 };
-
-// onMounted(() => {
-//   socket.on("new-invoice", (invoice) => {
-//     console.log("📩 New invoice received", invoice);
-//     dbContents.value.unshift(invoice); // Insert at top of your reactive array
-//   });
-// });
-
-const colors = {
-  1: "red-darken-2",
-  2: "red-lighten-3",
-  3: "orange",
-  4: "yellow",
-  5: "green",
-  income: "green",
-  charity: "blue",
-  expense: "red"
-};
-
-const methodIcons = {
-  income: "mdi mdi-menu-up",
-  expense: "mdi mdi-menu-down",
-  charity: "mdi mdi-menu-down"
-}
-
-const getColor = (value) => colors[value] || "grey"; // Default to 'grey' for unexpected values.
-const methodColor = (value) => colors[value] || "grey"
-const methodIcon = (value) => methodIcons[value]
 </script>
+
+

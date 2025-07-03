@@ -9,7 +9,7 @@
       >
         <v-icon
           class="mr-6 cursor-pointer"
-          @click="router.push('/')"
+          @click="$router.push('/')"
         >
           mdi-arrow-left-circle
         </v-icon>
@@ -108,7 +108,6 @@
 </template>
   
   <script setup>
-  import router from '@/router'
 import { ref } from 'vue'
   
   const headers = [

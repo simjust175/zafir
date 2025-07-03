@@ -114,14 +114,14 @@
 
 <!-- eslint-disable vue/require-default-prop -->
 <script setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 //import MainForm from "../MainDisplay/AmountForm/MainForm.vue";
 //import NumberCard from "../MainDisplay/NumberCard.vue";
 import ProgressCards from "./ProgressCards.vue";
 import BarChart from "@/components/Utilities/Charts/BarChart.vue";
 import SparklinesDashboard from "@/components/Utilities/Charts/SparklinesDashboard.vue";
 
-const props = defineProps({
+defineProps({
   currencyInUse: String,
   monthly: Object,
   daysLeft: Number,
@@ -150,7 +150,7 @@ const triggerOverlayFunction = () => {
 
   setTimeout(() => {
     triggerOverlay.value = false;
-  }, 1500);
+  }, 500);
 };
 
 onMounted(() => {

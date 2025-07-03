@@ -9,24 +9,26 @@
       scroll-behavior="hide"
       scroll-threshold="340"
     >
-      <v-img />
-      <!-- <v-app-bar-nav-icon></v-app-bar-nav-icon> -->
-
-      <!-- <v-toolbar-title>
-        <v-icon @click="$router.push('/')" color="primary"
-          >mdi mdi-hand-coin-outline</v-icon
-        >
-      </v-toolbar-title> -->
+      <h1 class="ml-5 zafir-text-primary cursor-pointer" @click.stop="$router.push('/')">
+        Z<span class="zafir-text-secondary">T</span>P
+      </h1>
 
       <v-spacer />
 
+      <!-- Live Email Watch Icon -->
+      <v-btn variant="outlined" class="mr-3" color="error" rounded="xl" density="compact">
+        Live
+        <span class="live-dot ml-2" />
+      </v-btn>
+      <v-tooltip activator="parent" location="bottom">Monitoring new emails</v-tooltip>
+
+      <!-- Logout/Login Button -->
       <div class="d-flex align-center justify-space-between mx-8">
-        <!-- <language-switch @updateLocale="$emit('updateLocale', $event)"/> -->
         <v-btn
           v-if="loginState.token"
           icon
         >
-          <v-icon @click="activateDialog = !activateDialog">
+          <v-icon @click="activateDialog = !activateDialog" class="no-ripple">
             mdi-export
           </v-icon>
         </v-btn>
@@ -40,6 +42,7 @@
           Login
         </v-btn>
       </div>
+
       <main-dialog
         :activate-dialog="activateDialog"
         title="Confirm Log-out"
@@ -121,5 +124,29 @@ const logout = async () => {
 
 #logo-text {
   z-index: 2;
+}
+.live-dot {
+  height: 10px;
+  width: 10px;
+  background-color: red;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 1.5s infinite;
+  z-index: 1;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 </style>

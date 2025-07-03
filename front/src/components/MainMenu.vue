@@ -17,7 +17,7 @@
               :icon="iconArray[index]"
               size="80"
             />
-            {{ $t(card) }}
+            {{ card }}
           </v-card>
         </v-col>
       </v-row>

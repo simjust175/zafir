@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import analyze from "./gpt.js";
+import { extractLogoIssuer } from "./ocrLogoScan.js";
 
 dotenv.config();
 
@@ -14,9 +15,9 @@ const __dirname = path.dirname(__filename);
 
 function extractPrice(text) {
   text = text
-    .normalize('NFKC') // Normalize Unicode characters
-    .replace(/\u00A0/g, ' ') // Replace non-breaking spaces
-    .replace(/\s+/g, ' ') // Collapse all whitespace
+    .normalize("NFKC") // Normalize Unicode characters
+    .replace(/\u00A0/g, " ") // Replace non-breaking spaces
+    .replace(/\s+/g, " ") // Collapse all whitespace
     .trim()
     .toLowerCase();
 
@@ -31,8 +32,8 @@ function extractPrice(text) {
   const totalMatch =
     text.match(/totaalbedrag\s*€?\s*([\d.,]+)/i) ||
     text.match(/totaal\s*eur\s*([\d.,]+)/i) ||
-    text.match(/totaal\s*€\s*(?:incl\.?|excl\.)\s*btw\s*([\d.,]+)/i) ||  // NEW: "Totaal € incl. btw"
-    text.match(/totaal\s*€\s*([\d.,]+)\s*incl\.?\s*btw/i) ||             // NEW: reversed order
+    text.match(/totaal\s*€\s*(?:incl\.?|excl\.)\s*btw\s*([\d.,]+)/i) || // NEW: "Totaal € incl. btw"
+    text.match(/totaal\s*€\s*([\d.,]+)\s*incl\.?\s*btw/i) || // NEW: reversed order
     text.match(/totaal incl\.? btw\s*€?\s*([\d.,]+)/i) ||
     text.match(/(?:eur|€)\s*([\d.,]+)\s*$/im); // Fallback at the end of text
 
@@ -44,7 +45,9 @@ function extractPrice(text) {
 
   // ✅ Handle amounts
   if (totalMatch) {
-    result.amount = parseFloat(totalMatch[1].replace(/\./g, "").replace(",", "."));
+    result.amount = parseFloat(
+      totalMatch[1].replace(/\./g, "").replace(",", ".")
+    );
   }
   if (btwMatch) {
     result.btw = parseFloat(btwMatch[1].replace(/\./g, "").replace(",", "."));
@@ -68,10 +71,9 @@ function extractPrice(text) {
     }
   }
   console.log("res", result);
-  
+
   return result.amount ? result : null;
 }
-
 
 // --------- IMAP Configuration ---------
 const imapConfig = {
@@ -102,7 +104,7 @@ function handleNewEmails(imap) {
         let hasProcessed = false;
         let uid;
 
-        msg.on("attributes", attrs => {
+        msg.on("attributes", (attrs) => {
           uid = attrs.uid;
         });
 
@@ -117,18 +119,26 @@ function handleNewEmails(imap) {
                   if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir);
                   const filePath = path.join(downloadsDir, att.filename);
                   fs.writeFileSync(filePath, att.content);
+                  // inside your PDF parsing block
                   try {
-                    const pdfData = await pdf(att.content);
-                    const issuer = parsed.from?.value?.[0]?.address;
-                    //const extracted = extractPrice(pdfData.text);
-                    const extracted = await analyze(pdfData.text)
+                    // const logoText = await extractLogoIssuer(att.content);
+                    // console.log("🖼️ OCR extracted logo text:", logoText);
+
+                    // // Optionally include this in GPT prompt
+                   const pdfData = await pdf(att.content);
+                    // const contextHint = logoText
+                    // //  ? `The logo shows: "${logoText}"\n\n`
+                    //   : "";
+
+                    //const extracted = await analyze(contextHint + pdfData.text);
+                    const extracted = await analyze(pdfData.text);
+
                     console.log("extract rrr", extracted);
-                    
 
                     if (extracted) {
                       //const { amount, btw, includesBTW } = extracted;
                       //results.push({ issuer, amount, btw, includesBTW });
-                      results = {...extracted}
+                      results = { ...extracted };
                       hasProcessed = true;
                     }
                   } catch (err) {
@@ -140,7 +150,8 @@ function handleNewEmails(imap) {
               // If processed, manually mark the email as read
               if (hasProcessed && uid) {
                 imap.addFlags(uid, "\\Seen", (err) => {
-                  if (err) console.warn("⚠️ Could not mark email as read:", err);
+                  if (err)
+                    console.warn("⚠️ Could not mark email as read:", err);
                 });
                 resolve(results.length === 1 ? results[0] : results); // support single or multiple invoices
               } else {
@@ -165,7 +176,6 @@ function handleNewEmails(imap) {
     });
   });
 }
-
 
 // --------- Start Listening Loop ---------
 function startListening(postToDb) {
@@ -198,7 +208,6 @@ function startListening(postToDb) {
   });
   imap.connect();
 }
-
 
 //startListening()
 export default startListening;
