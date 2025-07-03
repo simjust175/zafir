@@ -66,3 +66,19 @@ onMounted(async () => {
   }, 8000);
 });
 </script>
+
+<style>
+.zafir-text-primary{
+  color: #18578c;
+}
+.zafir-text-secondary{
+  color: #3788bf;
+}
+.zafir-primary{
+  background-color: #18578c;
+}
+.zafir-secondary{
+  background-color: #3788bf;
+}
+
+</style>

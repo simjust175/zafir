@@ -40,20 +40,21 @@
         @click="router.push('/users')"
       />
       <v-list-item
-        prepend-icon="mdi-percent"
-        :title="titles.percent[lang]"
-        value="percentage"
+        prepend-icon="mdi-file-upload-outline"
+        title="Upload"
+        @click="acivateUploadDialog = !acivateUploadDialog"
       />
       <v-list-item
-        prepend-icon="mdi-currency-usd"
-        :title="titles.currency[lang]"
-        value="currency"
+        prepend-icon="mdi-invoice-plus-outline"
+        title="Create invoice"
+        @click="invoiceFormRef?.open()"
       />
-      <currency-drop-down :select-stat="false" />
+     
       <v-list-item
-        prepend-icon="mdi-map-marker"
-        :title="titles.location[lang]"
-        value="currency"
+        prepend-icon="mdi-robot-outline"
+        title="AI chat"
+        value="chat"
+        @click="showChatBot = true"
       />
       <v-list-item
         prepend-icon="mdi-receipt-text-outline"
@@ -75,19 +76,35 @@
     text="confirm_dialog"
     @confirm="logout"
   />
+  <file-upload
+    :active="acivateUploadDialog"
+    @close="acivateUploadDialog = false"
+  />
+  <v-dialog
+    v-model="showChatBot"
+    max-width="600px"
+    persistent
+  >
+    <ChatBot @close="showChatBot = false" />
+  </v-dialog>
+  <create-invoice ref="invoiceFormRef" />
   <!-- <v-main style="height: 250px"></v-main> -->
 </template>
 
 <script setup>
 import { ref, reactive, computed } from "vue";
 import { useRouter } from 'vue-router';
+
+
+const showChatBot = ref(false)
 const props = defineProps({ lang: String })
 const router = useRouter();
 
 // import { useLocale } from 'vuetify'
 // const { t } = useLocale()
+const invoiceFormRef = ref(null);
 const activateDialog = ref(false)
-
+const acivateUploadDialog = ref(false)
 const drawer = ref(true);
 const rail = ref(true);
 const chevronIcon = computed(() => `mdi-chevron-${props.lang === 'he' ? 'right' : 'left'}`);

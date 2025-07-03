@@ -1,13 +1,13 @@
 <template>
   <v-card
-    class="mx-auto text-center pa-8"
+    class="text-center pa-8"
     color="grey-lighten-6"
     dark
   >
     <div
       id="chart"
-      class="pa-2"
-      width="70%"
+      class="pa-1"
+      width="80%"
     >
       <div class="d-flex justify-space-between">
         <h5 class="text-start">
@@ -65,7 +65,7 @@ const chartOptions = reactive({
     breakpoint: 480,
     options: {
       chart: {
-        width: 200
+        width: 350
       },
       legend: {
         position: 'bottom'

@@ -75,7 +75,8 @@ const getAmounts = async () => {
   })
   const data = await res.json();
 
-  console.log("It/'s all /'bout the data:", data.amounts);
+  //console.log("It/'s all /'bout the data:", data.amounts);
+  console.log("sums", sumArray(data.amounts));
   
  amountArray.value = [...data.amounts]
   // monthly.value.sums = { income: sumArray(sumCalc(data.amounts, 'income')), masser: sumArray(sumCalc(data.amounts, 'charity')), expenses: sumArray(sumCalc(data.amounts, 'expense')) }
