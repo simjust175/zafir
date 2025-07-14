@@ -3,10 +3,16 @@
     :class="{ 'pt-0': !actionStat }"
     fluid
   >
+    <!-- <v-btn
+        :disabled="loading"
+        icon="mdi-refresh"
+        text="Refresh"
+        variant="outlined"
+        @click="initialize"
+      /> -->
     <v-card
-      class="pa-6"
-     
-      elevation="3"
+      class="pa-6 pt-0"
+      flat
     >
       <v-data-table
         :headers="headers"
@@ -29,21 +35,20 @@
             class="bg-grey-lighten-5"
             flat
           >
-            <v-toolbar-title>
-              <v-icon
+            <v-toolbar-title class="text-capitalize text-h6 text-grey-darken-4">
+              <!-- <v-icon
                 v-if="actionStat"
-                class="mb-4 mr-2"
-                icon="mdi-arrow-left-circle"
-                size="large"
+                class="mr-2"
+                icon="mdi-arrow-left"
+                size="25"
                 @click="$router.push('/')"
-              />
-              {{ actionStat ? 'Invoices' : 'All Invoices' }}
+              /> -->
+              {{ projectName }}
             </v-toolbar-title>
 
             <v-spacer />
 
             <v-text-field
-              v-if="actionStat"
               v-model="search"
               density="compact"
               class="pr-4 rounded-b-pill"
@@ -54,17 +59,18 @@
               single-line
             />
 
-            <v-icon
+            <!-- <v-icon
               v-if="!actionStat"
               icon="mdi-arrow-expand"
               class="mr-5"
               color="blue-darken-1"
               @click="$router.push('/table')"
-            />
+            /> -->
 
             <DialogComponent
               :dialog-prop="dialogProp"
               :edited-item="editedItem"
+              :original-item="{ ...editedItem }" 
               :form-title="formTitle"
               @close="close"
               @save="save"
@@ -86,6 +92,36 @@
           </v-toolbar>
         </template>
 
+        <!-- <template #body>
+          <transition-group
+            name="fade-slide"
+            tag="tbody"
+          >
+            <tr
+              v-for="group in groupedInvoices"
+              :key="group.issuer"
+              :class="{ 'flash-row': group.issuer === updatedIssuer }"
+              @click="openInvoiceDialog($event, { item: group })"
+            >
+              <td>{{ group.issuer }}</td>
+              <td>€{{ group.totalAmount.toFixed(2) }}</td>
+              <td>{{ group.totalMargin.toFixed(2) }}%</td>
+              <td>€{{ group.totalWithMargin.toFixed(2) }}</td>
+              <td>
+                <v-icon
+                  size="22"
+                  color="success"
+                  class="ml-3"
+                  @click.stop="sendInvoice(group)"
+                >
+                  mdi-send
+                </v-icon>
+              </td>
+            </tr>
+          </transition-group>
+        </template> -->
+
+
         <template #item.created_at="{ item }">
           {{ new Date(item.created_at).toLocaleDateString() }}
         </template>
@@ -96,7 +132,10 @@
           €{{ item.totalWithMargin.toFixed(2) }}
         </template>
         <template #item.totalMargin="{ item }">
-          {{ item.totalMargin.toFixed(2) }}%
+          <margin-setter
+            :item="item"
+            @margin-change="item.totalMargin = $event"
+          />
         </template>
 
         <template #item.actions="{ item }">
@@ -131,6 +170,9 @@
 
         <v-card-text> -->
     </v-card>
+    <v-banner class="bg-grey-lighten-5 text-capitalize">
+      Total for {{ projectName }}: {{groupedInvoices.map(inv=> inv.totalAmount)}}
+    </v-banner>
   </v-container>
 </template>
 
@@ -147,7 +189,8 @@ const props = defineProps({
   invoices: { type: Array, default: () => [] },
   language: String,
   actionStat: Boolean,
-  employee: Number,
+  projectName: String,
+  refreshing: Boolean
 });
 
 const invoiceArray = invoiceStore();
@@ -159,11 +202,11 @@ const actionStat = ref(props.actionStat);
 const heightPerWindow = computed(() => (actionStat.value ? '' : 405));
 
 const headers = computed(() => [
-  { title: 'Issuer', key: 'issuer' },
-  { title: 'Total', key: 'totalAmount' },
+  { title: 'Supplier', key: 'issuer' },
+  // { title: 'Total', key: 'totalAmount' },
   { title: 'Margin', key: 'totalMargin' },
   { title: 'Total + Margin', key: 'totalWithMargin' },
-  { title: '', key: 'actions', sortable: false },
+  // { title: '', key: 'actions', sortable: false },
 ]);
 
 const dbContents = ref([]);
@@ -191,7 +234,8 @@ const groupedInvoices = computed(() => {
       invoices,
       totalAmount,
       totalMargin,
-      totalWithMargin: totalAmount + totalMargin,
+      totalWithMargin: totalAmount + (totalAmount * (totalMargin/100)),
+      marginChanged: false
     };
   });
 });
@@ -226,11 +270,15 @@ const initialize = () => {
   }, 500);
 };
 
+
 watch(
   () => props.invoices,
   () => initialize(),
   { immediate: true }
 );
+
+watch(()=> props.refreshing, ()=> initialize())
+
 
 const editItem = (item) => {
   editedIndex.value = dbContents.value.indexOf(item);
@@ -279,6 +327,39 @@ const save = () => {
   }
   close();
 };
+
+//animation !!
+const updatedIssuer = ref(null);
+
+socket.on('new-invoice', (invoice) => {
+  updatedIssuer.value = invoice.issuer;
+  dbContents.value = [invoice, ...dbContents.value];
+  invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
+
+  setTimeout(() => {
+    updatedIssuer.value = null;
+  }, 1500); // Remove highlight after 1.5s
+});
+
+// ALL OUT PATCH 🪡 FUNCTION
+
+
 </script>
+
+
+<style scoped>
+/* .v-field__field{
+  height: 10px !important;
+  background: red !important;
+} */
+hr.v-divider{
+  background: red !important;
+}
+.v-input__details{
+  color: rgb(121, 121, 230) !important;
+  padding-inline: 0 !important;
+}
+</style>
+
 
 

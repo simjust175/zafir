@@ -7,10 +7,11 @@ import cors from "cors";
 import invoiceRoutes from "./Routers/invoiceRoutes.js";
 import RegisterRoutes from "./Login_system/Router/registerRoutes.js";
 import AmountServices from "./Services/amountService.js";
-import startListening from "./email-service/imap.js";
+//import startListening from "./email-service/imap.js";
+//import GeneralService from "../../Services/generalService.js";
+import startListeningForAll from "./email-service/imap/index.js";
 
 dotenv.config();
-console.log("listen", startListening);
 
 // ----------- Server Setup -----------
 const app = express();
@@ -35,7 +36,6 @@ const postInvoices = async (inv) => {
   try {
     console.log("📦 Posting invoice to DB:", inv);
     await AmountServices.postService(inv);
-    console.log("await");
     
     // 🔊 Push invoice to connected clients
     io.emit("new-invoice", inv);
@@ -45,7 +45,10 @@ const postInvoices = async (inv) => {
 };
 
 // ----------- Start IMAP Email Listener -----------
-startListening(async(inv)=> await postInvoices(inv));
+//startListening(async(inv)=> await postInvoices(inv));
+//startListeningForAll(async(inv)=> await postInvoices(inv))
+//startListeningForAll()
+
 
 // ----------- WebSocket Logging -----------
 io.on("connection", (socket) => {

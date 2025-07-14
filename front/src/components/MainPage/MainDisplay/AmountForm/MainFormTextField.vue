@@ -1,21 +1,59 @@
 <template>
-  <v-card class="bg-grey-lighten-3 px-6 pb-6 pt-10" height="525">
-    <div class="d-flex flex-column justify-space-around" :class="{ 'pt-12': inputMethod !== 'charity' }">
-      <v-form v-model="valid" ref="form">
+  <v-card
+    class="bg-grey-lighten-3 px-6 pb-6 pt-10"
+    height="525"
+  >
+    <div
+      class="d-flex flex-column justify-space-around"
+      :class="{ 'pt-12': inputMethod !== 'charity' }"
+    >
+      <v-form
+        ref="form"
+        v-model="valid"
+      >
         <div class="d-flex">
-          <v-text-field v-model="amount" :label="t('amount')" :rules="amountRules" class="grow-1"
-            required />
-          <currency-drop-down :selectStat="true" @currencyUpdate="updateCurrency" />
+          <v-text-field
+            v-model="amount"
+            :label="t('amount')"
+            :rules="amountRules"
+            class="grow-1"
+            required
+          />
+          <currency-drop-down
+            :select-stat="true"
+            @currency-update="updateCurrency"
+          />
         </div>
-        <v-text-field v-model="source" :label="t('source')" v-if="inputMethod === 'charity'" />
-        <v-text-field v-model="description" :label="t('description')" />
-        <rating-card v-if="inputMethod === 'charity'" @ratingUpdate="updateRating" />
-        <drop-down v-if="inputMethod === 'charity'" :menuItems="charityMethods" :language="currentLanguage"
-          @methodSelect="processSelection" :beforeUpdate="false" />
+        <v-text-field
+          v-if="inputMethod === 'charity'"
+          v-model="source"
+          :label="t('source')"
+        />
+        <v-text-field
+          v-model="description"
+          :label="t('description')"
+        />
+        <rating-card
+          v-if="inputMethod === 'charity'"
+          @rating-update="updateRating"
+        />
+        <drop-down
+          v-if="inputMethod === 'charity'"
+          :menu-items="charityMethods"
+          :language="currentLanguage"
+          :before-update="false"
+          @method-select="processSelection"
+        />
       </v-form>
     </div>
-    <template v-slot:actions>
-      <v-btn :loading="loading" class="flex-grow-1 bg-primary" height="48" variant="tonal" @click="submitForm">
+    <template #actions>
+      <v-btn
+        :loading="loading"
+        class="flex-grow-1 bg-primary"
+        height="48"
+        variant="tonal"
+        @click="submitForm"
+      >
         <span>{{ currentLanguage === 'he' ? `הוספת ${he[inputMethod]}` : `Add ${inputMethod}` }}</span>
       </v-btn>
     </template>
