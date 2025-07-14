@@ -1,30 +1,48 @@
 <template>
-  <v-app>
-    <v-main class="bg-grey-lighten-3">
-      <AppBar
-        :language="current"
-        :logged-in-stat="loggedIn"
-        @update-locale="changeLocale($event)"
-      />
-      <navigation-bar
+  <v-app
+    :theme="themeSetter"
+    class="d-flex flex-column justify-space-between"
+    :class="{'bg-grey-lighten-5' : currentTheme === 'light'}"
+  >
+    <v-main >
+      <!-- :class="{ 'bg-grey-lighten-3': currentTheme === 'light' }" -->
+      <AppBar :logged-in-stat="loggedIn" />
+
+      <!-- <navigation-bar
         v-if="loggedIn && isHomeRoute"
         :language="current"
-      />
-      <router-view />
-      
-      <footer class="bg-red">
-        <footer-component />
+      /> -->
+      <navigation-bar language="en" />
+
+      <!-- Animated overlay when loading -->
+      <overlay-component :overlay-trigger="loading" v-if="loading" />
+
+      <!-- Smooth fade transition between route views -->
+      <transition
+        v-else
+        name="fade"
+        mode="out-in"
+      >
+        <router-view />
+      </transition>
+
+
+
+      <!-- Footer with cleaner separation -->
+      <footer>
+        <footer-component class="bg-red" />
       </footer>
     </v-main>
   </v-app>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, reactive,  onMounted, computed } from "vue";
 // import { useLocale } from "vuetify";
 import FooterComponent from "@/components/Header-footer/FooterComponent.vue";
 import { useRouter } from 'vue-router';
-import { setLogin } from "@/stores/loginState"
+import { setLogin } from "@/stores/loginState";
+import { useTheme } from "vuetify";
 const loginState = setLogin()
 const router = useRouter();
 
@@ -49,12 +67,11 @@ async function validateToken() {
   return isTokenValid.Success ? true : false;
 }
 
-const loading = ref(true);
+const loading = ref(false);
 onMounted(async () => {
   const isValid = await validateToken();
   loginState.token = isValid //set the state in the Pinia store
   if (!isValid) {
-    console.log("is valid", isValid);
     router.push("/register")
   } else {
     loggedIn.value = true
@@ -63,8 +80,15 @@ onMounted(async () => {
   loading.value = true;
   setTimeout(() => {
     loading.value = false;
-  }, 8000);
+  }, 3000);
 });
+
+
+/// THEME 🌞/🌛
+const themeSetter = ref('light')
+const theme = useTheme()
+let currentTheme = reactive(theme.global.name.value)
+
 </script>
 
 <style>
@@ -79,6 +103,28 @@ onMounted(async () => {
 }
 .zafir-secondary{
   background-color: #3788bf;
+}
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.bounce {
+  animation: bounce 0.8s infinite alternate;
+}
+
+@keyframes bounce {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-8px); }
+}
+
+.overlay-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 </style>

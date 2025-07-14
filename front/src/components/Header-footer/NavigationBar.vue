@@ -1,25 +1,20 @@
 <template>
   <v-navigation-drawer
+    v-if="router.currentRoute.value.fullPath !== '/register'"
     v-model="drawer"
-    theme="light"
-    :rail="rail"
     :permanent="true"
+    class="pt-3"
+    :rail="isMobile || router.currentRoute.value.fullPath === '/table'"
+    :mobile="isMobile"
     :temporary="!rail"
   >
+    <!-- :location="drawerLocation" -->
     <!-- @click.stop="toggleRail" -->
-    <v-list-item
+    <!-- <v-list-item
       prepend-avatar="https://randomuser.me/api/portraits/men/85.jpg"
-      title="User name"
+      :title="display.smAndDown.value"
       nav
-    >
-      <template #append>
-        <v-btn
-          :icon="chevronIcon"
-          variant="text"
-          @click.stop="toggleRail"
-        />
-      </template>
-    </v-list-item>
+    /> -->
 
     <v-divider />
 
@@ -94,6 +89,15 @@
 <script setup>
 import { ref, reactive, computed } from "vue";
 import { useRouter } from 'vue-router';
+import { useDisplay } from 'vuetify';
+
+const display = useDisplay();
+
+// Detects mobile based on breakpoint
+const isMobile = computed(() => display.smAndDown.value);
+
+// Dynamically set drawer location
+const drawerLocation = computed(() => display.smAndDown.value ? 'bottom' : 'left');
 
 
 const showChatBot = ref(false)
@@ -107,7 +111,7 @@ const activateDialog = ref(false)
 const acivateUploadDialog = ref(false)
 const drawer = ref(true);
 const rail = ref(true);
-const chevronIcon = computed(() => `mdi-chevron-${props.lang === 'he' ? 'right' : 'left'}`);
+
 
 const toggleRail = () => {
   rail.value = !rail.value;

@@ -9,9 +9,10 @@
       >
         <v-icon
           class="mr-6 cursor-pointer"
+          size="25"
           @click="$router.push('/')"
         >
-          mdi-arrow-left-circle
+          mdi-arrow-left
         </v-icon>
         <v-icon>mdi-account-multiple</v-icon>
         User Management

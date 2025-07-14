@@ -21,7 +21,11 @@ import { createApp } from 'vue'
 import { createVuetify } from 'vuetify'
 
 
-const vuetify = createVuetify()
+const vuetify = createVuetify({
+    theme: {
+        defaultTheme: 'light', // 'light' | 'dark' | 'system'
+      },
+})
 
 const app = createApp(App)
 const pinia = createPinia()

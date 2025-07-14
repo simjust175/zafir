@@ -6,14 +6,13 @@ const openai = new OpenAI({
 });
 
 const cleanJSON = (text) => {
-  // Remove triple backticks and optional language hint (e.g. ```json)
   return text.replace(/```json|```/g, "").trim();
 };
 
 const issuerBlacklist = [
   "ZAFIR TOTAALPROJECTEN BVBA",
   "ZAFIR TOTAL PROJECTS",
-  "ZAFIR"
+  "ZAFIR",
 ];
 
 const isBlacklistedIssuer = (name) =>
@@ -22,47 +21,47 @@ const isBlacklistedIssuer = (name) =>
   );
 
 async function askGPT(text) {
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4-turbo",
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a helpful assistant. Always respond in valid JSON format without markdown code fences.",
-      },
-      {
-        role: "user",
-        content: `
-From the following text, extract the fields below. The issuer is the company that SENT the invoice — typically found near payment details, legal disclaimers, or VAT numbers. Do NOT use the recipient.
+  
+  const prompt = `
+Parse the following invoice text and extract:
 
-- issuer: the sending company’s name
-- amount: total price as a number
-- btw: true if the amount includes BTW, false otherwise
-- btwPercent: the percent of BTW as a number, or false if not found
+- issuer: the company that issued/sent the invoice (not the recipient)
+- amount: total to pay (number)
+- btw: true if the total includes BTW
+- btwPercent: number or false if not found
 
-Exclude known recipients like Zafir in any form.
-
-Return only valid JSON:
+Return only this JSON:
 {
-  "issuer": "CPE nv",
-  "amount": 45.05,
+  "issuer": "Company Name",
+  "amount": 123.45,
   "btw": true,
   "btwPercent": 21
 }
 
-Text:
+Invoice Text:
 ${text}
-`,
-      },
-    ],
-    temperature: 0.2,
-  });
-
-  let responseText = completion.choices[0].message.content.trim();
-  responseText = cleanJSON(responseText);
+  `;
 
   try {
-    const parsed = JSON.parse(responseText);
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert invoice reader. You always return a clean JSON object. The issuer is the company that sent the invoice, which is usually found at the top or near payment/bank/VAT details. Exclude any recipient names like ZAFIR. If unsure, output 'UNKNOWN ISSUER'. Do not include markdown or backticks.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.2,
+    });
+
+    let responseText = completion.choices[0].message.content.trim();
+    responseText = cleanJSON(responseText);
+    let parsed = JSON.parse(responseText);
 
     if (parsed.issuer && isBlacklistedIssuer(parsed.issuer)) {
       parsed.issuer = "UNKNOWN ISSUER";
@@ -79,13 +78,46 @@ ${text}
       throw new Error("JSON structure is invalid");
     }
   } catch (err) {
-    console.error("❌ Failed to parse GPT response as valid JSON:", responseText);
-    throw new Error("Could not parse GPT response");
+    console.warn("Initial GPT parsing failed. Attempting fallback retry.");
+
+    try {
+      const fallbackPrompt = `Please retry:
+Extract JSON in format:
+{
+  "issuer": "",
+  "amount": 0,
+  "btw": false,
+  "btwPercent": false
+}
+from:
+${text}`;
+
+      const retry = await openai.chat.completions.create({
+        model: "gpt-4-turbo",
+        messages: [
+          { role: "user", content: fallbackPrompt },
+        ],
+        temperature: 0.2,
+      });
+
+      let retryText = cleanJSON(retry.choices[0].message.content.trim());
+      const retryParsed = JSON.parse(retryText);
+
+      if (retryParsed.issuer && isBlacklistedIssuer(retryParsed.issuer)) {
+        retryParsed.issuer = "UNKNOWN ISSUER";
+      }
+
+      return retryParsed;
+    } catch (retryErr) {
+      console.error("❌ Retry also failed:", retryErr);
+      throw new Error("Both initial and retry GPT parsing failed.");
+    }
   }
 }
 
-
-const analyze = async (text) => {
+const analyze = async (text, senderEmail) => {
+  console.log("Email sent from -", senderEmail);
+  
   return await askGPT(text);
 };
 

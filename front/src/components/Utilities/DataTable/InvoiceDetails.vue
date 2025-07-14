@@ -6,19 +6,25 @@
     scrollable="y"
   >
     <v-card class="pa-0">
-      <v-toolbar
-        class="zafir-secondary"
-        dark
-        flat
-      >
-        <v-toolbar-title>Invoice Details for {{ invoiceArray[0].issuer }}</v-toolbar-title>
-        <v-spacer />
+      <v-toolbar class="pr-3">
+        <template #prepend>
+          <v-btn
+            icon="mdi-arrow-left"
+            @click="$emit('close')"
+          />
+        </template>
+        <v-toolbar-title class="text-h6 text-grey-darken-5">
+          {{ invoiceArray[0].issuer }}
+        </v-toolbar-title>
+
         <v-btn
-          icon
-          @click="$emit('close')"
-        >
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
+          class="ms-5"
+          icon="mdi-printer-outline"
+        />
+
+        <v-btn icon="mdi-download-outline" />
+
+        <v-btn icon="mdi-send-variant-outline" />
       </v-toolbar>
 
       <v-card-text>
@@ -30,8 +36,8 @@
           hide-default-footer
           style="max-width: 100%"
         >
-          <template #item.created_at="{ item }">
-            {{ new Date(item.created_at).toLocaleDateString() }}
+          <template #item.invoice_date="{ item }">
+            {{ new Date(item.invoice_date).toLocaleDateString() }}
           </template>
   
           <template #item.amount="{ item }">
@@ -39,7 +45,7 @@
           </template>
   
           <template #item.includesBtw="{ item }">
-            {{ item.includesBtw ? 'included' : 'excluded' }}
+            {{ item.btwPercent ? 'included' : 'excluded' }}
           </template>
   
           <template #item.btwPercent="{ item }">
@@ -86,11 +92,17 @@
           </template>
         </v-data-table>
       </v-card-text>
+      <v-card-actions class="d-flex justify-end align-center bg-grey-lighten-4 text-grey-darken-3 ma-2 mt-0 px-4 py-0 rounded-md text-subtitle-1">
+        <div class="d-flex pr-2 ga-2">
+          <strong>Total: </strong> €{{ totalWithMargin() }}
+        </div>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
   
   
+<!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 const props = defineProps({
@@ -102,19 +114,22 @@ const props = defineProps({
   
 const invoiceArray = ref([])
 watch(()=> props.invoices, (updated)=> invoiceArray.value = updated)
-//watch(()=> props.invoices, (updated)=> invoiceArray.value = updated)
-onMounted(()=> console.log("woadkjfhuvhdbvz", invoiceArray.value, "props>>>>>", props.invoices))
+
+onMounted(()=> console.log("props>>>>>", props.invoices))
 defineEmits(['edit', 'delete', 'close']);
   
   const headers = [
-    { title: 'Date', key: 'created_at' },
+    { title: 'Date', key: 'invoice_date' },
     { title: 'Amount', key: 'amount' },
     { title: 'Btw', key: 'includesBtw' },
     { title: '(%)', key: 'btwPercent' },
-    { title: 'Margin', key: 'margin' },
     { title: '', key: 'actions', sortable: false }
   ];
   
+  const totalWithMargin = ()=> {
+    const {amount, margin} = invoiceArray.value[0];
+    return (amount + ( amount* margin/100)).toFixed(2)
+  }
   const dialog = computed(()=> props.active)
   </script>
   

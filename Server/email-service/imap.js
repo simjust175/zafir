@@ -6,7 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import analyze from "./gpt.js";
-import { extractLogoIssuer } from "./ocrLogoScan.js";
+import emailAccounts from "./imap/accounts.js";
 
 dotenv.config();
 
@@ -76,14 +76,14 @@ function extractPrice(text) {
 }
 
 // --------- IMAP Configuration ---------
-const imapConfig = {
-  user: process.env.EMAIL_USER,
-  password: process.env.EMAIL_PASS,
-  host: process.env.EMAIL_HOST,
-  port: parseInt(process.env.EMAIL_PORT),
-  tls: true,
-  tlsOptions: { rejectUnauthorized: false },
-};
+// const imapConfig = {
+//   user: process.env.EMAIL_USER,
+//   password: process.env.EMAIL_PASS,
+//   host: process.env.EMAIL_HOST,
+//   port: parseInt(process.env.EMAIL_PORT),
+//   tls: true,
+//   tlsOptions: { rejectUnauthorized: false },
+// };
 
 // --------- Core Email Handling ---------
 function openInbox(imap, cb) {
@@ -129,11 +129,10 @@ function handleNewEmails(imap) {
                     // const contextHint = logoText
                     // //  ? `The logo shows: "${logoText}"\n\n`
                     //   : "";
-
+                    const senderEmail = parsed.from?.value?.[0]?.address;
+                    
                     //const extracted = await analyze(contextHint + pdfData.text);
-                    const extracted = await analyze(pdfData.text);
-
-                    console.log("extract rrr", extracted);
+                    const extracted = await analyze(pdfData.text, senderEmail);
 
                     if (extracted) {
                       //const { amount, btw, includesBTW } = extracted;
@@ -210,4 +209,5 @@ function startListening(postToDb) {
 }
 
 //startListening()
-export default startListening;
+//export default startListening;
+export {openInbox, handleNewEmails}

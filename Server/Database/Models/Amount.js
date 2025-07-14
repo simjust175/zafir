@@ -25,10 +25,16 @@ class Amount {
     return user_id;
   }
 
-  static async GetAmounts() { //user_id
-    const SELECT_amounts = `SELECT * FROM invoices WHERE ${isNotDeleted}`; //user = ? AND
-    const [amountSelected, _] = await db.query(SELECT_amounts); //, [user_id]
+  static async GetAmounts() {
+    const SELECT_amounts = `SELECT *, projects.created_at AS invoice_date FROM invoices INNER JOIN projects ON invoices.project = projects.project_id WHERE invoices.deleted_at IS NULL AND projects.deleted_at IS NULL;`; //user = ? AND
+    const [amountSelected] = await db.query(SELECT_amounts); //, [user_id]
     return amountSelected;
+  }
+
+  static async getProjectId(email) {
+    const Select_projectId = `Select project_id FROM projects WHERE email = ? AND ${isNotDeleted}`;
+    const [projectId] = await db.query(Select_projectId, [email]);
+    return projectId;
   }
 }
 

@@ -24,7 +24,7 @@
           </div>
           <div class="widget-content-left fsize-1">
             <div class="text-muted opacity-6">
-              Income Target
+              Amount invoiced
             </div>
           </div>
         </div>
@@ -56,7 +56,7 @@
           </div>
           <div class="widget-content-left fsize-1">
             <div class="text-muted opacity-6">
-              Expenses Target
+              Invoiced paid
             </div>
           </div>
         </div>
@@ -88,7 +88,7 @@
           </div>
           <div class="widget-content-left fsize-1">
             <div class="text-muted opacity-6">
-              Spendings Target
+              Total paid
             </div>
           </div>
         </div>
