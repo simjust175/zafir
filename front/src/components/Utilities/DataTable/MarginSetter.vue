@@ -20,7 +20,7 @@
     <v-btn
       icon="mdi-check"
       :loading="loading"
-      class="ma-0 position-absolute right-0"
+      class="ma-0 position-absolute right-0 bottom-1 mt-2"
       size="small"
       density="comfortable"
       color="primary"

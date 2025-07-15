@@ -92,6 +92,11 @@ let currentTheme = reactive(theme.global.name.value)
 </script>
 
 <style>
+#app{
+  background-color: var(--v-theme-background);
+  color: var(--v-theme-on-background);
+}
+
 .zafir-text-primary{
   color: #18578c;
 }

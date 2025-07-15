@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import analyze from "./gpt.js";
 import emailAccounts from "./imap/accounts.js";
+import { v4 as uuidv4 } from "uuid"; 
 
 dotenv.config();
 
@@ -117,27 +118,18 @@ function handleNewEmails(imap) {
                 if (att.contentType === "application/pdf") {
                   const downloadsDir = path.join(__dirname, "downloads");
                   if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir);
-                  const filePath = path.join(downloadsDir, att.filename);
+                
+                  const uniqueName = `${uuidv4()}_${att.filename}`;
+                  const filePath = path.join(downloadsDir, uniqueName);
                   fs.writeFileSync(filePath, att.content);
-                  // inside your PDF parsing block
+                
                   try {
-                    // const logoText = await extractLogoIssuer(att.content);
-                    // console.log("🖼️ OCR extracted logo text:", logoText);
-
-                    // // Optionally include this in GPT prompt
-                   const pdfData = await pdf(att.content);
-                    // const contextHint = logoText
-                    // //  ? `The logo shows: "${logoText}"\n\n`
-                    //   : "";
+                    const pdfData = await pdf(att.content);
                     const senderEmail = parsed.from?.value?.[0]?.address;
-                    
-                    //const extracted = await analyze(contextHint + pdfData.text);
                     const extracted = await analyze(pdfData.text, senderEmail);
-
+                
                     if (extracted) {
-                      //const { amount, btw, includesBTW } = extracted;
-                      //results.push({ issuer, amount, btw, includesBTW });
-                      results = { ...extracted };
+                      results = { ...extracted, pdf_file: uniqueName}; // for now ❌ , pdf_data: pdfData
                       hasProcessed = true;
                     }
                   } catch (err) {
@@ -176,38 +168,38 @@ function handleNewEmails(imap) {
   });
 }
 
-// --------- Start Listening Loop ---------
-function startListening(postToDb) {
-  const imap = new Imap(imapConfig);
-  imap.once("ready", async () => {
-    openInbox(imap, async (err) => {
-      if (err) throw err;
-      console.log("👀 IMAP ready, watching for new emails...");
+// // --------- Start Listening Loop ---------
+// function startListening(postToDb) {
+//   const imap = new Imap(imapConfig);
+//   imap.once("ready", async () => {
+//     openInbox(imap, async (err) => {
+//       if (err) throw err;
+//       console.log("👀 IMAP ready, watching for new emails...");
 
-      imap.on("mail", async () => {
-        console.log("📨 New mail event detected");
-        const handleResults = await handleNewEmails(imap);
-        if (handleResults) postToDb(handleResults);
-      });
+//       imap.on("mail", async () => {
+//         console.log("📨 New mail event detected");
+//         const handleResults = await handleNewEmails(imap);
+//         if (handleResults) postToDb(handleResults);
+//       });
 
-      // Also check unseen emails on startup
-      const handleResults = await handleNewEmails(imap);
-      if (handleResults) postToDb(handleResults);
-    });
-  });
+//       // Also check unseen emails on startup
+//       const handleResults = await handleNewEmails(imap);
+//       if (handleResults) postToDb(handleResults);
+//     });
+//   });
 
-  imap.once("error", (err) => {
-    console.error("❌ IMAP error:", err);
-    setTimeout(() => startListening(postToDb), 5000);
-  });
+//   imap.once("error", (err) => {
+//     console.error("❌ IMAP error:", err);
+//     setTimeout(() => startListening(postToDb), 5000);
+//   });
 
-  imap.once("end", () => {
-    console.warn("⚠️ IMAP connection ended, restarting...");
-    setTimeout(() => startListening(postToDb), 5000);
-  });
-  imap.connect();
-}
+//   imap.once("end", () => {
+//     console.warn("⚠️ IMAP connection ended, restarting...");
+//     setTimeout(() => startListening(postToDb), 5000);
+//   });
+//   imap.connect();
+// }
 
-//startListening()
-//export default startListening;
+// //startListening()
+// //export default startListening;
 export {openInbox, handleNewEmails}

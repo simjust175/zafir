@@ -3,6 +3,8 @@ import http from "http";
 import { Server as SocketIOServer } from "socket.io";
 import dotenv from "dotenv";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from 'url';
 
 import invoiceRoutes from "./Routers/invoiceRoutes.js";
 import RegisterRoutes from "./Login_system/Router/registerRoutes.js";
@@ -15,6 +17,10 @@ dotenv.config();
 
 // ----------- Server Setup -----------
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const server = http.createServer(app);
 
 const io = new SocketIOServer(server, {
@@ -29,6 +35,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // ----------- Routes -----------
 app.use("/invoice", invoiceRoutes);
+app.use("/file/", express.static(path.join(__dirname, "email-service/downloads")));
 app.use("/register", RegisterRoutes);
 
 // ----------- Invoice Posting with Socket Emission -----------
@@ -46,7 +53,7 @@ const postInvoices = async (inv) => {
 
 // ----------- Start IMAP Email Listener -----------
 //startListening(async(inv)=> await postInvoices(inv));
-//startListeningForAll(async(inv)=> await postInvoices(inv))
+startListeningForAll(async(inv)=> await postInvoices(inv))
 //startListeningForAll()
 
 
