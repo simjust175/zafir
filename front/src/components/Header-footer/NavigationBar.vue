@@ -24,7 +24,7 @@
     >
       <v-list-item
         prepend-icon="mdi-table-eye"
-        :title="titles.table[lang]"
+        title="Chart"
         value="table"
         @click="openExpandedTable"
       />
@@ -53,14 +53,14 @@
       />
       <v-list-item
         prepend-icon="mdi-receipt-text-outline"
-        :title="titles.receipts[lang]"
+        title="Receipts"
         value="receipt"
       />
     </v-list>
     <template #append>
       <v-list-item
         prepend-icon="mdi-export"
-        :title="titles.logout[lang]"
+        title="Logout"
         value="logout"
       />
     </template>
@@ -87,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from 'vue-router';
 import { useDisplay } from 'vuetify';
 
@@ -101,7 +101,6 @@ const drawerLocation = computed(() => display.smAndDown.value ? 'bottom' : 'left
 
 
 const showChatBot = ref(false)
-const props = defineProps({ lang: String })
 const router = useRouter();
 
 // import { useLocale } from 'vuetify'
@@ -117,44 +116,10 @@ const toggleRail = () => {
   rail.value = !rail.value;
 };
 
-const titles = reactive({
-  table: {
-    he: "פרטים",
-    en: "Table"
-  },
-  charts: {
-    he: "הטבלאות שלי",
-    en: "My tables"
-  },
-  currency: {
-    he: "מטבע",
-    en: "Currency"
-  },
-  percent: {
-    he: "אחוזים",
-    en: "Percentage"
-  },
-  location: {
-    he: "מיקום",
-    en: "Location"
-  },
-  receipts: {
-    he: "קבלות",
-    en: "Receipts"
-  },
-  logout: {
-    he: "התנתקות",
-    en: "logout"
-  },
-
-})
-
 const openExpandedTable = () => {
   router.push('/table');
   rail.value = false;
 };
-
-const currencyDropDownStat = ref(false);
 </script>
 
 <style>

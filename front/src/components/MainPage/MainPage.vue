@@ -39,11 +39,11 @@ const getAmounts = async () => {
     body: JSON.stringify({ token: tokenFromLocalStorage }),
   });
   const data = await res.json();
-  console.log("daya dya yd data", data);
-  
+  console.log("daya dya yd data", data.amounts[54]);
   amountArray.value = [...data.amounts];
   invoiceArray.dbResponse = data.amounts;
 };
+
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> }(o){ <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<  \\
 
