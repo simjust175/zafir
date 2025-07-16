@@ -32,8 +32,8 @@
       <v-col
         cols="12"
         md="3"
-        class="pt-4 bg-grey-lighten-4"
-        :class="{'d-flex flex-column': $vuetify.display.mdAndUp}"
+        class="pt-4"
+        :class="[themeColor,{'d-flex flex-column': $vuetify.display.mdAndUp}]"
         style="max-height: 100%;"
       >
         <div class="d-flex flex-column flex-grow-1 overflow-y-auto">
@@ -62,6 +62,7 @@
             <v-tab
               value="add"
               class="text-left font-weight-bold text-primary mb-2"
+              :class="{'pl-8' : !actionStat}"
               prepend-icon="mdi-domain-plus"
             >
               Add Project
@@ -115,7 +116,9 @@
   
   <script setup>
   import { ref, computed } from "vue";
-  
+  import { useTheme } from "vuetify"
+  const theme = useTheme();
+  const themeColor = computed(()=> `bg-grey-${theme.global.name.value}en-4`);
   const props = defineProps({
     invoiceArray: {
       type: Array,

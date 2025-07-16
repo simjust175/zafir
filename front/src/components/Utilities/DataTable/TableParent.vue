@@ -11,7 +11,7 @@
         @click="initialize"
       /> -->
     <v-card
-      class="pa-6 pt-0"
+      class="pa-6 pt-2"
       flat
     >
       <v-data-table
@@ -31,10 +31,10 @@
         </template>
         <template #top>
           <v-toolbar
-            class="bg-grey-lighten-5"
+            :class="themeColor"
             flat
           >
-            <v-toolbar-title class="text-capitalize text-h6 text-grey-darken-4">
+            <v-toolbar-title class="text-capitalize text-h6 mx-8">
               {{ projectName }}
             </v-toolbar-title>
             <v-spacer />
@@ -69,7 +69,7 @@
               inset
               vertical
             />
-           <table-parent-toolbar-menu />
+            <table-parent-toolbar-menu />
           </v-toolbar>
         </template>
 
@@ -151,7 +151,10 @@
 
         <v-card-text> -->
     </v-card>
-    <v-banner class="bg-grey-lighten-5 text-capitalize text-subtitle-1 d-flex justify-end px-7">
+    <v-banner
+      class="text-capitalize text-subtitle-1 d-flex justify-end px-7"
+      :class="themeColor"
+    >
       <strong class="mx-4">Total for {{ projectName }}:</strong> €{{ overallTotalWithMargin }}
     </v-banner>
     <InvoiceDetails
@@ -285,6 +288,14 @@ const overallTotalWithMargin = computed(() => {
     return sum + group.totalWithMargin;
   }, 0).toFixed(2);
 });
+
+//THEME 
+import { useTheme } from "vuetify"
+  const theme = useTheme();
+  const themeColor = computed(() =>
+  theme.global.name.value === 'dark' ? 'bg-grey-darken-3' : 'bg-grey-lighten-4'
+);
+
 // 🩻 animation
 const skeletonRows = computed(() => {
   const count = props.invoices?.length || 10;
