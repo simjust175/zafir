@@ -27,26 +27,18 @@
         @click:row="openInvoiceDialog"
       >
         <template #loading>
-          <v-skeleton-loader type="table-row@10" />
+          <v-skeleton-loader :type="`table-row@${skeletonRows}`" />
         </template>
-
         <template #top>
           <v-toolbar
             class="bg-grey-lighten-5"
             flat
           >
             <v-toolbar-title class="text-capitalize text-h6 text-grey-darken-4">
-              <!-- <v-icon
-                v-if="actionStat"
-                class="mr-2"
-                icon="mdi-arrow-left"
-                size="25"
-                @click="$router.push('/')"
-              /> -->
               {{ projectName }}
             </v-toolbar-title>
-
             <v-spacer />
+
 
             <v-text-field
               v-model="search"
@@ -59,36 +51,25 @@
               single-line
             />
 
-            <!-- <v-icon
-              v-if="!actionStat"
-              icon="mdi-arrow-expand"
-              class="mr-5"
-              color="blue-darken-1"
-              @click="$router.push('/table')"
-            /> -->
-
-            <DialogComponent
-              :dialog-prop="dialogProp"
-              :edited-item="editedItem"
-              :original-item="{ ...editedItem }" 
-              :form-title="formTitle"
-              @close="close"
-              @save="save"
+            <v-btn
+              class="ms-5"
+              icon="mdi-printer-outline"
+              @click="printPdf"
             />
-
-            <DeleteDialogComponent
-              :dialog-delete="dialogDelete"
-              @close-delete="closeDelete"
-              @delete-item-confirm="deleteItemConfirm"
+            <v-btn
+              icon="mdi-download-outline"
+              @click="downloadPdf"
             />
-            <InvoiceDetails
-              :invoices="selectedInvoices"
-              :active="activateInvoiceDetailDialog"
-              :sending-id="sendingId"
-              @close="activateInvoiceDetailDialog = false"
-              @edit="editItem"
-              @delete="deleteItem"
+            <v-btn
+              icon="mdi-send-variant-outline"
+              @click="sendPdfByEmail"
             />
+            <v-divider
+              class="mx-2"
+              inset
+              vertical
+            />
+           <table-parent-toolbar-menu />
           </v-toolbar>
         </template>
 
@@ -170,16 +151,22 @@
 
         <v-card-text> -->
     </v-card>
-    <v-banner class="bg-grey-lighten-5 text-capitalize">
-      Total for {{ projectName }}: {{groupedInvoices.map(inv=> inv.totalAmount)}}
+    <v-banner class="bg-grey-lighten-5 text-capitalize text-subtitle-1 d-flex justify-end px-7">
+      <strong class="mx-4">Total for {{ projectName }}:</strong> €{{ overallTotalWithMargin }}
     </v-banner>
+    <InvoiceDetails
+      :invoices="selectedInvoices"
+      :active="activateInvoiceDetailDialog"
+      :sending-id="sendingId"
+      @close="activateInvoiceDetailDialog = false"
+      @edit="editItem"
+      @delete="deleteItem"
+    />
   </v-container>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick, defineProps, defineEmits } from 'vue';
-import DialogComponent from './DialogComponent.vue';
-import DeleteDialogComponent from './DeleteDialogComponent.vue';
+import { ref, computed, watch, onMounted, defineProps, defineEmits } from 'vue';
 import EmptyState from '../EmptyState.vue';
 import { invoices as invoiceStore } from '@/stores/invoiceState';
 import socket from '@/socket.js';
@@ -195,8 +182,6 @@ const props = defineProps({
 
 const invoiceArray = invoiceStore();
 const search = ref('');
-const dialogProp = ref(false);
-const dialogDelete = ref(false);
 const activateInvoiceDetailDialog = ref(false)
 const actionStat = ref(props.actionStat);
 const heightPerWindow = computed(() => (actionStat.value ? '' : 405));
@@ -211,10 +196,6 @@ const headers = computed(() => [
 
 const dbContents = ref([]);
 const loading = ref(true);
-const editedIndex = ref(-1);
-const editedItem = ref({});
-const defaultItem = { issuer: '', amount: 0, created_at: '', includesBtw: false, btwPercent: null, margin: 0 };
-const formTitle = computed(() => (editedIndex.value === -1 ? 'New Item' : 'Edit Item'));
 const sendingId = ref(null);
 
 const groupedInvoices = computed(() => {
@@ -280,52 +261,10 @@ watch(
 watch(()=> props.refreshing, ()=> initialize())
 
 
-const editItem = (item) => {
-  editedIndex.value = dbContents.value.indexOf(item);
-  editedItem.value = { ...item };
-  dialogProp.value = true;
-};
-
-const deleteItem = (item) => {
-  editedIndex.value = dbContents.value.indexOf(item);
-  editedItem.value = { ...item };
-  dialogDelete.value = true;
-};
-
 const sendInvoice = async (item) => {
   sendingId.value = item.id;
   await new Promise((resolve) => setTimeout(resolve, 1000));
   sendingId.value = null;
-};
-
-const deleteItemConfirm = () => {
-  dbContents.value.splice(editedIndex.value, 1);
-  closeDelete();
-};
-
-const close = () => {
-  dialogProp.value = false;
-  nextTick(() => {
-    editedItem.value = { ...defaultItem };
-    editedIndex.value = -1;
-  });
-};
-
-const closeDelete = () => {
-  dialogDelete.value = false;
-  nextTick(() => {
-    editedItem.value = { ...defaultItem };
-    editedIndex.value = -1;
-  });
-};
-
-const save = () => {
-  if (editedIndex.value > -1) {
-    Object.assign(dbContents.value[editedIndex.value], editedItem.value);
-  } else {
-    dbContents.value.push({ ...editedItem.value });
-  }
-  close();
 };
 
 //animation !!
@@ -340,8 +279,17 @@ socket.on('new-invoice', (invoice) => {
     updatedIssuer.value = null;
   }, 1500); // Remove highlight after 1.5s
 });
-
-// ALL OUT PATCH 🪡 FUNCTION
+//Grand total per project 
+const overallTotalWithMargin = computed(() => {
+  return groupedInvoices.value.reduce((sum, group) => {
+    return sum + group.totalWithMargin;
+  }, 0).toFixed(2);
+});
+// 🩻 animation
+const skeletonRows = computed(() => {
+  const count = props.invoices?.length || 10;
+  return Math.min(Math.max(count, 3), 20); // Load between 3 and 20 skeletons
+});
 
 
 </script>

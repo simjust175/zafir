@@ -1,6 +1,6 @@
 <template>
   <div
-    class="d-flex align-baseline position-relative"
+    class="d-flex align-center position-relative"
     style="gap: 8px;"
   >
     <v-number-input
@@ -17,16 +17,28 @@
       @update:model-value="onMarginChange"
       @click.stop
     />
-    <v-btn
-      icon="mdi-check"
-      :loading="loading"
-      class="ma-0 position-absolute right-0 bottom-1 mt-2"
-      size="small"
-      density="comfortable"
-      color="primary"
+    <div
+      class="d-flex flex-column ga-2 gl-0 ml-0 pl-0"
       :style="{ visibility: marginChangedMap[item.issuer] ? 'visible' : 'hidden' }"
-      @click.stop="saveMargin(item)"
-    />
+    >
+      <v-btn
+        :loading="loading"
+       
+        size="small"
+        text="Save"
+        density="comfortable"
+        color="success"
+        @click.stop="saveMargin(item)"
+      />
+      <v-btn
+        :loading="loading"
+        size="small"
+        text="Cancel"
+        density="comfortable"
+        color="error"
+        @click.stop="cancelMargin(item)"
+      />
+    </div>
   </div>
 </template>
   
@@ -78,6 +90,11 @@ const inputRules = [
     marginChangedMap.value[item.issuer] = false;
     emit('marginChange', localMargin.value)
   };
+
+  function cancelMargin(item) {
+  localMargin.value = item.totalMargin
+  marginChangedMap.value[item.issuer] = false
+}
 
 
   </script>

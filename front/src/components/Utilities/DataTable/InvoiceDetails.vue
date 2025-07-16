@@ -1,19 +1,36 @@
 <template>
   <v-main>
-    <v-dialog v-model="dialog" max-width="75%" max-height="75%" scrollable="y">
+    <v-dialog
+      v-model="dialog"
+      max-width="70%"
+      max-height="95%"
+      scrollable="y"
+    >
       <v-card class="pa-0">
         <v-toolbar class="pr-3">
           <template #prepend>
-            <v-btn icon="mdi-arrow-left" @click="$emit('close')" />
+            <v-btn
+              icon="mdi-arrow-left"
+              @click="$emit('close')"
+            />
           </template>
-
           <v-toolbar-title class="text-h6 text-grey-darken-5">
             {{ invoiceArray[0]?.issuer || 'Invoice Details' }}
           </v-toolbar-title>
 
-          <v-btn class="ms-5" icon="mdi-printer-outline" @click="printPdf" />
-          <v-btn icon="mdi-download-outline" @click="downloadPdf" />
-          <v-btn icon="mdi-send-variant-outline" @click="sendPdfByEmail" />
+          <v-btn
+            class="ms-5"
+            icon="mdi-printer-outline"
+            @click="printPdf"
+          />
+          <v-btn
+            icon="mdi-download-outline"
+            @click="downloadPdf"
+          />
+          <v-btn
+            icon="mdi-send-variant-outline"
+            @click="sendPdfByEmail"
+          />
         </v-toolbar>
 
         <v-card-text>
@@ -24,6 +41,7 @@
             density="comfortable"
             hide-default-footer
             style="max-width: 100%"
+            :item-class="(item) => item.id === updatedId ? 'row-highlight' : ''"
           >
             <template #item.invoice_date="{ item }">
               {{ new Date(item.invoice_date).toLocaleDateString() }}
@@ -82,7 +100,9 @@
           </v-data-table>
         </v-card-text>
 
-        <v-card-actions class="d-flex justify-end align-center bg-grey-lighten-4 text-grey-darken-3 ma-2 mt-0 px-4 py-0 rounded-md text-subtitle-1">
+        <v-card-actions
+          class="d-flex justify-end align-center bg-grey-lighten-4 text-grey-darken-3 ma-2 mt-0 px-4 py-0 rounded-md text-subtitle-1"
+        >
           <div class="d-flex pr-2 ga-2">
             <strong>Total: </strong> €{{ totalWithMargin() }}
           </div>
@@ -91,25 +111,13 @@
     </v-dialog>
 
     <!-- PDF Viewer Dialog -->
-    <v-dialog v-model="pdfDialog" max-width="90%">
-      <v-card>
-        <v-toolbar>
-          <v-toolbar-title>PDF Preview</v-toolbar-title>
-          <v-spacer />
-          <v-btn icon="mdi-close" @click="pdfDialog = false" />
-        </v-toolbar>
-
-        <v-card-text>
-          <iframe
-            v-if="selectedUrl"
-            :src="selectedUrl"
-            width="100%"
-            height="600px"
-            type="application/pdf"
-          />
-        </v-card-text>
-      </v-card>
-    </v-dialog>
+    <pdf-viewer 
+      :dialog="pdfDialog"
+      :url="selectedUrl"
+      @close="pdfDialog = false"
+    />
+   
+   
 
     <dialog-component
       :dialog-prop="triggerDialog"
@@ -129,7 +137,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 
 const props = defineProps({
   active: Boolean,
@@ -164,12 +172,19 @@ const totalWithMargin = () => {
   return total.toFixed(2);
 };
 
+const updatedId = ref(null); // 🟡 Highlight tracker
+
 // ========== PDF Preview ==========
 const pdfDialog = ref(false);
 const selectedUrl = ref('');
 
+// const previewPdf = (fileName) => {
+//   selectedUrl.value = `${import.meta.env.VITE_BASE_URL}/file/${fileName}?t=${Date.now()}`;
+//   pdfDialog.value = true;
+// };
+
 const previewPdf = (fileName) => {
-  selectedUrl.value = `${import.meta.env.VITE_BASE_URL}/file/${fileName}?t=${Date.now()}`;
+  selectedUrl.value = fileName;
   pdfDialog.value = true;
 };
 
@@ -261,7 +276,7 @@ const save = () => {
 
 const patchChanges = async (changes) => {
   console.log("changes", changes);
-  
+
   try {
     const response = await fetch(
       `${import.meta.env.VITE_BASE_URL}/invoice/patch/invoices?id=${changes.id}`,
@@ -273,14 +288,28 @@ const patchChanges = async (changes) => {
     );
 
     if (!response.ok) throw new Error('Failed to patch invoice');
-
     const data = await response.json();
-    save();
+
+    // 🔄 Instantly update UI
+    if (editedIndex.value > -1) {
+      Object.assign(invoiceArray.value[editedIndex.value], {
+        ...invoiceArray.value[editedIndex.value],
+        ...changes.body
+      });
+      updatedId.value = changes.id; // 🚨 Trigger highlight
+      setTimeout(() => {
+        updatedId.value = null;
+      }, 2000); // Reset after 2s
+    }
+
+    close();
     console.log('✅ Successfully patched:', data);
   } catch (error) {
     console.error('❌ Patch error:', error.message);
   }
 };
-
-onMounted(() => console.log("props>>>>>", props.invoices));
 </script>
+
+<style scoped>
+
+</style>

@@ -1,6 +1,5 @@
 <template>
-  <main class="pa-2" height="92%">
-    <!-- <table-parent :amountArray="amountArray" :actionStat="true" @tableUpdate="fetchFromSessionStorage" class="overflow-y-auto"/> -->
+  <main>
     <main-display-tabs
       :invoice-array="amountArray"
       :action-stat="true"

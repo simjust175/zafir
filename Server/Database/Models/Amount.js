@@ -26,7 +26,7 @@ class Amount {
   }
 
   static async GetAmounts() {
-    const SELECT_amounts = `SELECT *, projects.created_at AS invoice_date FROM invoices INNER JOIN projects ON invoices.project = projects.project_id WHERE invoices.deleted_at IS NULL AND projects.deleted_at IS NULL;`; //user = ? AND
+    const SELECT_amounts = `SELECT *, invoices.created_at AS invoice_date FROM invoices INNER JOIN projects ON invoices.project = projects.project_id WHERE invoices.deleted_at IS NULL AND projects.deleted_at IS NULL;`; //user = ? AND
     const [amountSelected] = await db.query(SELECT_amounts); //, [user_id]
     return amountSelected;
   }
