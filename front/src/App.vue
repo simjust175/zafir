@@ -1,34 +1,23 @@
 <template>
   <v-app
-    :theme="themeSetter"
+    :theme="localTheme"
     class="d-flex flex-column justify-space-between"
-    :class="{'bg-grey-lighten-5' : currentTheme === 'light'}"
+    :class="themeColor"
   >
-    <v-main >
-      <!-- :class="{ 'bg-grey-lighten-3': currentTheme === 'light' }" -->
-      <AppBar :logged-in-stat="loggedIn" />
+    <v-main>
+      <AppBar
+        :logged-in-stat="loggedIn"
+        @theme-update="handleThemeChange"
+      />
 
-      <!-- <navigation-bar
-        v-if="loggedIn && isHomeRoute"
-        :language="current"
-      /> -->
       <navigation-bar language="en" />
 
-      <!-- Animated overlay when loading -->
       <overlay-component :overlay-trigger="loading" v-if="loading" />
 
-      <!-- Smooth fade transition between route views -->
-      <transition
-        v-else
-        name="fade"
-        mode="out-in"
-      >
+      <transition v-else name="fade" mode="out-in">
         <router-view />
       </transition>
 
-
-
-      <!-- Footer with cleaner separation -->
       <footer>
         <footer-component class="bg-red" />
       </footer>
@@ -37,58 +26,72 @@
 </template>
 
 <script setup>
-import { ref, reactive,  onMounted, computed } from "vue";
-// import { useLocale } from "vuetify";
-import FooterComponent from "@/components/Header-footer/FooterComponent.vue";
-import { useRouter } from 'vue-router';
-import { setLogin } from "@/stores/loginState";
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { useTheme } from "vuetify";
-const loginState = setLogin()
+import FooterComponent from "@/components/Header-footer/FooterComponent.vue";
+import { setLogin } from "@/stores/loginState";
+
+// Vuetify theme instance
+const theme = useTheme();
+
+// Pinia store
+const loginState = setLogin();
+
 const router = useRouter();
+const loggedIn = ref(false);
+const loading = ref(false);
+const localTheme = ref('light'); // fallback default
 
+const themeColor = computed(() =>
+  theme.global.name.value === 'dark'
+    ? 'bg-grey-darken-5'
+    : 'bg-grey-lighten-4'
+);
 
-const loggedIn = ref(false)
 const loggedInInfo = {
-  user_email:localStorage.getItem("user_email"),
+  user_email: localStorage.getItem("user_email"),
   token: localStorage.getItem("token"),
 };
 
 const isHomeRoute = computed(() => router.currentRoute.value.path === "/try");
+
 async function validateToken() {
-  console.log("starting to validate", loggedInInfo, "base url", import.meta.env.VITE_BASE_URL);
   const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/validateToken`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(loggedInInfo),
   });
   const isTokenValid = await res.json();
-  return isTokenValid.Success ? true : false;
+  return isTokenValid.Success;
 }
 
-const loading = ref(false);
 onMounted(async () => {
+  // Validate user login
   const isValid = await validateToken();
-  loginState.token = isValid //set the state in the Pinia store
+  loginState.token = isValid;
   if (!isValid) {
-    router.push("/register")
+    router.push("/register");
   } else {
-    loggedIn.value = true
-    router.push("/")
+    loggedIn.value = true;
+    router.push("/");
   }
+
+  // Load theme from store
+  if (loginState.theme) {
+    localTheme.value = loginState.theme;
+    theme.global.name.value = loginState.theme;
+  }
+
   loading.value = true;
-  setTimeout(() => {
-    loading.value = false;
-  }, 3000);
+  setTimeout(() => (loading.value = false), 3000);
 });
 
-
-/// THEME 🌞/🌛
-const themeSetter = ref('light')
-const theme = useTheme()
-let currentTheme = reactive(theme.global.name.value)
-
+function handleThemeChange(newTheme) {
+  localTheme.value = newTheme;         // update local ref
+  loginState.theme = newTheme;         // persist in store
+  theme.global.name.value = newTheme;  // apply immediately
+}
 </script>
 
 <style>

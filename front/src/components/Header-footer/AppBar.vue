@@ -48,7 +48,7 @@
         <v-btn
           v-if="loginState.token"
           :icon="themeIcon"
-          @click="theme.toggle()"
+          @click="toggleTheme"
         />
         <v-btn
           v-if="loginState.token"
@@ -93,15 +93,12 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 const theme = useTheme();
-// const themeIcon = {
-//   light: 'mdi-weather-sunny',
-//   dark: 'mdi-moon'
-// }
-// const icon
-// function toggleTheme() {
-//   theme.global.name.value = theme.global.current.value.dark ? "light" : "dark";
-//   // return themeIcon[theme.global.name.value]
-// }
+const emit = defineEmits(['themeUpdate'])
+
+function toggleTheme() {
+  theme.toggle()
+  emit('themeUpdate', theme.global.current.value.dark ? 'dark' : 'light');
+}
 
 const activateDialog = ref(false)
 
@@ -110,6 +107,8 @@ const themeIcon = computed(() =>
     ? "mdi-weather-night"
     : "mdi-white-balance-sunny"
 );
+
+const themeSetting = computed(()=> theme.global.current.dark ? 'dark' : 'light')
 
 defineProps({
   loggedInStat: Boolean,

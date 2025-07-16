@@ -8,12 +8,14 @@ export const setLogin = defineStore(
     const token = ref(null);
     const userName = ref("");
     const userInfo = ref({});
+    const theme = ref('light')
 
     //Returns
     return {
       token,
       userName,
       userInfo,
+      theme
     };
   },
   {
