@@ -97,10 +97,8 @@ class General {
     console.log("patch pathchy", patch);
     
     const sql = `UPDATE \`${table}\` SET ${patch} WHERE ${whereClause}`;
-    console.log("sql", sql);
-    
-
     const [result] = await db.query(sql, [id]);
+    console.log("sql", sql, "ID", id, "res", result);
     return result;
   }
 

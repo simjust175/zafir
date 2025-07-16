@@ -41,7 +41,7 @@ class GeneralControllers {
             if (!newGeneral) return res.status(404).json({ msg: 'Error in GeneralServices/postGeneralService()' });
             res.status(200).json({ Success: `New General added successfully`, newGeneral });
         } catch (error) {
-            res.status(500).json({ Error: `Error in userServices/postGeneral: ${error.message}` });
+            res.status(500).json({ Error: `Error in userServices/patchService: ${error.message}` });
         }
     }
 

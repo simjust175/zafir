@@ -4,7 +4,10 @@
     max-width="800"
     scrollable
   >
-    <v-card class="pa-0 overflow-hidden">
+    <v-card
+      v-if="url"
+      class="pa-0 overflow-hidden"
+    >
       <v-toolbar
         flat
         dense
@@ -37,7 +40,7 @@
           <v-icon>mdi-open-in-new</v-icon>
         </v-btn>
       </v-toolbar>
-
+  
       <!-- Summary section -->
       <div class="pa-4 bg-grey-lighten-3 text-grey-darken-3 text-body-2">
         <div class="d-flex justify-space-between align-center">
@@ -53,7 +56,7 @@
           </div>
         </div>
       </div>
-
+  
       <!-- PDF Viewer -->
       <v-card-text class="pa-0">
         <iframe
@@ -66,24 +69,51 @@
         />
       </v-card-text>
     </v-card>
+    <v-card
+      v-else
+      height="900"
+      class="d-flex flex-column align-center justify-center text-grey px-5 py-4"
+      flat
+    >
+      <v-icon
+        size="48"
+        color="grey"
+      >
+        mdi-file-remove-outline
+      </v-icon>
+      <div class="text-subtitle-1 mt-2">
+        No PDF available
+      </div>
+      <div class="text-body-2">
+        There is no document to preview at the moment.
+      </div>
+      <v-btn
+        class="mt-4"
+        variant="outlined"
+        color="primary"
+        @click="$emit('close')"
+      >
+        Close
+      </v-btn>
+    </v-card>
   </v-dialog>
 </template>
-
-
-<script setup>
-import { computed } from "vue"
-const props = defineProps({
+  
+  
+  <script setup>
+  import { computed } from "vue"
+  const props = defineProps({
     url: String,
     dialog: Boolean
-});
-
-const pdfUrl = computed(() =>
+  });
+  
+  const pdfUrl = computed(() =>
     props.url ? `${import.meta.env.VITE_BASE_URL}/file/${props.url}` : ''
-);
-</script>
-
-<style scoped>
+  );
+  </script>
+  
+  <style scoped>
 iframe {
-    border: none;
+  border: none;
 }
 </style>

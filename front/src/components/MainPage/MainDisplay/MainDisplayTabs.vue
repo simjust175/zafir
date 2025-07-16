@@ -1,6 +1,8 @@
 <template>
   <v-card
-    class="rounded-xl elevation-3 mx-2 d-flex flex-column"
+    class="d-flex flex-column"
+    :class="{ 'rounded-xl': !actionStat, 'elevation-3': !actionStat, 'mx-2': !actionStat, 'pt-1': actionStat }"
+    :flat="actionStat"
     min-height="75vh"
   >
     <!-- prepend-icon="mdi-refresh"
@@ -39,15 +41,15 @@
             v-model="tab"
             :direction="$vuetify.display.mdAndUp ? 'vertical' : 'horizontal'"
             :stacked="!$vuetify.display.mdAndUp"
-            :class="{'d-flex flex-column align-center py-0' : $vuetify.display.mdAndUp}"
+            :class="{'d-flex flex-column py-0' : $vuetify.display.mdAndUp}"
             color="primary"
-            class="pl-4 flex-grow-1 d-flex flex-column"
+            class="flex-grow-1 d-flex flex-column"
           >
             <v-tab
               v-for="project in projects"
               :key="project"
               :value="project"
-              class="text-left"
+              :class="{'pl-8' : !actionStat}"
               prepend-icon="mdi-domain"
             >
               {{ project }}
