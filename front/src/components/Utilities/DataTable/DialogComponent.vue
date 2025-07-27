@@ -39,6 +39,7 @@
             <v-col cols="6">
               <v-text-field
                 v-model="localItem.amount"
+                prefix="€"
                 label="Amount"
               />
             </v-col>

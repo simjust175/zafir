@@ -72,14 +72,14 @@ class General {
     return rows[0];
   }
 
-  static async patch(table, body, whereClause, id) {
+  static async patch(table, body, whereClause, id) {    
     if (!allowedTables.includes(table)) {
       throw new Error("Invalid table name");
     }
 
     // Optional: Define updatable fields per table
     const fieldList = {
-      invoices: ['issuer', 'amount', 'includesBtw', 'btwPercent', 'margin'],
+      invoices: ['issuer', 'amount', 'includesBtw', 'btwPercent', 'margin', 'deleted_at'],
       // add more tables and fields as needed
     };
 
@@ -93,6 +93,7 @@ class General {
     // const setClauses = entries.map(([key]) => `${key} = ?`).join(', ');
     // const values = entries.map(([_, value]) => value);
     const itemsToPatch = Object.entries(body)
+    console.log(" in Patch", itemsToPatch);
     const patch = itemsToPatch.map(entry => `${entry[0]} = ${typeof entry[1] === 'string' ? `"${entry[1]}"` : entry[1]}`).join(" ,");
     console.log("patch pathchy", patch);
     

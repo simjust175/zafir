@@ -1,10 +1,12 @@
 <template>
   <main>
-    <v-btn
-      id="menu-activator"
-      icon="mdi-dots-vertical"
-    />
-    <v-menu activator="#menu-activator">
+    <v-menu>
+      <template #activator="{ props }">
+        <v-btn
+          v-bind="props"
+          icon="mdi-dots-vertical"
+        />
+      </template>
       <v-list>
         <v-list-item prepend-icon="mdi-pencil-outline" value="edit">
           <v-list-item-title>Edit project</v-list-item-title>
@@ -17,8 +19,11 @@
   </main>
 </template>
 
+<!-- eslint-disable vue/require-default-prop -->
 <script setup>
-
+defineProps({
+  project: Object
+})
 </script>
 
 <style>

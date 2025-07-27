@@ -1,16 +1,14 @@
 <template>
-  <v-card class="text-center bg-grey-lighten-3 d-flex justify-space-evenly">
-    <div id="card">
-      <div id="chart">
-        <apexchart
-          type="radialBar"
-          height="350"
-          :options="chartOptions"
-          :series="series"
-        />
-      </div>
+  <div id="card" class="pl-0">
+    <div id="chart">
+      <apexchart
+        type="radialBar"
+        height="180"
+        :options="chartOptions"
+        :series="series"
+      />
     </div>
-  </v-card>
+  </div>
 </template>
 
 <script>
@@ -20,7 +18,7 @@ return{
     series: [35],
     chartOptions: {
       chart: {
-        height: 350,
+        height: 180,
         type: 'radialBar',
         toolbar: {
           show: true

@@ -1,9 +1,13 @@
 <template>
   <v-card class="text-center bg-grey-lighten-3 d-flex justify-space-evenly">
-
     <div id="card">
       <div id="chart">
-        <apexchart type="radialBar" height="350" :options="chartOptions" :series="series"></apexchart>
+        <apexchart
+          type="radialBar"
+          height="350"
+          :options="chartOptions"
+          :series="series"
+        />
       </div>
     </div>
   </v-card>

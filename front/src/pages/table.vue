@@ -2,7 +2,7 @@
   <main>
     <main-display-tabs
       :invoice-array="amountArray"
-      :action-stat="true"
+      :expanded="true"
       class="overflow-y-auto"
       @table-update="fetchFromSessionStorage"
     />
