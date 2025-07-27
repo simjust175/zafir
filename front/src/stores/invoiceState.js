@@ -6,10 +6,12 @@ export const invoices = defineStore(
   () => {
     // state
     const dbResponse = reactive({});
+    const warnings = reactive([])
 
     //Returns
     return {
      dbResponse,
+     warnings
     };
   },
   {

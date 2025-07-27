@@ -12,11 +12,19 @@
 
       <navigation-bar language="en" />
 
-      <overlay-component :overlay-trigger="loading" v-if="loading" />
+      <overlay-component
+        v-if="loading"
+        :overlay-trigger="loading"
+      />
 
-      <transition v-else name="fade" mode="out-in">
+      <router-view v-slot="{ Component }">
+        <transition>
+          <component :is="Component" />
+        </transition>
+      </router-view>
+      <!--   <transition v-else name="fade" mode="out-in">
         <router-view />
-      </transition>
+      </transition> -->
 
       <footer>
         <footer-component class="bg-red" />
@@ -93,6 +101,7 @@ function handleThemeChange(newTheme) {
   theme.global.name.value = newTheme;  // apply immediately
 }
 </script>
+
 
 <style>
 #app{

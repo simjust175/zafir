@@ -33,12 +33,10 @@
         min-width="380"
         class="elevation-5 rounded-lg"
       >
-        <v-card-title class="bg-grey-lighten-4 font-weight-bold py-1 text-h6 text-grey-darken-3">
-          <!-- <v-icon
-            icon="mdi-bell"
-            size="20"
-            class="mr-2"
-          /> -->
+        <v-card-title
+          class="font-weight-bold py-1 text-h6"
+          :class="themeColor"
+        >
           Notifications
         </v-card-title>
         <v-divider />
@@ -58,7 +56,7 @@
               >
                 mdi-alert-remove
               </v-icon>
-              <div class="text-h5 text-grey-darken-1 mt-3 mb-3">
+              <div class="text-h5 mt-3 mb-3">
                 Hurray! No issues
               </div>
             </v-list-item-content>
@@ -69,20 +67,15 @@
               v-for="(message, index) in messages"
               :key="index"
               class="notification-item d-flex"
+              prepend-icon="mdi-alert"
               @click="openDialog(message)"
             >
-              <v-list-item-icon>
-                <v-icon
-                  icon="mdi-alert"
-                  color="amber-darken-2"
-                />
-              </v-list-item-icon>
               <v-list-item-content>
                 <v-list-item-title class="font-weight-medium">
                   {{ message.title || 'Invoice Alert' }}
                 </v-list-item-title>
                 <v-list-item-subtitle class="text-truncate">
-                  {{ message.body }}
+                  {{ message.body }} {{ messages[0].item.pdf_file }}
                 </v-list-item-subtitle>
               </v-list-item-content>
             </v-list-item>
@@ -97,47 +90,57 @@
     </v-menu>
   
     <!-- Invoice Popup Component -->
-    <issue-prompt
+    <!-- <issue-prompt
       v-model="dialog"
       :message="selectedMessage"
+    /> -->
+    <pdf-viewer 
+      :dialog="dialog"
+      :url="selectedUrl"
+      @close="dialog = false"
     />
   </div>
 </template>
   
   <script setup>
-  import { ref } from 'vue'
+  import { ref, computed } from 'vue'
+  //THEME 
+import { useTheme } from "vuetify"
+  const theme = useTheme();
+  const themeColor = computed(() =>
+  theme.global.name.value === 'dark' ? 'bg-grey-darken-3' : 'bg-grey-lighten-4'
+);
+import { invoices } from "@/stores/invoiceState";
+const invoiceArray = invoices();
  
-  defineProps({
-    messages: {
-      type: Array,
-      default: () => [],
-    },
-  })
-  
+  const messages = computed(()=> invoiceArray.warnings)
   const menu = ref(false)
   const dialog = ref(false)
   const selectedMessage = ref(null)
+  const selectedUrl = ref('')
   
   function openDialog(message) {
     selectedMessage.value = message
+    console.log("in pdf dialog in notification menu", message);
+    selectedUrl.value = message.messages[0].item.pdf_file
     dialog.value = true
   }
   </script>
   
   <style scoped>
-  .notification-item {
+  /* .notification-item {
     transition: background-color 0.2s ease;
     cursor: pointer;
     padding: 12px;
     border-radius: 6px;
-  }
-  .notification-item:hover {
+  } */
+  /* .notification-item:hover {
     background-color: #f5f5f5;
-  }
-  .text-truncate {
+  } */
+  /* .text-truncate {
     max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
+  } */
   </style>

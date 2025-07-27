@@ -53,8 +53,8 @@ const postInvoices = async (inv) => {
 
 // ----------- Start IMAP Email Listener -----------
 //startListening(async(inv)=> await postInvoices(inv));
-startListeningForAll(async(inv)=> await postInvoices(inv))
-//startListeningForAll()
+ //>>>  startListeningForAll(async(inv)=> await postInvoices(inv))
+//startLsteningForAll()
 
 
 // ----------- WebSocket Logging -----------

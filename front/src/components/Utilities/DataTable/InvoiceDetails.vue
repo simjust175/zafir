@@ -97,11 +97,18 @@
                 />
               </v-scale-transition>
             </template>
+            <template #no-data>
+              <empty-state
+                class="my-12"
+                @refresh="initialize()"
+              />
+            </template>
           </v-data-table>
         </v-card-text>
 
         <v-card-actions
-          class="d-flex justify-end align-center bg-grey-lighten-4 text-grey-darken-3 ma-2 mt-0 px-4 py-0 rounded-md text-subtitle-1"
+          class="d-flex justify-end align-center ma-2 mt-0 px-4 py-0 rounded-md text-subtitle-1"
+          :class="themeColor"
         >
           <div class="d-flex pr-2 ga-2">
             <strong>Total: </strong> €{{ totalWithMargin() }}
@@ -116,9 +123,18 @@
       :url="selectedUrl"
       @close="pdfDialog = false"
     />
+    <!-- <alert-prop 
+      :alert="activateAlert"
+      type="success"
+      :label="alertLabel"
+      :closable="true"
+    /> -->
+    <snack-bar
+      :banner="activateAlert"
+      label="Invoice successful deleted"
+      color="success"
+    />
    
-   
-
     <dialog-component
       :dialog-prop="triggerDialog"
       :edited-item="editedItem"
@@ -129,6 +145,8 @@
     />
 
     <DeleteDialogComponent
+      :id="deletedId"
+      :edited-index="editedIndex"
       :dialog-delete="dialogDelete"
       @close-delete="closeDelete"
       @delete-item-confirm="deleteItemConfirm($event)"
@@ -136,8 +154,17 @@
   </v-main>
 </template>
 
+<!-- eslint-disable vue/require-default-prop -->
 <script setup>
+import SnackBar from '../SnackBar.vue';
 import { ref, computed, watch, nextTick } from 'vue';
+//THEME 
+import { useTheme } from "vuetify"
+  const theme = useTheme();
+  const themeColor = computed(() =>
+  theme.global.name.value === 'dark' ? 'bg-grey-darken-3' : 'bg-grey-lighten-4'
+);
+
 
 const props = defineProps({
   active: Boolean,
@@ -151,7 +178,7 @@ defineEmits(['edit', 'delete', 'close']);
 const invoiceArray = ref([]);
 const dialog = computed(() => props.active);
 const headers = [
-  { title: 'Date', key: 'invoice_date' },
+  { title: 'Generated on', key: 'invoice_date' },
   { title: 'Amount', key: 'amount' },
   { title: 'Btw', key: 'includesBtw' },
   { title: '(%)', key: 'btwPercent' },
@@ -212,9 +239,14 @@ const sendPdfByEmail = () => {
   alert("📨 This would trigger an email send function (hook up backend if needed)");
 };
 
+//⚠️alert prop
+const activateAlert = ref(false)
+const alertLabel = ref("");
+
 // ========== Edit ==========
 const editedIndex = ref(-1);
 const editedItem = ref({});
+const deletedId = ref()
 const triggerDialog = ref(false);
 const dialogDelete = ref(false);
 const defaultItem = {
@@ -237,15 +269,28 @@ const editItem = (item) => {
 };
 
 // ========== Delete ==========
+function formatDateToMySQL(date) {
+  return date.getFullYear() + '-' +
+    String(date.getMonth() + 1).padStart(2, '0') + '-' +
+    String(date.getDate()).padStart(2, '0') + ' ' +
+    String(date.getHours()).padStart(2, '0') + ':' +
+    String(date.getMinutes()).padStart(2, '0') + ':' +
+    String(date.getSeconds()).padStart(2, '0');
+}
 const deleteItem = (item) => {
   editedIndex.value = invoiceArray.value.indexOf(item);
-  editedItem.value = { ...item };
+  deletedId.value = {...item};
   dialogDelete.value = true;
 };
 
-const deleteItemConfirm = (item) => {
-  invoiceArray.value.splice(editedIndex.value, 1);
-  console.log("item to delete:", item);
+const deleteItemConfirm = (id) => {
+  invoiceArray.value.splice(editedIndex.value, 1);  
+  patchChanges({id: id, body: { deleted_at: formatDateToMySQL(new Date()) } });
+ activateAlert.value = true
+    setTimeout(()=>{
+     activateAlert.value = false
+    }, 2000)
+  alertLabel.value = "Invoice successfully deleted."
   closeDelete();
 };
 
@@ -275,8 +320,6 @@ const save = () => {
 };
 
 const patchChanges = async (changes) => {
-  console.log("changes", changes);
-
   try {
     const response = await fetch(
       `${import.meta.env.VITE_BASE_URL}/invoice/patch/invoices?id=${changes.id}`,
@@ -289,18 +332,19 @@ const patchChanges = async (changes) => {
 
     if (!response.ok) throw new Error('Failed to patch invoice');
     const data = await response.json();
-
-    // 🔄 Instantly update UI
-    if (editedIndex.value > -1) {
-      Object.assign(invoiceArray.value[editedIndex.value], {
-        ...invoiceArray.value[editedIndex.value],
+    // ✅ Always update the corresponding item by ID
+    const index = invoiceArray.value.findIndex(inv => inv.invoice_id === changes.id);
+    if (index !== -1) {
+      Object.assign(invoiceArray.value[index], {
+        ...invoiceArray.value[index],
         ...changes.body
       });
-      updatedId.value = changes.id; // 🚨 Trigger highlight
-      setTimeout(() => {
-        updatedId.value = null;
-      }, 2000); // Reset after 2s
     }
+
+    updatedId.value = changes.id; // 🚨 Highlight updated row
+    setTimeout(() => {
+      updatedId.value = null;
+    }, 2000); // Reset highlight
 
     close();
     console.log('✅ Successfully patched:', data);

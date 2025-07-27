@@ -1,6 +1,6 @@
 <template>
   <v-container
-    :class="{ 'pt-0': !actionStat }"
+    :class="{ 'pt-0': expanded }"
     fluid
   >
     <!-- <v-btn
@@ -14,6 +14,15 @@
       class="pa-6 pt-2"
       flat
     >
+      <v-container
+        class="rounded-xl pa-4 mb-6"
+    
+        fluid
+      >
+        <v-row dense>
+          <InvoiceDash :db-contents="dbContents" />
+        </v-row>
+      </v-container>
       <v-data-table
         :headers="headers"
         :items="groupedInvoices"
@@ -34,23 +43,26 @@
             :class="themeColor"
             flat
           >
-            <v-toolbar-title class="text-capitalize text-h6 mx-8">
+            <v-toolbar-title
+              v-if="expanded"
+              class="text-capitalize text-h6 mx-8"
+            >
               {{ projectName }}
             </v-toolbar-title>
-            <v-spacer />
+            <v-spacer v-if="expanded" />
 
 
             <v-text-field
               v-model="search"
               density="compact"
               class="pr-4 rounded-b-pill"
+              :class="{'ml-3': !expanded}"
               label="Search"
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
               hide-details
               single-line
             />
-
             <v-btn
               class="ms-5"
               icon="mdi-printer-outline"
@@ -69,39 +81,9 @@
               inset
               vertical
             />
-            <table-parent-toolbar-menu />
+            <table-parent-toolbar-menu :project="invoices" />
           </v-toolbar>
         </template>
-
-        <!-- <template #body>
-          <transition-group
-            name="fade-slide"
-            tag="tbody"
-          >
-            <tr
-              v-for="group in groupedInvoices"
-              :key="group.issuer"
-              :class="{ 'flash-row': group.issuer === updatedIssuer }"
-              @click="openInvoiceDialog($event, { item: group })"
-            >
-              <td>{{ group.issuer }}</td>
-              <td>€{{ group.totalAmount.toFixed(2) }}</td>
-              <td>{{ group.totalMargin.toFixed(2) }}%</td>
-              <td>€{{ group.totalWithMargin.toFixed(2) }}</td>
-              <td>
-                <v-icon
-                  size="22"
-                  color="success"
-                  class="ml-3"
-                  @click.stop="sendInvoice(group)"
-                >
-                  mdi-send
-                </v-icon>
-              </td>
-            </tr>
-          </transition-group>
-        </template> -->
-
 
         <template #item.created_at="{ item }">
           {{ new Date(item.created_at).toLocaleDateString() }}
@@ -115,18 +97,18 @@
         <template #item.totalMargin="{ item }">
           <margin-setter
             :item="item"
-            @margin-change="item.totalMargin = $event"
+            @margin-update="(newMargin)=>updateMargin(item, newMargin)"
           />
         </template>
 
-        <template #item.actions="{ item }">
+        <template #item.actions>
+          <!-- tool-tip -->
           <v-icon
             size="22"
-            color="success"
+            color="primary"
             class="ml-3"
-            @click.stop="sendInvoice(item)"
           >
-            mdi-send
+            mdi-unfold-more-horizontal
           </v-icon>
         </template>
 
@@ -152,11 +134,31 @@
         <v-card-text> -->
     </v-card>
     <v-banner
-      class="text-capitalize text-subtitle-1 d-flex justify-end px-7"
+      class="text-subtitle-1 d-flex justify-end align-center px-7 text-one-line"
       :class="themeColor"
     >
-      <strong class="mx-4">Total for {{ projectName }}:</strong> €{{ overallTotalWithMargin }}
+      <div
+        class="d-flex align-center"
+        style="height: 24px;"
+      >
+        <strong class="mx-4 text-capitalize d-flex align-center">
+          Total for {{ projectName }}:
+        </strong>
+        <!-- <v-progress-linear
+          :model-value="percentPaid"
+          height="15"
+          color="green"
+          class="rounded-pill my-0"
+          style="width: 150px;"
+        >
+          <template #default>
+            {{ percentPaid }}% Paid
+          </template>
+        </v-progress-linear> -->
+      </div>
+      €{{ overallTotalWithMargin }}
     </v-banner>
+
     <InvoiceDetails
       :invoices="selectedInvoices"
       :active="activateInvoiceDetailDialog"
@@ -165,12 +167,21 @@
       @edit="editItem"
       @delete="deleteItem"
     />
+    <snack-bar
+      :banner="SnackBarTrigger"
+      :label="snackBarLabel"
+      :color="snackBarColor"
+      :icon="snackBarIcon"
+    />
   </v-container>
 </template>
 
+<!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { ref, computed, watch, onMounted, defineProps, defineEmits } from 'vue';
 import EmptyState from '../EmptyState.vue';
+import InvoiceDash from './InvoiceDash.vue';
+//import FAB from './FAB.vue';
 import { invoices as invoiceStore } from '@/stores/invoiceState';
 import socket from '@/socket.js';
 
@@ -178,7 +189,7 @@ const emit = defineEmits(['amountUpdate']);
 const props = defineProps({
   invoices: { type: Array, default: () => [] },
   language: String,
-  actionStat: Boolean,
+  expanded: Boolean,
   projectName: String,
   refreshing: Boolean
 });
@@ -186,15 +197,15 @@ const props = defineProps({
 const invoiceArray = invoiceStore();
 const search = ref('');
 const activateInvoiceDetailDialog = ref(false)
-const actionStat = ref(props.actionStat);
-const heightPerWindow = computed(() => (actionStat.value ? '' : 405));
+const expanded = ref(props.expanded);
+const heightPerWindow = computed(() => (expanded.value ? '' : 405));
 
 const headers = computed(() => [
   { title: 'Supplier', key: 'issuer' },
   // { title: 'Total', key: 'totalAmount' },
   { title: 'Margin', key: 'totalMargin' },
   { title: 'Total + Margin', key: 'totalWithMargin' },
-  // { title: '', key: 'actions', sortable: false },
+  { title: '', key: 'actions', sortable: false },
 ]);
 
 const dbContents = ref([]);
@@ -237,11 +248,24 @@ const openInvoiceDialog = (event, group) => {
   detailsDialog.value = true;
 };
 
+// 🍫snackBar 🍫
+const SnackBarTrigger = ref(false)
+const snackBarLabel = ref("")
+const snackBarColor = ref("")
+const snackBarIcon = ref("")
+const activateSnackBar = (label, color, icon="")=> {
+  snackBarLabel.value = label
+  snackBarColor.value = color
+  snackBarIcon.value = icon
+  SnackBarTrigger.value = true
+  setTimeout(()=> SnackBarTrigger.value = false, 2000)
+}
 onMounted(() => {
   initialize();
   socket.on('new-invoice', (invoice) => {
     dbContents.value = [invoice, ...dbContents.value];
     invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
+    activateSnackBar('New email detected', 'success', 'mdi-email-newsletter');
   });
 });
 
@@ -282,6 +306,7 @@ socket.on('new-invoice', (invoice) => {
     updatedIssuer.value = null;
   }, 1500); // Remove highlight after 1.5s
 });
+
 //Grand total per project 
 const overallTotalWithMargin = computed(() => {
   return groupedInvoices.value.reduce((sum, group) => {
@@ -289,10 +314,19 @@ const overallTotalWithMargin = computed(() => {
   }, 0).toFixed(2);
 });
 
+// 🔃 Update the margin total (before reload)
+const updateMargin = (item, newMargin) => {
+  dbContents.value.forEach(inv => {
+    if (inv.issuer === item.issuer) {
+      inv.margin = newMargin;
+    }
+  });
+};
+
 //THEME 
 import { useTheme } from "vuetify"
-  const theme = useTheme();
-  const themeColor = computed(() =>
+const theme = useTheme();
+const themeColor = computed(() =>
   theme.global.name.value === 'dark' ? 'bg-grey-darken-3' : 'bg-grey-lighten-4'
 );
 
@@ -301,23 +335,11 @@ const skeletonRows = computed(() => {
   const count = props.invoices?.length || 10;
   return Math.min(Math.max(count, 3), 20); // Load between 3 and 20 skeletons
 });
-
-
 </script>
 
 
-<style scoped>
-/* .v-field__field{
-  height: 10px !important;
-  background: red !important;
-} */
-hr.v-divider{
-  background: red !important;
-}
-.v-input__details{
-  color: rgb(121, 121, 230) !important;
-  padding-inline: 0 !important;
-}
+<style>
+
 </style>
 
 

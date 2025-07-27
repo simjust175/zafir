@@ -1,27 +1,27 @@
 <template>
   <v-card
     class="d-flex flex-column"
-    :class="{ 'rounded-xl': !actionStat, 'elevation-3': !actionStat, 'mx-2': !actionStat, 'pt-1': actionStat }"
-    :flat="actionStat"
+    :class="{ 'rounded-xl': !expanded, 'elevation-3': !expanded, 'mx-2': !expanded}"
+    :flat="expanded"
     min-height="75vh"
   >
     <!-- prepend-icon="mdi-refresh"
   @click:prepend="refresh = true" -->
     <!-- Top-right Icon -->
     <v-icon
-      v-if="!actionStat"
+      v-if="!expanded"
       icon="mdi-arrow-expand"
       class="mr-5 mt-4 mb-3 position-absolute top-0 right-0 zIndex"
-      color="blue-darken-1"
+      color="primary"
       @click="$router.push('/table')"
     />
-    <v-icon
+    <!-- <v-icon
       v-else
-      icon="mdi-close"
-      class="mr-5 mt-4 mb-3 position-absolute top-0 right-0 zIndex"
-      color="blue-darken-1"
+      icon="mdi-arrow-left"
+      class="ml-1 mt-1 mb-3 position-absolute top-0 left-0 zIndex"
+      color="primary"
       @click="$router.push('/')"
-    />
+    /> -->
   
     <!-- Main Content -->
     <v-row
@@ -31,25 +31,31 @@
       <!-- Sidebar Tabs -->
       <v-col
         cols="12"
-        md="3"
-        class="pt-4"
-        :class="[themeColor,{'d-flex flex-column': $vuetify.display.mdAndUp}]"
+        :md="!expanded ? 3 : 12"
+        :class="[themeColor, 'd-flex flex-column pa-0']"
         style="max-height: 100%;"
       >
         <div class="d-flex flex-column flex-grow-1 overflow-y-auto">
+          <!-- maybe? selected-class="bg-white" -->
           <v-tabs
             v-model="tab"
-            :direction="$vuetify.display.mdAndUp ? 'vertical' : 'horizontal'"
+            :direction="$vuetify.display.mdAndUp && !expanded ? 'vertical' : 'horizontal'"
             :stacked="!$vuetify.display.mdAndUp"
-            :class="{'d-flex flex-column py-0' : $vuetify.display.mdAndUp}"
+            :class="[
+              $vuetify.display.mdAndUp && !expanded ? 'd-flex flex-column justify-start py-0' : '',
+              'flex-grow-1'
+            ]"
             color="primary"
-            class="flex-grow-1 d-flex flex-column"
+            :show-arrows="!$vuetify.display.mdAndUp || expanded"
           >
+            <!-- :class="{'d-flex flex-column py-0' : $vuetify.display.mdAndUp}"
+            color="primary"
+            class="flex-grow-1 d-flex flex-column" -->
             <v-tab
               v-for="project in projects"
               :key="project"
               :value="project"
-              :class="{'pl-8' : !actionStat}"
+              class="pl-8"
               prepend-icon="mdi-domain"
             >
               {{ project }}
@@ -62,7 +68,7 @@
             <v-tab
               value="add"
               class="text-left font-weight-bold text-primary mb-2"
-              :class="{'pl-8' : !actionStat}"
+              :class="{'pl-8' : !expanded}"
               prepend-icon="mdi-domain-plus"
             >
               Add Project
@@ -74,7 +80,7 @@
       <!-- Right Content -->
       <v-col
         cols="12"
-        md="9"
+        :md="!expanded ? 9 : 12"
         class="pa-4 d-flex flex-column"
       >
         <v-tabs-window
@@ -91,7 +97,7 @@
               class="mt-4"
               :invoices="props.invoiceArray.filter(inv => inv.project_name === project)"
               :project-name="project"
-              :action-stat="actionStat"
+              :expanded="expanded"
               :refreshing="refresh"
               fill-width
               fill-height
@@ -118,17 +124,17 @@
   import { ref, computed } from "vue";
   import { useTheme } from "vuetify"
   const theme = useTheme();
-  const themeColor = computed(()=> `bg-grey-${theme.global.name.value}en-4`);
+   const themeColor = computed(()=> `bg-grey-${theme.global.name.value}en-4`);
   const props = defineProps({
     invoiceArray: {
       type: Array,
       required: true
     },
-    actionStat: Boolean
+    expanded: Boolean
   });
   const refresh = ref(false)
   
-  const tab = ref(null);
+  const tab = ref(0);
   
   // Extract unique projects from data
   const projects = computed(() => {

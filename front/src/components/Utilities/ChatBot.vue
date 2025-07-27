@@ -1,57 +1,66 @@
 <template>
-    <v-card
-      class="pa-4 glass-card"
-      height="100%"
-      elevation="10"
-      rounded="xl"
-    >
-      <v-card-title class="d-flex align-center justify-space-between">
-        <div class="text-h6 font-weight-bold text-neon">🤖 AI Assistant</div>
-        <v-icon class="text-grey-lighten-1" @click="$emit('close')" style="cursor: pointer">mdi-close</v-icon>
-      </v-card-title>
+  <v-card
+    class="pa-4 glass-card"
+    height="100%"
+    elevation="10"
+    rounded="xl"
+  >
+    <v-card-title class="d-flex align-center justify-space-between">
+      <div class="text-h6 font-weight-bold text-neon">
+        🤖 AI Assistant
+      </div>
+      <v-icon
+        class="text-grey-lighten-1"
+        style="cursor: pointer"
+        @click="$emit('close')"
+      >
+        mdi-close
+      </v-icon>
+    </v-card-title>
   
-      <v-divider class="mb-2" />
+    <v-divider class="mb-2" />
   
-      <v-card-text class="chat-log">
-        <div
-          v-for="(msg, index) in messages"
-          :key="index"
-          :class="msg.sender === 'You' ? 'user-msg' : 'bot-msg'"
-        >
-          <span class="sender">{{ msg.sender }}:</span>
-          <span class="text">{{ msg.text }}</span>
-        </div>
-      </v-card-text>
+    <v-card-text class="chat-log">
+      <div
+        v-for="(msg, index) in messages"
+        :key="index"
+        :class="msg.sender === 'You' ? 'user-msg' : 'bot-msg'"
+      >
+        <span class="sender">{{ msg.sender }}:</span>
+        <span class="text">{{ msg.text }}</span>
+      </div>
+    </v-card-text>
   
-      <v-divider class="my-2" />
+    <v-divider class="my-2" />
   
-      <v-card-actions class="pa-0">
-        <v-text-field
-          v-model="input"
-          label="Type your question..."
-          class="flex-grow-1 rounded-pill input-glass"
-          hide-details
-          density="compact"
-          variant="solo"
-          color="primary"
-          @keydown.enter="send"
-        />
-        <v-btn
-          icon
-          color="cyan-lighten-1"
-          variant="flat"
-          @click="send"
-          class="ml-2"
-        >
-          <v-icon>mdi-send</v-icon>
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </template>
+    <v-card-actions class="pa-0">
+      <v-text-field
+        v-model="input"
+        label="Type your question..."
+        class="flex-grow-1 rounded-pill input-glass"
+        hide-details
+        density="compact"
+        variant="solo"
+        color="primary"
+        @keydown.enter="send"
+      />
+      <v-btn
+        icon
+        color="cyan-lighten-1"
+        variant="flat"
+        class="ml-2"
+        @click="send"
+      >
+        <v-icon>mdi-send</v-icon>
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</template>
   
   <script setup>
   import { ref } from 'vue';
   
+  defineEmits(['close'])
   const input = ref('');
   const messages = ref([
     { sender: 'Bot', text: 'Hello! How can I help you with invoices or data today?' }

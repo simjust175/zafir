@@ -8,6 +8,13 @@
       scroll-behavior="hide"
       scroll-threshold="340"
     >
+      <v-icon
+        v-if="router.currentRoute.value.fullPath == '/table'"
+        icon="mdi-arrow-left"
+        class="ml-2 zIndex"
+        size="30"
+        @click="$router.push('/')"
+      />
       <h1
         class="ml-5 zafir-text-primary cursor-pointer"
         @click.stop="$router.push('/')"
@@ -39,11 +46,10 @@
 
       <!-- Logout/Login Button -->
       <div
-        class="d-flex align-center justify-space-between mx-8"
+        class="d-flex align-center justify-space-between ml-8 mr-4"
       >
         <notification-menu
           v-if="loginState.token" 
-          :messages="fauxMessages"
         />
         <v-btn
           v-if="loginState.token"
@@ -108,8 +114,6 @@ const themeIcon = computed(() =>
     : "mdi-white-balance-sunny"
 );
 
-const themeSetting = computed(()=> theme.global.current.dark ? 'dark' : 'light')
-
 defineProps({
   loggedInStat: Boolean,
 });
@@ -128,9 +132,7 @@ watch(
 //     loggedIn.value = newVal;
 //   }
 // );
-const fauxMessages = []
 const logout = async () => {
-  console.log("entered logout");
   const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userName}`, {
       method: "POST",
       headers: {

@@ -3,14 +3,13 @@
     <!-- <overlay-component
       :overlay-trigger="triggerOverlay"
     /> -->
-    <!-- v-if="Object.values(props.monthly.sums).length < 1" -->
     <main-dialog
       :activate-dialog="activateDialog"
       title="Confirm Log-out"
       text="Confirm dialog"
     />
     <v-container
-      class="fill-height fill-width pa-6"
+      class="fill-height fill-width pa-1"
       fluid
     >
       <v-responsive
@@ -24,6 +23,7 @@
             cols="12"
             md="12"
             fill-height
+            class="mb-1"
           >
             <!-- <main-form
               v-bind="$attrs"
@@ -33,16 +33,19 @@
             <v-spacer class="mt-5" /> -->
             <main-display-tabs 
               :invoice-array="invoices"
-              :action-stat="false"
+              :expanded="false"
               height="100%"
               class="overflow-y-auto scrollbar-style"
             />
           </v-col>
+          <!-- <v-col cols="3">
+            <invoice-control-panel />
+          </v-col> -->
         </v-row>
 
-        <v-row class="mt-7">
+        <!-- <v-row class="mt-7">
           <progress-cards />
-        </v-row>
+        </v-row> -->
       </v-responsive>
     </v-container>
   </v-container>

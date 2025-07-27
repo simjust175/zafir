@@ -1,14 +1,28 @@
 <template>
   <div class="text-center">
-    <v-select v-model="methodSelection" :items="menuItems" :label="$t(label[currentLanguage])" item-value="value"
-      item-title="text">
+    <v-select
+      v-model="methodSelection"
+      :items="menuItems"
+      :label="$t(label[currentLanguage])"
+      item-value="value"
+      item-title="text"
+    >
       <!-- Custom rendering of items -->
       <template #item="{ item, props }">
         <v-list-item v-bind="props">
-          <v-list-item-title v-if="!item.isButton">{{ item.text }}</v-list-item-title>
-          <div v-else class="d-flex align-center justify-space-between">
+          <v-list-item-title v-if="!item.isButton">
+            {{ item.text }}
+          </v-list-item-title>
+          <div
+            v-else
+            class="d-flex align-center justify-space-between"
+          >
             <span>{{ item.text }}</span>
-            <v-btn small color="primary" @click.stop="handleButtonClick(item)">
+            <v-btn
+              small
+              color="primary"
+              @click.stop="handleButtonClick(item)"
+            >
               {{ $t('Action') }}
             </v-btn>
           </div>
