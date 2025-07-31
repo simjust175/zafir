@@ -3,6 +3,7 @@
     v-model="trigger"
     :timeout="2000"
     elevation="24"
+    :class="{'pa-4': props.icon}"
     transition="slide-x-reverse-transition"
   >
     <div class="d-flex flex-column align-center">
@@ -41,6 +42,6 @@ watch(()=> props.banner, (update)=> trigger.value = update)
 
 </script>
 
-<style>
+<style scoped>
 
 </style>

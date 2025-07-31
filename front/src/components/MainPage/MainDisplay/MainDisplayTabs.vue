@@ -43,7 +43,7 @@
             :stacked="!$vuetify.display.mdAndUp"
             :class="[
               $vuetify.display.mdAndUp && !expanded ? 'd-flex flex-column justify-start py-0' : '',
-              'flex-grow-1'
+              'flex-grow-1 pt-1'
             ]"
             color="primary"
             :show-arrows="!$vuetify.display.mdAndUp || expanded"
@@ -95,8 +95,9 @@
           >
             <table-parent
               class="mt-4"
-              :invoices="props.invoiceArray.filter(inv => inv.project_name === project)"
+              :invoices="props.invoiceArray.filter(inv => inv.project_name === project && inv.invoice_id)"
               :project-name="project"
+              :project_id="props.invoiceArray.filter(inv => inv.project_name === project).map(proj => proj.project_id)[0]"
               :expanded="expanded"
               :refreshing="refresh"
               fill-width
@@ -112,6 +113,7 @@
             <add-new-project 
               fill-width
               fill-height
+              :in-tabs="true"
             />
           </v-tabs-window-item>
         </v-tabs-window>
@@ -121,6 +123,7 @@
 </template>
   
   <script setup>
+  import AddNewProject from "@/components/Projects/AddNewProject.vue";
   import { ref, computed } from "vue";
   import { useTheme } from "vuetify"
   const theme = useTheme();

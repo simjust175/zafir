@@ -6,14 +6,16 @@
     :placeholder="props.placeholder"
     variant="solo"
     density="compact"
-    :type="props.pwd ? 'password' : 'text'"
+    :type="showPwdStat? 'text' : 'password'"
     :rules="rule"
-    :append-inner-icon="icon"
+    :prepend-inner-icon="icon"
+    :append-inner-icon="showPwdIcon"
     @click:append-inner="showPwdStat = !showPwdStat"
     @input="emitData"
   />
 </template>
 
+<!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { ref, reactive, computed } from "vue";
 
@@ -41,7 +43,7 @@ const props = defineProps({
   pwd1: String,
   placeholder: String,
   pwd: Boolean,
-  icon: String,
+  icon: String
 });
 
 const emit = defineEmits(["input"]);

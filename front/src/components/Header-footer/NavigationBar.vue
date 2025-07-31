@@ -22,11 +22,25 @@
       nav
     >
       <NavItemWithTooltip
+        title="Home"
+        prepend-icon="mdi-home-outline"
+        value="home"
+        :rail="railStat"
+        @click="router.push('/')"
+      />
+      <NavItemWithTooltip
         title="Chart"
         prepend-icon="mdi-table-eye"
         value="table"
         :rail="railStat"
         @click="openExpandedTable"
+      />
+      <NavItemWithTooltip
+        title="Manage projects"
+        prepend-icon="mdi-office-building-cog-outline"
+        value="projects"
+        :rail="railStat"
+        @click="router.push('/projects')"
       />
       <NavItemWithTooltip
         title="Manage users"
@@ -35,32 +49,33 @@
         :rail="railStat"
         @click="router.push('/users')"
       />
+
+      
+      <!-- removed the: value="upload" so that it should not be selected like a nav -->
       <NavItemWithTooltip
         title="Upload"
         prepend-icon="mdi-file-upload-outline"
-        value="upload"
+        
         :rail="railStat"
         @click="activateUploadDialog = !activateUploadDialog"
       />
+      
+      <!-- removed the: value="create" so that it should not be selected like a nav -->
       <NavItemWithTooltip
         title="Create invoice"
         prepend-icon="mdi-invoice-plus-outline"
-        value="create"
+        
         :rail="railStat"
         @click="invoiceFormRef?.open()"
       />
+      
+      <!-- removed the: value="chat" so that it should not be selected like a nav -->
       <NavItemWithTooltip
         title="AI chat"
         prepend-icon="mdi-robot-outline"
-        value="chat"
+        
         :rail="railStat"
         @click="showChatBot = true"
-      />
-      <NavItemWithTooltip
-        title="Receipts"
-        prepend-icon="mdi-receipt-text-outline"
-        value="receipt"
-        :rail="railStat"
       />
     </v-list>
     <template #append>
@@ -113,9 +128,12 @@
 
 <script setup>
 import NavItemWithTooltip from "../Utilities/NavItemWithTooltip.vue";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRouter } from 'vue-router';
 import { useDisplay } from 'vuetify';
+import { setLogin } from "@/stores/loginState"
+const loginState = setLogin()
+
 
 const display = useDisplay();
 
@@ -132,6 +150,12 @@ const drawerLocation = computed(() => display.smAndDown.value ? 'bottom' : 'left
 const showChatBot = ref(false)
 const router = useRouter();
 
+const activeItem = ref(router.currentRoute.value.path)
+
+// Watch for route changes to update active item
+watch(() => router.currentRoute.value.path, (newPath) => {
+  activeItem.value = newPath
+})
 // import { useLocale } from 'vuetify'
 // const { t } = useLocale()
 const invoiceFormRef = ref(null);

@@ -1,212 +1,180 @@
 <template>
-  <v-container
-    fluid
-    class="pa-0"
-  >
-    <v-row dense>
-      <v-col
-        cols="12"
-        md="4"
-      >
-        <v-card
-          color="indigo-lighten-5"
-          class="pa-4 rounded-xl position-relative"
-          :loading="invoicedLoading"
-          elevation="0"
-        >
-          <!-- Add Button -->
-          <v-btn
-            icon="mdi-plus"
-            size="small"
-            rounded="xl"
-            density="comfortable"
-            color="indigo-darken-2"
-            variant="outlined"
-            class="position-absolute top-0 right-0 mt-2 mr-2"
-            @click="openInvoiceDialog"
-          />
-          <v-img
-            src="../../../../public/invoice.png"
-            height="50"
-          />
-          <div class="text-subtitle-1 text-center font-weight-medium text-grey-darken-2 mb-1 pt-1">
-            Total Invoiced
-          </div>
-          <div class="text-h5 text-center font-weight-bold text-indigo">
-            €{{ totalInvoiced }}
-          </div>
-        </v-card>
-      </v-col>
-  
-      <!-- Total Paid -->
-      <v-col
-        cols="12"
-        md="4"
-      >
-        <v-card
-          color="green-lighten-5"
-          class="pa-4 rounded-xl"
-          elevation="0"
-          :loading="paidLoading"
-        >
-          <v-btn
-            icon="mdi-plus"
-            size="small"
-            rounded="xl"
-            density="comfortable"
-            color="green"
-            variant="outlined"
-            class="position-absolute top-0 right-0 mt-2 mr-2"
-            @click="openInvoiceDialog"
-          />
-          <v-img
-            src="../../../../public/paid.png"
-            height="50"
-          />
-          <div class="text-subtitle-1 text-center font-weight-medium text-grey-darken-2 mb-1 pt-1">
-            Total Paid
-          </div>
-          <div class="text-h5 text-center font-weight-bold text-green">
-            €{{ totalPaid }}
-          </div>
-        </v-card>
-      </v-col>
-  
-      <!-- Payment Completion -->
-      <v-col
-        cols="12"
-        md="4"
-      >
-        <v-card
-          color="blue-grey-lighten-5"
-          class="pa-4 rounded-xl d-flex flex-column align-center"
-          elevation="0"
-        >
-          <v-icon
-            icon="mdi-percent-circle-outline"
-            color="blue-grey-darken-2"
-            size="50"
-          />
-          <div class="text-subtitle-1 font-weight-medium text-grey-darken-2 mb-1 pt-1">
-            Client Payment
-          </div>
-          <v-progress-linear
-            :model-value="percentPaid"
-            height="12"
-            color="blue-grey-darken-2"
-            class="rounded-pill"
-          />
-          <div class="text-caption text-end text-blue-grey-darken-2 mt-1">
-            {{ percentPaid }}%
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
-  
-    <!-- Optional: Add Invoice Dialog -->
-    <v-dialog
-      v-model="showInvoiceDialog"
-      max-width="400"
+  <v-container fluid class="pa-0">
+    <!-- Expansion panel for xs/sm screens -->
+    <v-expansion-panels
+      multiple
+      class="mb-4 d-md-none"
+      variant="accordion"
+      elevation="1"
     >
-      <v-card>
-        <v-card-title>Add New Invoice</v-card-title>
-        <v-card-text>
-          <v-text-field
-            v-model="newInvoiceAmount"
-            label="Amount (€)"
-            type="number"
+      <v-expansion-panel>
+        <v-expansion-panel-title class="text-subtitle-2 font-weight-medium">
+          Invoicing Summary
+        </v-expansion-panel-title>
+        <v-expansion-panel-text>
+          <InvoiceSummary
+            :total-invoiced="totalInvoiced"
+            :total-paid="totalPaid"
+            :percent-paid="percentPaid"
+            :loading-invoiced="invoicedLoading"
+            :loading-paid="paidLoading"
+            @open-dialog="openInvoiceDialog"
           />
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            text
-            @click="showInvoiceDialog = false"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-            color="primary"
-            @click="submitInvoice"
-          >
-            Save
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
+    </v-expansion-panels>
+
+    <!-- Regular row for md+ screens -->
+    <InvoiceSummary
+      class="d-none d-md-flex mb-4"
+      :total-invoiced="totalInvoiced"
+      :total-paid="totalPaid"
+      :percent-paid="percentPaid"
+      :loading-invoiced="invoicedLoading"
+      :loading-paid="paidLoading"
+      @open-dialog="openInvoiceDialog"
+    />
+
+    <!-- Shared Dialog for Paid + Invoiced -->
+    <invoice-dash-dialog
+      :show="showInvoiceDialog"
+      :dialog-type="dialogType"
+      :initial-amount="originalAmount"
+      :is-edit="isEditMode"
+      @close="showInvoiceDialog = false"
+      @update="updateInvoicing"
+    />
+
+    <!-- Snackbar Notification -->
+    <v-snackbar
+      v-model="snack.show"
+      :color="snack.color"
+      location="top"
+      multi-line
+      timeout="3500"
+    >
+      {{ snack.message }}
+      <template #actions>
+        <v-btn icon @click="snack.show = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
-<!-- eslint-disable vue/require-default-prop -->
 <script setup>
-import { computed, ref  } from 'vue';
+import { computed, ref } from 'vue'
+import InvoiceSummary from './InvoiceSummary.vue'
+import { invoices } from '@/stores/invoiceState'
 
-const props = defineProps({
-    dbContents: Array
-});
+const props = defineProps({ currentProjectId: Number })
 
-// const totalInvoiced = ref(8000)
-// const totalPaid = ref(6500)
-// const percentPaid = ref(Math.round((totalPaid.value / totalInvoiced.value) * 100))
+const invoiceStore = invoices()
+const payments = computed(() => invoiceStore.payments)
+const invoicing = computed(() => invoiceStore.invoicing)
+const localInvoices = ref([])
 
 const showInvoiceDialog = ref(false)
-const newInvoiceAmount = ref(null)
 const invoicedLoading = ref(false)
 const paidLoading = ref(false)
+const dialogType = ref(null)
+const isEditMode = ref(false)
+const originalAmount = ref(0)
 
-const openInvoiceDialog = () => {
+const snack = ref({
+  show: false,
+  color: 'success',
+  message: ''
+})
+
+
+const totalPaid = computed(() => {
+  const entries = payments.value.filter(p => p.project === props.currentProjectId)
+  return entries.reduce((acc, curr) => acc + curr.amount, 0)
+})
+
+const totalInvoiced = computed(() => {
+  const entries = invoicing.value.filter(p => p.project === props.currentProjectId)
+  return entries.reduce((acc, curr) => acc + curr.amount, 0)
+})
+
+const percentPaid = computed(() => {
+  const invoiced = totalInvoiced.value
+  const paid = totalPaid.value
+  return invoiced === 0 ? 0 : Math.round((paid / invoiced) * 100)
+})
+
+const openInvoiceDialog = (type, edit = false) => {
+  dialogType.value = type
+  isEditMode.value = edit
+
+  if (edit) {
+    originalAmount.value = type === 'invoiced' ? totalInvoiced.value : totalPaid.value
+  } else {
+    originalAmount.value = 0
+  }
+
   showInvoiceDialog.value = true
 }
 
-const submitInvoice = () => {
-  if (!newInvoiceAmount.value) return
-  totalInvoiced.value += parseFloat(newInvoiceAmount.value)
-  percentPaid.value = Math.round((totalPaid.value / totalInvoiced.value) * 100)
-  newInvoiceAmount.value = null
-  showInvoiceDialog.value = false
-}
+const updateInvoicing = async (newAmount) => {
+  const isInvoiced = dialogType.value === 'invoiced'
+  const project = props.currentProjectId
 
-//INVOICING CONTROL
-const totalInvoiced = computed(() => {
-  return props.dbContents.reduce((sum, inv) => {
-    return sum + (inv.amount_invoiced || 0);
-  }, 0).toFixed(2);
-});
+  if (!project) {
+    console.error("❌ No project ID found")
+    return
+  }
 
-const totalPaid = computed(() => {
-  return props.dbContents.reduce((sum, inv) => {
-    return sum + (inv.amount_paid || 0);
-  }, 0).toFixed(2);
-});
+  const endpoint = isInvoiced
+    ? '/invoice/post-general/invoicing'
+    : '/invoice/post-general/payments'
 
-const percentPaid = computed(() => {
-  const invoiced = parseFloat(totalInvoiced.value);
-  return invoiced === 0 ? 0 : Math.round((totalPaid.value / invoiced) * 100);
-});
+  const payload = { project, amount: newAmount }
+  if (isInvoiced) invoicedLoading.value = true
+  else paidLoading.value = true
 
-const update = async(item) => {
-    const query = [{project: props.item.invoices[0].project}, {issuer: item.issuer}];
-    if(localMargin.value === null) return null
-    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/patch/invoices?margin=${JSON.stringify(query)}`, {
-        method: 'PATCH',
-        headers: {'Content-Type' : 'application/json'},
-        body: JSON.stringify({margin: localMargin.value})
+  try {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     })
-    if (!res.ok) {
-      throw new Error('Failed to change margin')
-    }
-    loading.value = true
-    setTimeout(() => {
-        loading.value = false;
-      }, 2000);
-    const data = await res.json()
-    console.log("Margin has been updated!!", data);
-    
-    // Reset changed flag
-    // marginChangedMap.value[item.issuer] = false;
-    // emit('marginUpdate', localMargin.value)
-  };
 
+    if (!res.ok) throw new Error('❌ Failed to update')
+
+    // ✅ Optimistically push new entry into store
+    const entry = {
+      project,
+      amount: Number(newAmount),
+      project_name: '' // you can optionally pull this from local context if needed
+    }
+
+    if (isInvoiced) invoiceStore.invoicing.push(entry)
+    else invoiceStore.payments.push(entry)
+
+    snack.value = {
+      show: true,
+      color: 'success',
+      message: `✔️  ${isInvoiced ? 'Invoice' : 'Payment'} added successfully`
+    }
+
+    showInvoiceDialog.value = false
+  } catch (err) {
+    console.error(err)
+    snack.value = {
+      show: true,
+      color: 'error',
+      message: '❌ Something went wrong. Please try again.'
+    }
+  } finally {
+    setTimeout(() => {
+      if (isInvoiced) invoicedLoading.value = false
+      else paidLoading.value = false
+    }, 1500)
+  }
+}
 </script>
 
 <style scoped>
@@ -215,6 +183,7 @@ const update = async(item) => {
 }
 .position-absolute {
   position: absolute;
+  z-index: 999 !important;
 }
 .top-0 {
   top: 0;

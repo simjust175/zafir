@@ -2,7 +2,7 @@ import db from "../config/db.js";
 
 const isNotDeleted = "deleted_at IS NULL";
 
-const allowedTables = ["emails", "invoices", "projects", "users"];
+const allowedTables = ["emails", "invoices", "projects", "users", "payments", "invoicing"];
 
 function isTableAllowed(database) {
   return allowedTables.includes(database);
@@ -66,7 +66,7 @@ class General {
     if (!insertResult.insertId) throw new Error("Insert failed");
   
     // Fetch and return the inserted row using insertId
-    const SELECT_SQL = `SELECT * FROM \`${table}\` WHERE ${table.slice(0, -1)}_id = ?`;
+    const SELECT_SQL = `SELECT * FROM \`${table}\` WHERE ${table === 'invoicing' ? table : table.slice(0, -1)}_id = ?`;
     const [rows] = await db.query(SELECT_SQL, [insertResult.insertId]);
   
     return rows[0];
@@ -76,10 +76,15 @@ class General {
     if (!allowedTables.includes(table)) {
       throw new Error("Invalid table name");
     }
-
+    console.log("in patch", table, body, whereClause);
+    
     // Optional: Define updatable fields per table
     const fieldList = {
-      invoices: ['issuer', 'amount', 'includesBtw', 'btwPercent', 'margin', 'deleted_at'],
+      invoices: ['issuer', 'amount', 'includesBtw', 'btwPercent', 'margin', 'deleted_at', 'double_checked'],
+      projects: [ 'project_name', 'amount_invoiced', 'amount_paid', 'completed_on'],
+      payments: ['payment_amount'],
+      invoicing: ['invoicing_amount']
+
       // add more tables and fields as needed
     };
 

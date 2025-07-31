@@ -9,9 +9,9 @@ import { fileURLToPath } from 'url';
 import invoiceRoutes from "./Routers/invoiceRoutes.js";
 import RegisterRoutes from "./Login_system/Router/registerRoutes.js";
 import AmountServices from "./Services/amountService.js";
-//import startListening from "./email-service/imap.js";
-//import GeneralService from "../../Services/generalService.js";
 import startListeningForAll from "./email-service/imap/index.js";
+import emailRoutes from "./Routers/emailRoutes.js"
+
 
 dotenv.config();
 
@@ -37,6 +37,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/invoice", invoiceRoutes);
 app.use("/file/", express.static(path.join(__dirname, "email-service/downloads")));
 app.use("/register", RegisterRoutes);
+app.use("/email", emailRoutes);
 
 // ----------- Invoice Posting with Socket Emission -----------
 const postInvoices = async (inv) => {
@@ -52,9 +53,7 @@ const postInvoices = async (inv) => {
 };
 
 // ----------- Start IMAP Email Listener -----------
-//startListening(async(inv)=> await postInvoices(inv));
- //>>>  startListeningForAll(async(inv)=> await postInvoices(inv))
-//startLsteningForAll()
+startListeningForAll(async(inv)=> await postInvoices(inv))
 
 
 // ----------- WebSocket Logging -----------

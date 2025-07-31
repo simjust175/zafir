@@ -29,7 +29,14 @@ const query = {
 const txt = "hello";
  // Output: "hell"
 
-const wage = 120
-const margin = 0
-console.log(wage + (wage*(margin/100)));
-console.log("name", names.includes('simcha'));
+// const wage = 120
+// const margin = 0
+// console.log(wage + (wage*(margin/100)));
+// console.log("name", names.includes('simcha'));
+
+// console.log("NOW!!", new Date().Now())
+const hey = 'yay'
+const ob = {
+    [hey]: 'ow'
+}
+console.log(ob['yay']);

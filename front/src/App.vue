@@ -27,7 +27,7 @@
       </transition> -->
 
       <footer>
-        <footer-component class="bg-red" />
+        <footer-component class="bottom-0 right-0 left-0"/>
       </footer>
     </v-main>
   </v-app>
@@ -39,6 +39,9 @@ import { useRouter } from "vue-router";
 import { useTheme } from "vuetify";
 import FooterComponent from "@/components/Header-footer/FooterComponent.vue";
 import { setLogin } from "@/stores/loginState";
+
+import { invoices } from "@/stores/invoiceState";
+const invoiceStore = invoices()
 
 // Vuetify theme instance
 const theme = useTheme();
@@ -74,8 +77,26 @@ async function validateToken() {
   return isTokenValid.Success;
 }
 
+//get Payment
+const getPayments = async () => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/payments`, {
+      headers: { 'Content-Type': 'application/json' }
+    })
+    const resJson = await res.json()
+    const pay = resJson.payments?.payments || []
+    const inv = resJson.payments?.invoicing || []
+    console.log("IN APP", pay, inv);
+    
+    invoiceStore.setPaymentsData(pay, inv)
+
+  } catch (err) {
+    console.error("❌ Failed to fetch payments:", err)
+  }
+}
+
+
 onMounted(async () => {
-  // Validate user login
   const isValid = await validateToken();
   loginState.token = isValid;
   if (!isValid) {
@@ -85,20 +106,22 @@ onMounted(async () => {
     router.push("/");
   }
 
-  // Load theme from store
   if (loginState.theme) {
     localTheme.value = loginState.theme;
     theme.global.name.value = loginState.theme;
   }
 
+  await getPayments(); // 👈 Load into store
+
   loading.value = true;
   setTimeout(() => (loading.value = false), 3000);
-});
+})
 
 function handleThemeChange(newTheme) {
   localTheme.value = newTheme;         // update local ref
   loginState.theme = newTheme;         // persist in store
-  theme.global.name.value = newTheme;  // apply immediately
+  //theme.global.name.value = newTheme;
+  theme.change(newTheme)  // apply immediately
 }
 </script>
 

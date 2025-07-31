@@ -1,9 +1,8 @@
 <template>
   <v-dialog
     v-model="dialog"
-    max-width="400"
   >
-    <v-card rounded="lg">
+    <v-card rounded="lg" width="400">
       <v-card-text class="px-6">
         {{ props.text }}
       </v-card-text>

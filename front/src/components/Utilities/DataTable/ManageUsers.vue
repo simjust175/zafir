@@ -55,9 +55,8 @@
     <!-- Add/Edit Dialog -->
     <v-dialog
       v-model="dialog"
-      max-width="500px"
     >
-      <v-card>
+      <v-card width="420" class="pa-2">
         <v-card-title class="text-h6">
           {{ editingUser ? 'Edit User' : 'Add User' }}
         </v-card-title>
@@ -164,8 +163,8 @@ import { ref } from 'vue'
   }
   </script>
   
-  <style scoped>
+  <!-- <style scoped>
   .v-data-table .v-btn {
     min-width: 32px;
   }
-  </style>
+  </style> -->
