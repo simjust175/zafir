@@ -6,11 +6,8 @@ import GeneralService from "../../Services/generalService.js";
 import AmountService from "../../Services/amountService.js";
 
 
-const test = 0
-const mockRoute = { params: { db: "emails" }};
-
 export default async function startListeningForAll(postToDb) {
-  const list = await GeneralService.getService(mockRoute);
+  const list = await GeneralService.getService({ params: { db: "emails" }});
 
   for (const accountConfig of list) {
     const { email, password } = accountConfig;
