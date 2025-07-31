@@ -1,0 +1,31 @@
+version: '3'
+ 
+services:
+  db-mysql:
+    image: mysql:5.7
+    container_name: zafir #change
+    environment:
+      MYSQL_ROOT_PASSWORD: 2018 #change
+      MYSQL_DATABASE: db #change
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+    ports:
+      - "3345:3306" #change the first port;
+    volumes:
+    # - ./dbdata:/var/lib/mysql
+      - zafirdata:/var/lib/mysql #change'zafirdata' to whats on the last row;
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: zafir_container #change
+    links:
+      - db-mysql
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+      # pma port should port
+    ports:
+        - 8088:80
+      # dbdata cannot be called twice  
+volumes:
+ zafirdata: #change
