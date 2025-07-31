@@ -17,8 +17,6 @@ const invoiceArray = invoices()
 
 let amountArray = ref([])
 const fetchFromSessionStorage = () =>{
-  console.log("innnnnnnnnnnnnnnnnvoices", invoiceArray);
-  
     amountArray.value = invoiceArray.dbResponse
 }
 

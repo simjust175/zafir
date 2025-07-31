@@ -1,5 +1,5 @@
 <template>
-  <main class="pa-12 my-0 py-0 main-container">
+  <main class="pa-12 my-0 py-0 main-menu main-container">
     <main-menu />
   </main>
 </template>
@@ -11,7 +11,7 @@ export default {
 </script>
 
 <style>
-.main-container{
+.main-menu.main-container{
     height: 100vh;
     display: flex;
     align-items: center;

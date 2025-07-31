@@ -18,7 +18,7 @@
             {{ invoiceArray[0]?.issuer || 'Invoice Details' }}
           </v-toolbar-title>
 
-          <v-btn
+          <!-- <v-btn
             class="ms-5"
             icon="mdi-printer-outline"
             @click="printPdf"
@@ -30,7 +30,7 @@
           <v-btn
             icon="mdi-send-variant-outline"
             @click="sendPdfByEmail"
-          />
+          /> -->
         </v-toolbar>
 
         <v-card-text>
@@ -60,42 +60,53 @@
             </template>
 
             <template #item.actions="{ item }">
-              <v-icon
-                size="22"
-                color="info"
-                class="ml-3"
-                @click="previewPdf(item.pdf_file)"
-              >
-                mdi-file-eye-outline
-              </v-icon>
+              <div class="d-flex flex-row flex-nowrap align-center ga-2">
+                <v-icon
+                  size="22"
+                  color="info"
+                  @click="previewPdf(item)"
+                >
+                  mdi-file-eye-outline
+                </v-icon>
 
-              <v-icon
-                size="22"
-                color="primary"
-                class="ml-3"
-                @click="editItem(item)"
-              >
-                mdi-pencil-outline
-              </v-icon>
+                <v-icon
+                  size="22"
+                  color="primary"
+                  @click="editItem(item)"
+                >
+                  mdi-pencil-outline
+                </v-icon>
 
-              <v-icon
-                size="22"
-                color="error"
-                class="ml-3"
-                @click="deleteItem(item)"
-              >
-                mdi-delete-outline
-              </v-icon>
+                <v-icon
+                  size="22"
+                  color="error"
+                  @click="deleteItem(item, false)"
+                >
+                  mdi-delete-outline
+                </v-icon>
 
-              <v-scale-transition>
-                <v-progress-circular
-                  v-if="sendingId === item.id"
-                  indeterminate
-                  color="success"
-                  size="20"
+                <v-scale-transition>
+                  <v-progress-circular
+                    v-if="sendingId === item.id"
+                    indeterminate
+                    color="success"
+                    size="20"
+                  />
+                </v-scale-transition>
+              </div>
+            </template>
+
+            <template #item.check="{ item }">
+              <div class="d-flex align-center justify-center">
+                <v-icon
+                  icon="mdi-check-circle-outline"
+                  size="32"
+                  :disabled="item.double_checked"
+                  :color="item.double_checked ? 'success' : 'grey-lighten-2'"
                   class="ml-3"
+                  @click="previewPdf(item, true)"
                 />
-              </v-scale-transition>
+              </div>
             </template>
             <template #no-data>
               <empty-state
@@ -120,8 +131,12 @@
     <!-- PDF Viewer Dialog -->
     <pdf-viewer 
       :dialog="pdfDialog"
+      :double-check="doubleCheckTrigger"
       :url="selectedUrl"
-      @close="pdfDialog = false"
+      :file-details="selectedPdf"
+      @close="closePdfDialog"
+      @close-double-check="doubleCheckTrigger = false"
+      @double-checked="handleDoubleCheck"
     />
     <!-- <alert-prop 
       :alert="activateAlert"
@@ -130,8 +145,9 @@
       :closable="true"
     /> -->
     <snack-bar
+      :icon="mdi-check-circle"
       :banner="activateAlert"
-      label="Invoice successful deleted"
+      :label="alertLabel"
       color="success"
     />
    
@@ -182,7 +198,8 @@ const headers = [
   { title: 'Amount', key: 'amount' },
   { title: 'Btw', key: 'includesBtw' },
   { title: '(%)', key: 'btwPercent' },
-  { title: '', key: 'actions', sortable: false }
+  { title: '', key: 'actions', sortable: false },
+  { title: 'Double-checked', key: 'check', sortable: false }
 ];
 
 watch(() => props.invoices, (updated) => invoiceArray.value = updated);
@@ -203,42 +220,26 @@ const updatedId = ref(null); // 🟡 Highlight tracker
 
 // ========== PDF Preview ==========
 const pdfDialog = ref(false);
+const doubleCheckTrigger = ref(false)
 const selectedUrl = ref('');
+const selectedPdf = ref({})
 
 // const previewPdf = (fileName) => {
 //   selectedUrl.value = `${import.meta.env.VITE_BASE_URL}/file/${fileName}?t=${Date.now()}`;
 //   pdfDialog.value = true;
 // };
 
-const previewPdf = (fileName) => {
-  selectedUrl.value = fileName;
+const previewPdf = (file, doubleCheck) => {
+  selectedUrl.value = file.pdf_file;
+  selectedPdf.value = file;
   pdfDialog.value = true;
+  if(doubleCheck) doubleCheckTrigger.value = true
 };
 
-const printPdf = () => {
-  const iframe = document.createElement('iframe');
-  iframe.style.display = 'none';
-  iframe.src = selectedUrl.value;
-  document.body.appendChild(iframe);
-  iframe.onload = () => {
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-  };
-};
-
-const downloadPdf = () => {
-  const link = document.createElement('a');
-  link.href = selectedUrl.value;
-  link.download = selectedUrl.value.split('/').pop();
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-const sendPdfByEmail = () => {
-  alert("📨 This would trigger an email send function (hook up backend if needed)");
-};
-
+const closePdfDialog = () => {
+  pdfDialog.value = false;
+  doubleCheckTrigger.value = false;
+}
 //⚠️alert prop
 const activateAlert = ref(false)
 const alertLabel = ref("");
@@ -277,6 +278,7 @@ function formatDateToMySQL(date) {
     String(date.getMinutes()).padStart(2, '0') + ':' +
     String(date.getSeconds()).padStart(2, '0');
 }
+
 const deleteItem = (item) => {
   editedIndex.value = invoiceArray.value.indexOf(item);
   deletedId.value = {...item};
@@ -309,6 +311,15 @@ const closeDelete = () => {
     editedIndex.value = -1;
   });
 };
+
+const handleDoubleCheck = (id)=> {
+  patchChanges({id: id, body: { double_checked : formatDateToMySQL(new Date()) } });
+   activateAlert.value = true
+    setTimeout(()=>{
+     activateAlert.value = false
+    }, 2000)
+   alertLabel.value = "Thanks for double checking!."
+}
 
 const save = () => {
   if (editedIndex.value > -1) {

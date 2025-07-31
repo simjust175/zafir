@@ -1,7 +1,6 @@
 <template>
   <v-dialog
     v-model="internalDialog"
-    max-width="500px"
   >
     <template #activator="{ props }">
       <v-btn

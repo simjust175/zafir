@@ -36,7 +36,7 @@ class RegisterService {
             const isCredentialsValid = await bcrypt.compare(body.pwd, pwd);
             console.log("validity", isCredentialsValid);
             if (!isCredentialsValid) return null;
-            const newToken = { token: await Register.GenerateToken(user_email, pwd), active: true };
+            const newToken = { token: await Register.GenerateToken(user_email, pwd) };//, active: true
             await Register.patchUser(user_id, newToken);
             return { newToken, user_id };
         } catch (error) {
@@ -48,9 +48,9 @@ class RegisterService {
         if (!params.user_email) throw new Error("email must be provided")
         try {
             const { user_id } = await Register.getByEmail(params)
-            const setStatusAsInactive = await Register.patchUser(user_id, {active: false})
+            //const setStatusAsInactive = await Register.patchUser(user_id)//, {active: false}
             const removeToken = await Register.patchUser(user_id, { token: "" });
-            console.log("user status:", setStatusAsInactive);
+            //console.log("user status:", setStatusAsInactive);
             return removeToken;
         } catch (error) {
             throw new Error(error);

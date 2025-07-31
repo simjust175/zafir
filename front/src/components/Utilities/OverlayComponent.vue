@@ -70,17 +70,17 @@
   
   .dot-3 {
     background-color: #3788bf;
-    animation: dot-3-move 2s ease infinite, index 4s ease infinite;
+    animation: dot-3-move 2s ease infinite, index 3s ease infinite;
   }
   
   .dot-2 {
     background-color: #18578c;
-    animation: dot-2-move 2s ease infinite, index 4s -4s ease infinite;
+    animation: dot-2-move 2s ease infinite, index 3s -3s ease infinite;
   }
   
   .dot-1 {
     background-color: #86CBFFFF;
-    animation: dot-1-move 2s ease infinite, index 4s -2s ease infinite;
+    animation: dot-1-move 2s ease infinite, index 3s -2s ease infinite;
   }
   
   @keyframes dot-3-move {

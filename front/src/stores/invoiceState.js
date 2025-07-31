@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { ref, reactive } from "vue";
 import { defineStore } from "pinia";
 
 export const invoices = defineStore(
@@ -6,12 +6,22 @@ export const invoices = defineStore(
   () => {
     // state
     const dbResponse = reactive({});
-    const warnings = reactive([])
+    const payments = ref([]);
+    const invoicing = ref([]);
+    const warnings = ref([]);
 
-    //Returns
+    const setPaymentsData = (pay, inv) => {
+      payments.value = pay;
+      invoicing.value = inv;
+    };
+
+    // Returns
     return {
-     dbResponse,
-     warnings
+      dbResponse,
+      warnings,
+      payments,
+      invoicing,
+      setPaymentsData,
     };
   },
   {

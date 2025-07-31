@@ -11,16 +11,15 @@
         @click="initialize"
       /> -->
     <v-card
-      class="pa-6 pt-2"
+      class="pa-6 pt-1"
       flat
     >
       <v-container
-        class="rounded-xl pa-4 mb-6"
-    
+        class="rounded-xl pa-1 pb-3"
         fluid
       >
         <v-row dense>
-          <InvoiceDash :db-contents="dbContents" />
+          <InvoiceDash :current-project-id="project_id" />
         </v-row>
       </v-container>
       <v-data-table
@@ -63,25 +62,34 @@
               hide-details
               single-line
             />
-            <v-btn
+            <download-file
               class="ms-5"
-              icon="mdi-printer-outline"
-              @click="printPdf"
+              :grouped-invoices="groupedInvoices"
+              :project-name="projectName"
+              :total="overallTotalWithMargin"
+              :print="false"
             />
-            <v-btn
-              icon="mdi-download-outline"
-              @click="downloadPdf"
+            <download-file
+              :grouped-invoices="groupedInvoices"
+              :project-name="projectName"
+              :total="overallTotalWithMargin"
+              :print="true"
             />
-            <v-btn
-              icon="mdi-send-variant-outline"
-              @click="sendPdfByEmail"
+            <SendInvoice
+              :grouped-invoices="groupedInvoices"
+              :project-name="projectName"
+              :current-project-id="project_id"
+              :total="overallTotalWithMargin"
             />
             <v-divider
               class="mx-2"
               inset
               vertical
             />
-            <table-parent-toolbar-menu :project="invoices" />
+            <table-parent-toolbar-menu
+              :project="invoices"
+              class="pr-1"
+            />
           </v-toolbar>
         </template>
 
@@ -181,6 +189,7 @@
 import { ref, computed, watch, onMounted, defineProps, defineEmits } from 'vue';
 import EmptyState from '../EmptyState.vue';
 import InvoiceDash from './InvoiceDash.vue';
+import SendInvoice from '@/components/DownloadSendPrint/SendInvoice.vue';
 //import FAB from './FAB.vue';
 import { invoices as invoiceStore } from '@/stores/invoiceState';
 import socket from '@/socket.js';
@@ -191,6 +200,7 @@ const props = defineProps({
   language: String,
   expanded: Boolean,
   projectName: String,
+  project_id: Number,
   refreshing: Boolean
 });
 
