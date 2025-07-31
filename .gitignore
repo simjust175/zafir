@@ -1,0 +1,10 @@
+# Ignore environment variables
+.env
+.env.*  # ignores .env.development, .env.production, etc.
+
+# Node.js dependencies
+node_modules/
+
+# Build output
+dist/
+build/
