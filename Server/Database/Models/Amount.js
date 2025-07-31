@@ -39,7 +39,7 @@ WHERE
     return amountSelected;
   }
   static async getFreeEmails() {
-    const SELECT_amounts = `SELECT e.email AS email_address
+    const SELECT_amounts = `SELECT e.email AS email_address, e.password AS password, e.email_id AS email_id
 FROM emails e
 WHERE NOT EXISTS (
   SELECT 1
@@ -52,7 +52,7 @@ WHERE NOT EXISTS (
   }
 
   static async getProjectId(email) {
-    const Select_projectId = `Select project_id FROM projects WHERE email = ? AND ${isNotDeleted}`;
+    const Select_projectId = `Select project_id FROM projects WHERE email = ? AND completed_on IS NULL`;
     const [projectId] = await db.query(Select_projectId, [email]);
     return projectId;
   }

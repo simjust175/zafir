@@ -1,6 +1,6 @@
 import express from "express";
 import http from "http";
-//import { Server as SocketIOServer } from "socket.io";
+import { Server as SocketIOServer } from "socket.io";
 import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
@@ -23,10 +23,10 @@ const __dirname = path.dirname(__filename);
 
 const server = http.createServer(app);
 
-// const io = new SocketIOServer(server, {
-//   cors: { origin: "*" },
-// });
-// app.set("io", io); // Optional: make io available in routes/middleware
+const io = new SocketIOServer(server, {
+  cors: { origin: "*" },
+});
+app.set("io", io); // Optional: make io available in routes/middleware
 
 // ----------- Middleware -----------
 app.use(cors());
@@ -45,8 +45,8 @@ const postInvoices = async (inv) => {
     console.log("📦 Posting invoice to DB:", inv);
     await AmountServices.postService(inv);
     
-    // 🔊 Push invoice to connected clients
-    // io.emit("new-invoice", inv);
+    //🔊 Push invoice to connected clients
+    io.emit("new-invoice", inv);
   } catch (error) {
     console.error("❌ Error handling invoice:", error);
   }
@@ -57,13 +57,13 @@ startListeningForAll(async(inv)=> await postInvoices(inv))
 
 
 // ----------- WebSocket Logging -----------
-// io.on("connection", (socket) => {
-//   console.log("🔌 Socket connected:", socket.id);
+io.on("connection", (socket) => {
+  console.log("🔌 Socket connected:", socket.id);
 
-//   socket.on("disconnect", () => {
-//     console.log("❎ Socket disconnected:", socket.id);
-//   });
-// });
+  socket.on("disconnect", () => {
+    console.log("❎ Socket disconnected:", socket.id);
+  });
+});
 
 // ----------- Start Server -----------
 const port = process.env.PORT || 1221;

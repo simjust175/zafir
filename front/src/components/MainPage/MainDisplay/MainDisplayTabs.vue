@@ -88,12 +88,34 @@
           </v-tabs-window-item>
 
           <!-- Add New Project -->
-          <v-tabs-window-item value="add">
+          <v-tabs-window-item value="add" v-if="!expanded">
             <add-new-project fill-width fill-height :in-tabs="true" />
           </v-tabs-window-item>
         </v-tabs-window>
       </v-col>
     </v-row>
+    <v-fab
+      v-if="expanded"
+      extended
+      color="primary"
+      density="comfortable"
+      prepend-icon="mdi-plus"
+      location="right bottom"
+      text="Add project"
+      height="40"
+      width="170"
+      app
+      @click="addProjectDialog = !addProjectDialog"
+    />
+    <v-dialog
+      v-model="addProjectDialog"
+      :in-tabs="false"
+    >
+      <add-new-project
+        @close="addProjectDialog = false"
+        @new-project-added="handleProjectRemoved"
+      />
+    </v-dialog>
   </v-card>
 </template>
 
@@ -101,6 +123,9 @@
 import AddNewProject from "@/components/Projects/AddNewProject.vue";
 import { ref, computed, watch } from "vue";
 import { useTheme } from "vuetify";
+import { invoices } from "@/stores/invoiceState"
+  
+const invoiceStore = invoices()
 
 const theme = useTheme();
 const themeColor = computed(() => `bg-grey-${theme.global.name.value}en-4`);
@@ -124,6 +149,12 @@ const projects = computed(() => {
   return [...set];
 });
 
+const addProjectDialog = ref(false);
+const handleProjectRemoved = (projectName) => {
+  invoiceStore.dbResponse = invoiceStore.dbResponse.filter(
+    inv => inv.project_name !== projectName
+  )
+}
 // Create a project → invoice mapping for easy reuse
 const invoicesByProject = computed(() => {
   const map = {};
