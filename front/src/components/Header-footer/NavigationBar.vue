@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import NavItemWithTooltip from "../Utilities/NavItemWithTooltip.vue";
+import NavItemWithTooltip from "./NavItemWithTooltip.vue";
 import { ref, computed, watch } from "vue";
 import { useRouter } from 'vue-router';
 import { useDisplay } from 'vuetify';

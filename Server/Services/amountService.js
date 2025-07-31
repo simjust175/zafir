@@ -82,6 +82,7 @@ class AmountService {
       throw new Error(`in Services/postNewEmailService: ${error.message}`);
     }
   }
+
   static async getService({ token }) {
     const [{ user_id }] = await Amount.ValidateByToken(token);
     if (!user_id) throw new Error("not the correct user");
@@ -117,6 +118,18 @@ class AmountService {
       );
       
       const [{ project_id }] = await Amount.getProjectId(emailId[0].email_id);
+      console.log("project_id", project_id);
+      
+      if (!project_id) return null;
+      return project_id;
+    } catch (error) {
+      throw new Error(`error in amountService/getProjectIdService: ${error.message}`);
+    }
+  }
+  
+  static async getActiveProjectIdService(email_id) {
+    try {
+      const [{ project_id }] = await Amount.getProjectId(email_id);
       console.log("project_id", project_id);
       
       if (!project_id) return null;

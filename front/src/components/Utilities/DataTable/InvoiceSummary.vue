@@ -1,6 +1,9 @@
 <template>
   <v-row dense>
-    <v-col cols="12" md="4">
+    <v-col
+      cols="12"
+      md="4"
+    >
       <v-card
         v-if="!animateLoading"
         color="indigo-lighten-5"
@@ -30,7 +33,10 @@
           class="position-absolute top-0 left-0 mt-2 ml-2"
           @click="$emit('open-dialog', 'invoiced', true)"
         />
-        <v-img src="/invoice.png" height="40" />
+        <v-img
+          src="/invoice.png"
+          height="40"
+        />
         <div class="text-subtitle-2 text-center font-weight-medium text-grey-darken-2 mb-1 pt-1">
           Total Invoiced
         </div>
@@ -46,7 +52,10 @@
       />
     </v-col>
 
-    <v-col cols="12" md="4">
+    <v-col
+      cols="12"
+      md="4"
+    >
       <v-card
         v-if="!animateLoading"
         color="green-lighten-5"
@@ -76,7 +85,10 @@
           class="position-absolute top-0 left-0 mt-2 ml-2"
           @click="$emit('open-dialog', 'paid', true)"
         />
-        <v-img src="/paid.png" height="40" />
+        <v-img
+          src="/paid.png"
+          height="40"
+        />
         <div class="text-subtitle-2 text-center font-weight-medium text-grey-darken-2 mb-1 pt-1">
           Total Paid
         </div>
@@ -92,14 +104,21 @@
       />
     </v-col>
 
-    <v-col cols="12" md="4">
+    <v-col
+      cols="12"
+      md="4"
+    >
       <v-card
         v-if="!animateLoading"
         color="blue-grey-lighten-5"
         class="pa-3 rounded-xl d-flex flex-column align-center"
         elevation="0"
       >
-        <v-icon icon="mdi-percent-circle-outline" color="blue-grey-darken-2" size="35" />
+        <v-icon
+          icon="mdi-percent-circle-outline"
+          color="blue-grey-darken-2"
+          size="35"
+        />
         <div class="text-subtitle-2 font-weight-medium text-grey-darken-2 mb-1 pt-1">
           Client Payment
         </div>
@@ -125,6 +144,7 @@
   </v-row>
 </template>
 
+<!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { ref, onMounted } from 'vue'
 

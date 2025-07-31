@@ -50,15 +50,24 @@
               class="flex-grow-1 select-email"
               required
             />
-            <v-btn
-              v-if="availableEmails.length > 0"
-              variant="flat"
-              :icon="!addingNewEmail ? 'mdi-plus' : 'mdi-arrow-u-left-top'"
-              rounded="lg"
-              color="primary"
-              class="ml-2"
-              @click="toggleEmailMode"
-            />
+            <v-tooltip
+              location="top"
+              open-delay="500"
+              :text="!addingNewEmail ? 'Add new email' : 'Back'"
+            >
+              <template #activator="{ props }">
+                <v-btn
+                  v-if="availableEmails.length > 0"
+                  variant="flat"
+                  :icon="!addingNewEmail ? 'mdi-plus' : 'mdi-arrow-u-left-top'"
+                  rounded="lg"
+                  color="primary"
+                  class="ml-2"
+                  v-bind="props"
+                  @click="toggleEmailMode"
+                />
+              </template>
+            </v-tooltip>
           </div>
 
           <v-text-field
@@ -235,6 +244,7 @@ const submitForm = async () => {
 
     if (addingNewEmail.value) {
       await snackbarRef.value.showSnack('Verifying email access...', 'info')
+      await snackbarRef.value.showSnack('✅ Email verified!...', 'info')
       const { success, error } = await verifyEmail(emailToUse, pass)
       if (!success) return snackbarRef.value.showSnack(error || 'Email access failed', 'error')
     }
@@ -263,7 +273,7 @@ const submitForm = async () => {
 
     if (!response.ok) throw new Error(result?.message || 'Failed to add project')
 
-    await snackbarRef.value.showSnack('Project successfully added!', 'success')
+    await snackbarRef.value.showSnack('✅ Project successfully added!', 'success')
     emit('close')
     emit('newProjectAdded')
 
