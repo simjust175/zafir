@@ -3,6 +3,8 @@ import General from "../Database/Models/general.js";
 
 class AmountService {
   static async postService(body) {
+    console.log("POST BODY💪", body);
+    
     try {
       const postAmount = await Amount.postAmount(body);
       if (!postAmount) return null;
@@ -12,39 +14,74 @@ class AmountService {
     }
   }
 
-  static async postNewEmailService({ email, project_name }) {
+  static async getEmailsNotConnectedToProjects() {
     try {
-      // 1. Check if email already exists
-      const emailQuery = `email = "${email.email}"`;
-      const existingEmails = await General.getWithFilter('emails', 'email', emailQuery);
-  
-      if (existingEmails && existingEmails.length > 0) {
-        console.log("Email already exists!");
-        return { email: existingEmails[0], project: null };
-      }
-  
-      // 2. Post new email
-      const newEmail = await General.post("emails", email);
-      if (!newEmail) throw new Error("Failed to insert new email");
-      
-      // 3. Fallback project name if empty or undefined
-      let finalProjectName = project_name?.project_name?.trim();
-      if (!finalProjectName) {
-        const defaultName = `project${Date.now()}`; // or use counter logic
-        finalProjectName = defaultName;
-      }
-  
-      // 4. Post new project linked to the email
-      const newProject = await General.post("projects", {
-        project_name: finalProjectName,
-        email: newEmail.email_id
-      });
-      return { email: newEmail, project: newProject };
+      return await Amount.getFreeEmails();
     } catch (error) {
-      throw new Error(`in Services/postService: ${error.message}`);
+      throw new Error(`in amountServices/getEmailsNotConnectedToProjects: ${error.message}`);
     }
   }
 
+  static async postNewEmailService({ email, password, project_name }) {
+    try {
+      const emailStr = (email || '').trim().toLowerCase();
+      if (!emailStr) throw new Error("Email is required");
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailStr)) throw new Error("Invalid email format");
+
+      let finalProjectName = (project_name || '').trim();
+      if (!finalProjectName) finalProjectName = `project${Date.now()}`;
+
+      // 1. Check if email exists
+      const existingEmails = await General.getWithFilter('emails', '*', `email = "${emailStr}"`);
+      let emailRow;
+
+      if (existingEmails && existingEmails.length > 0) {
+        emailRow = existingEmails[0];
+      } else {
+        if (!password || !password.trim()) {
+          throw new Error("Password is required to create a new email");
+        }
+
+        emailRow = await General.post("emails", { email: emailStr, password });
+        if (!emailRow || !emailRow.email_id) {
+          throw new Error("Failed to insert new email");
+        }
+      }
+
+      // 2. Check if project with same name already exists for this email
+      const existingProjects = await General.getWithFilter(
+        "projects",
+        "*",
+        `email = ${emailRow.email_id} AND project_name = "${finalProjectName}"`
+      );
+
+      if (existingProjects && existingProjects.length > 0) {
+        return {
+          email: emailRow,
+          project: existingProjects[0],
+          created: false,
+        };
+      }
+
+      // 3. Create new project linked to the email
+      const newProject = await General.post("projects", {
+        project_name: finalProjectName,
+        email: emailRow.email_id,
+      });
+
+      if (!newProject) throw new Error("Failed to insert new project");
+
+      return {
+        email: emailRow,
+        project: newProject,
+        created: true,
+      };
+    } catch (error) {
+      throw new Error(`in Services/postNewEmailService: ${error.message}`);
+    }
+  }
   static async getService({ token }) {
     const [{ user_id }] = await Amount.ValidateByToken(token);
     if (!user_id) throw new Error("not the correct user");
@@ -54,6 +91,20 @@ class AmountService {
       return getAmounts;
     } catch (error) {
       throw new Error(`error in amountService/getService: ${error.message}`);
+    }
+  }
+
+  static async getPaymentService() { //table
+    console.log("table to get");
+    
+    try {
+      //const payments = await Amount.getPayments(table)
+      const payments = await Amount.getPayments('payments')
+      const invoicing = await Amount.getPayments('invoicing')
+      if (!payments) return null;
+      return { payments, invoicing };
+    } catch (error) {
+      throw new Error(`error in amountService/getProjectIdService: ${error.message}`);
     }
   }
 

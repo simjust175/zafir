@@ -80,17 +80,21 @@ class GeneralService {
     }
     if (query.id) {
       whereClause = "invoice_id = ?";
-      whereParams.push(query.id);
+      // whereParams.push(query.id);
     } else if (query.margin) {
       const q = JSON.parse(query.margin)
       console.log("is it iterable?", q);
       whereClause = `project = ${q[0].project} AND issuer = "${q[1].issuer}"`;
+    }  else if (query.project) {
+      const q = JSON.parse(query.project)
+      console.log("is it iterable?", q);
+      whereClause = `project_id = ${query.project}`;
     } else {
       throw new Error("⚠️ patchService - valid query must be provided.");
     }
 
     try {
-      const result = await General.patch(db, body, whereClause);
+      const result = await General.patch(db, body, whereClause, query.id);
       return result;
     } catch (err) {
       throw new Error("🔴 patchService Error: " + err.message);
