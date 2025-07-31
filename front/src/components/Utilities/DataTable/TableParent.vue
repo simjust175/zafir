@@ -192,7 +192,7 @@ import InvoiceDash from './InvoiceDash.vue';
 import SendInvoice from '@/components/DownloadSendPrint/SendInvoice.vue';
 //import FAB from './FAB.vue';
 import { invoices as invoiceStore } from '@/stores/invoiceState';
-import socket from '@/socket.js';
+// import socket from '@/socket.js';
 
 const emit = defineEmits(['amountUpdate']);
 const props = defineProps({
@@ -272,11 +272,11 @@ const activateSnackBar = (label, color, icon="")=> {
 }
 onMounted(() => {
   initialize();
-  socket.on('new-invoice', (invoice) => {
-    dbContents.value = [invoice, ...dbContents.value];
-    invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
-    activateSnackBar('New email detected', 'success', 'mdi-email-newsletter');
-  });
+  // socket.on('new-invoice', (invoice) => {
+  //   dbContents.value = [invoice, ...dbContents.value];
+  //   invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
+  //   activateSnackBar('New email detected', 'success', 'mdi-email-newsletter');
+  // });
 });
 
 const initialize = () => {
@@ -307,15 +307,15 @@ const sendInvoice = async (item) => {
 //animation !!
 const updatedIssuer = ref(null);
 
-socket.on('new-invoice', (invoice) => {
-  updatedIssuer.value = invoice.issuer;
-  dbContents.value = [invoice, ...dbContents.value];
-  invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
+// socket.on('new-invoice', (invoice) => {
+//   updatedIssuer.value = invoice.issuer;
+//   dbContents.value = [invoice, ...dbContents.value];
+//   invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
 
-  setTimeout(() => {
-    updatedIssuer.value = null;
-  }, 1500); // Remove highlight after 1.5s
-});
+//   setTimeout(() => {
+//     updatedIssuer.value = null;
+//   }, 1500); // Remove highlight after 1.5s
+// });
 
 //Grand total per project 
 const overallTotalWithMargin = computed(() => {
