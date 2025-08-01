@@ -9,7 +9,8 @@ import { fileURLToPath } from 'url';
 import invoiceRoutes from "./Routers/invoiceRoutes.js";
 import RegisterRoutes from "./Login_system/Router/registerRoutes.js";
 import AmountServices from "./Services/amountService.js";
-import startListeningForAll from "./email-service/imap/index.js";
+// import startListeningForAll from "./email-service/imap/index.js";
+import { startEmailListeners, getEmailListenerStatus } from "./email-service/imap/useEmailListners.js";
 import emailRoutes from "./Routers/emailRoutes.js"
 
 
@@ -33,6 +34,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+//❤️‍🩹 IMAP health
+app.get("/health/email-listeners", (req, res) => {
+  res.json(getEmailListenerStatus());
+});
+
 // ----------- Routes -----------
 app.use("/invoice", invoiceRoutes);
 app.use("/file/", express.static(path.join(__dirname, "email-service/downloads")));
@@ -53,7 +59,7 @@ const postInvoices = async (inv) => {
 };
 
 // ----------- Start IMAP Email Listener -----------
-startListeningForAll(async(inv)=> await postInvoices(inv))
+//startListeningForAll(async(inv)=> await postInvoices(inv))
 
 
 // ----------- WebSocket Logging -----------
@@ -69,4 +75,5 @@ io.on("connection", (socket) => {
 const port = process.env.PORT || 1221;
 server.listen(port, () => {
   console.log("🚀 Zafir management running on port - ", port);
+  startEmailListeners(async (inv) => await postInvoices(inv));
 });

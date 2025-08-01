@@ -21,11 +21,12 @@ class AmountService {
       throw new Error(`in amountServices/getEmailsNotConnectedToProjects: ${error.message}`);
     }
   }
+
   static async getActiveEmailsService() {
     try {
       return await Amount.getActiveEmails();
     } catch (error) {
-      throw new Error(`in amountServices/getEmailsNotConnectedToProjects: ${error.message}`);
+      throw new Error(`in amountServices/getActiveEmailsService: ${error.message}`);
     }
   }
 
