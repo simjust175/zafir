@@ -7,10 +7,10 @@ import AmountService from "../../Services/amountService.js";
 
 
 export default async function startListeningForAll(postToDb) {
-  const list = await AmountService.getEmailsNotConnectedToProjects();
+  const list = await AmountService.getActiveEmailsService();
 
   for (const accountConfig of list) {
-    const { email_address, password } = accountConfig;
+    const { email_address, password, project_id } = accountConfig;
 
     const imap = new Imap(emailAccounts(email_address, password));
     //handleNewEmails(imap)
@@ -30,7 +30,7 @@ export default async function startListeningForAll(postToDb) {
               const result = await handleNewEmails(imap);
               console.log("result:", result);
               
-              if (result) postToDb({ ...result, project: await AmountService.getActiveProjectIdService(email_id) });
+              if (result) postToDb({ ...result, project: project_id });
             } catch (error) {
               console.error(`⚠️ Failed to process mail for ${email_address}:`, error);
             }
@@ -38,7 +38,7 @@ export default async function startListeningForAll(postToDb) {
 
           try {
             const result = await handleNewEmails(imap);
-            if (result) postToDb({ ...result, project: await AmountService.getActiveProjectIdService(email_id) });
+            if (result) postToDb({ ...result, project: project_id });
           } catch (error) {
             console.error(`⚠️ Initial check failed for ${email_address}:`, error);
           }
