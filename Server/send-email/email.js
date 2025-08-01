@@ -62,14 +62,15 @@ const htmlContent = `
 
       <p style="margin-top: 40px;">
         ${isDutch ? "Met vriendelijke groeten" : "Kind regards"},<br>
-        <strong>Simcha Justman</strong><br>
-        ${isDutch ? "Voor Zafir Totaal Projecten" : "For Zafir Total Projects"}
+        <strong>Reuven Zafir</strong><br>
+        <strong>Manager</strong><br>
+        ${isDutch ? "Voor Zafir Totaal Projecten BVBA" : "For Zafir Total Projects BVBA"}
       </p>
     </div>
 
     <!-- Footer -->
     <div style="background-color: #f8f9fa; padding: 15px; font-size: 12px; text-align: center; color: #888;">
-      © ${new Date().getFullYear()} Zafir Total Projects — All rights reserved.
+      © ${new Date().getFullYear()} ZAFIR TOTAAL PROJECTEN BVBA — All rights reserved.
     </div>
   </div>
 `;
@@ -89,15 +90,6 @@ const htmlContent = `
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    //console.log("are we mailing??"); 
-    // await transporter.sendMail({
-    //   from: "test2@zafir-test.co.uk",
-    //   to: "bunim175@gmail.com",
-    //   subject: "Test",
-    //   text: "Hello world"
-    // });
-    // console.log("HURRA");
-    
     console.log("✅ Email sent:", info.response);
 
     // Optional cleanup

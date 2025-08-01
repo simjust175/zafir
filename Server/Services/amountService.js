@@ -21,6 +21,13 @@ class AmountService {
       throw new Error(`in amountServices/getEmailsNotConnectedToProjects: ${error.message}`);
     }
   }
+  static async getActiveEmailsService() {
+    try {
+      return await Amount.getActiveEmails();
+    } catch (error) {
+      throw new Error(`in amountServices/getEmailsNotConnectedToProjects: ${error.message}`);
+    }
+  }
 
   static async postNewEmailService({ email, password, project_name }) {
     try {
@@ -126,7 +133,7 @@ class AmountService {
       throw new Error(`error in amountService/getProjectIdService: ${error.message}`);
     }
   }
-  
+
   static async getActiveProjectIdService(email_id) {
     try {
       const [{ project_id }] = await Amount.getProjectId(email_id);

@@ -50,6 +50,11 @@ WHERE NOT EXISTS (
     const [amountSelected] = await db.query(SELECT_amounts); //, [user_id]
     return amountSelected;
   }
+  static async getActiveEmails() {
+    const SELECT_amounts = `select emails.email_id AS email_id, emails.password AS password, emails.email AS email_address, projects.project_id AS project_id FROM projects INNER JOIN emails ON projects.email = emails.email_id WHERE projects.completed_on IS NULL;`;
+    const [amountSelected] = await db.execute(SELECT_amounts); //, [user_id]
+    return amountSelected;
+  }
 
   static async getProjectId(email) {
     const Select_projectId = `Select project_id FROM projects WHERE email = ? AND completed_on IS NULL`;
