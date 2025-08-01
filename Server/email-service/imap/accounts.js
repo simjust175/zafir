@@ -1,4 +1,3 @@
-// import GeneralService from "../../Services/generalService.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -15,6 +14,7 @@ const emailAccounts = (email, password) => {
 };
 
 export default emailAccounts
+
 // export const emailAccounts = process.env.EMAILS.split(",").map((email, index) => ({
 //   user: email,
 //   password: process.env.PASSWORDS.split(",")[index],
