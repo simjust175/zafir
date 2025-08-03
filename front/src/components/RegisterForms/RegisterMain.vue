@@ -3,8 +3,8 @@
     fluid
     fill-height
     class="pa-0 mt-4"
-    style="background-color: #f5f7fa;"
   >
+  <!-- :class="themeBackgroundColor" -->
     <!-- <v-card
       color="blue"
       elevation="4"
@@ -20,7 +20,7 @@
         cols="12"
         align-center
         class="d-flex flex-column align-center justify-center pa-12"
-        style="background-color: #ffffff; border-top-right-radius: 12px; border-bottom-right-radius: 12px;"
+        style="border-top-right-radius: 12px; border-bottom-right-radius: 12px;"
       >
         <h2
           class="font-weight-bold mb-6"
@@ -53,6 +53,8 @@
 
 
 <script>
+// import { useTheme } from "vuetify";
+// const theme = useTheme()
 import LoginForm from "../RegisterForms/LoginForm.vue";
 export default {
   components: { LoginForm },
@@ -65,6 +67,11 @@ export default {
       forgot: false,
     };
   },
+  computed:{
+    // themeBackgroundColor(){
+    //   return theme.global.name.value === 'light' ? 'bg-grey-lighten-4' : '';
+    // }
+  }
 };
 </script>
 
@@ -163,3 +170,9 @@ export default {
 </template> 
 
 -->
+
+<style>
+.background-grey{
+  background-color: red !important;
+}
+</style>

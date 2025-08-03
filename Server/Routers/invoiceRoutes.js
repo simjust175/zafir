@@ -9,6 +9,9 @@ import AmountService from "../Services/amountService.js";
 //import auth from "../middleware/auth.js"
 
 
+//get filtered
+route.get("/filtered/:db", GeneralControllers.getFilteredGeneral)
+
 //POST
 route.post("/post", AmountControllers.postAmount);
 
@@ -19,7 +22,7 @@ route.post("/post-general/:db", GeneralControllers.postGeneral);
 route.post("/newproject", AmountControllers.postNewEmail);
 
 //POST new email/project
-route.post("/add-to-existing-email", AmountControllers.postNewEmail);
+route.post("/add-to-existing-email", AmountControllers.postToExitingEmail);
 
 //Get
 route.post("/get", AmountControllers.getAmounts);
@@ -27,7 +30,7 @@ route.post("/get", AmountControllers.getAmounts);
 //Get emails not connected to projects
 route.get("/freeEmails", AmountControllers.getFreeEmails)
 
-//Get filtered
+//Get projects
 route.get("/projects/:db", GeneralService.getMultipleFilteredService);
 
 //Get payment

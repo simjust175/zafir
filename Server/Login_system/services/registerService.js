@@ -31,14 +31,16 @@ class RegisterService {
         const isDataValid = await Register.validateUserData(body);
         const dataFromDB = await Register.getByEmail(body);
         if (!isDataValid || dataFromDB.length === 0) throw new Error("invalid user name");
-        const [{ user_email, pwd, user_id }] = dataFromDB;
+        const [{ user_name, user_email, pwd, user_id }] = dataFromDB;
+        console.log("body", body, "form db", user_email, "||",  pwd, "||", user_id);
+        
         try {
             const isCredentialsValid = await bcrypt.compare(body.pwd, pwd);
             console.log("validity", isCredentialsValid);
             if (!isCredentialsValid) return null;
             const newToken = { token: await Register.GenerateToken(user_email, pwd) };//, active: true
             await Register.patchUser(user_id, newToken);
-            return { newToken, user_id };
+            return { newToken, user_id, user_name };
         } catch (error) {
             throw new Error(error);
         }
@@ -49,7 +51,7 @@ class RegisterService {
         try {
             const { user_id } = await Register.getByEmail(params)
             //const setStatusAsInactive = await Register.patchUser(user_id)//, {active: false}
-            const removeToken = await Register.patchUser(user_id, { token: "" });
+            const removeToken = await Register.patchUser(user_id, { token: NULL });
             //console.log("user status:", setStatusAsInactive);
             return removeToken;
         } catch (error) {

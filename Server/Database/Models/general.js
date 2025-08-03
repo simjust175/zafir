@@ -17,7 +17,7 @@ class General {
     return rows;
   }
 
-  static async getWithFilter(database, columns = "*", whereClause = "", values = []) {
+  static async getWithFilter(database, columns = "*", whereClause = "") {
     if (!isTableAllowed(database)) throw new Error("Invalid table name");
 
     const selectedColumns = Array.isArray(columns) ? columns.map(col => `\`${col}\``).join(", ") : columns;
@@ -25,7 +25,9 @@ class General {
     let query = `SELECT ${selectedColumns} FROM \`${database}\` WHERE ${isNotDeleted}`;
     if (whereClause) query += ` AND ${whereClause}`;
     
-    const [rows] = await db.query(query, values);
+    const [rows] = await db.query(query);
+    console.log("in filtered models: --> ", query, rows);
+    
     return rows;
   }
 
@@ -43,6 +45,8 @@ class General {
     const whereClause = `\`${filterField}\` IN (${placeholders})`;
   
     const query = `SELECT ${selectedColumns} FROM \`${database}\` WHERE ${isNotDeleted} AND ${whereClause}`;
+    console.log("in get filtered ", query);
+    
     const [rows] = await db.query(query, filterValues);
     
     

@@ -286,7 +286,7 @@ const submitForm = async () => {
     formRef.value?.resetValidation?.()
   } catch (err) {
     console.error(err)
-    snackbarRef.value.showSnack('Error: ' + err.message, 'error')
+    snackbarRef.value.showSnack( err.message, 'error')
   }
 }
 </script>

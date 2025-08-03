@@ -12,6 +12,10 @@
 import { ref, onMounted } from "vue";
 import { invoices } from "@/stores/invoiceState";
 const invoiceArray = invoices();
+import { setLogin } from "@/stores/loginState";
+
+// Pinia store
+const loginState = setLogin();
 
 const currencyInUse = ref("EUR");
 const amountArray = ref([]);
@@ -52,7 +56,7 @@ const processIncomingData = (rawArray) => {
 
 const getAmounts = async () => {
   console.log("Starting to fetch...");
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token") || setLogin.token;
   if (!token) return console.log("No token found");
 
   const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/get`, {

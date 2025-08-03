@@ -3,8 +3,7 @@
     v-model="trigger"
     max-width="400"
   >
-    <v-card>
-      ++{{ localAmount }}++
+    <v-card class="pa-3" rounded="xl">
       <v-card-title>
         {{ isEdit ? 'Edit' : 'Add' }} {{ dialogType === 'invoiced' ? 'Invoice' : 'Payment' }}
       </v-card-title>

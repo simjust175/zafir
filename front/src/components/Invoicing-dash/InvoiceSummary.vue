@@ -22,17 +22,28 @@
           class="position-absolute top-0 right-0 mt-2 mr-2"
           @click="$emit('open-dialog', 'invoiced', false)"
         />
-        <v-btn
-          icon="mdi-pencil"
-          size="small"
-          elevation="1"
-          rounded="xl"
-          density="comfortable"
-          color="indigo-darken-2"
-          variant="tonal"
-          class="position-absolute top-0 left-0 mt-2 ml-2"
-          @click="$emit('open-dialog', 'invoiced', true)"
-        />
+
+        <!-- ⚠️ REMPOVE TOOLTIP TEMPRARY!!! ⚠️ -->
+        <v-tooltip
+          location="top"
+          open-delay="100"
+          text="🚧 Coming soon... Bezrat Hashem..."
+        >
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-pencil"
+              size="small"
+              elevation="1"
+              rounded="xl"
+              density="comfortable"
+              color="indigo-darken-2"
+              variant="tonal"
+              class="position-absolute top-0 left-0 mt-2 ml-2"
+              @click="$emit('open-dialog', 'invoiced', true)"
+            />
+          </template>
+        </v-tooltip>
         <v-img
           src="/invoice.png"
           height="40"
@@ -74,17 +85,28 @@
           class="position-absolute top-0 right-0 mt-2 mr-2"
           @click="$emit('open-dialog', 'paid', false)"
         />
-        <v-btn
-          icon="mdi-pencil"
-          size="small"
-          elevation="1"
-          rounded="xl"
-          density="comfortable"
-          color="green"
-          variant="tonal"
-          class="position-absolute top-0 left-0 mt-2 ml-2"
-          @click="$emit('open-dialog', 'paid', true)"
-        />
+        
+        <v-tooltip
+          location="top"
+          open-delay="200"
+          text="🚧 Coming soon... Bezrat Hashem..."
+        >
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-pencil"
+              size="small"
+              elevation="1"
+              rounded="xl"
+              density="comfortable"
+              color="green"
+              variant="tonal"
+              class="position-absolute top-0 left-0 mt-2 ml-2"
+              @click="$emit('open-dialog', 'paid', true)"
+            />
+          </template>
+        </v-tooltip>
+
         <v-img
           src="/paid.png"
           height="40"

@@ -4,23 +4,26 @@ class RegisterControllers{
 
        //post
        static async postNewUser({ body }, res) {
+        console.log("in postNewUser", body);
+        
         try {
             const addNew = await RegisterService.registerNewUser(body);
             if(!addNew) res.status(404).json({Error: "[in Controller/postNewUser] Not found"})
             res.status(200).json({ Success: `New user ${body.user_email} added successfully`, addNew });
         } catch (error) {
-            res.status(500).json({ Error: `[In Services/registerService] : Cannot post client: ${error.message}` });
+            res.status(500).json({ message: `[In Services/registerService] : Cannot post client: ${error.message}` });
         };
     };
 
         //log-in 
         static async userLogin({ body }, res) {
+            
             try {
                const newToken = await RegisterService.loginUser(body);
                 if (!newToken) return res.status(401).json({ Error : "Auth failed." });
                 res.status(200).json({ Success: "Auth successful" , newToken});
             } catch (error) {
-                res.status(500).json({ Error : `userService/userLoginService: Cannot login ${error.message}` });
+                res.status(500).json({ message : `userService/userLoginService: Cannot login ${error.message}` });
             };
         };
         //log-out 
@@ -31,7 +34,7 @@ class RegisterControllers{
                 if (!removeToken) return res.status(401).json({ Error : "[registerControllers/userLogout] token" });
                 res.status(200).json({ Success: "Successful removed token"});
             } catch (error) {
-                res.status(500).json({ Error : `userService/userLogoutService: Cannot logout ${error.message}` });
+                res.status(500).json({ message : `userService/userLogoutService: Cannot logout ${error.message}` });
             };
         };
 

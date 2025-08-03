@@ -52,7 +52,6 @@
           v-if="loginState.token" 
         />
         <v-btn
-          v-if="loginState.token"
           :icon="themeIcon"
           @click="toggleTheme"
         />

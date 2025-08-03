@@ -23,7 +23,18 @@ class GeneralControllers {
         } catch (error) {
             res.status(500).json({ message: `Error in GeneralServices/getGeneral: ${error.message}` });
         }
-    }
+    };
+    
+    static async getFilteredGeneral(req, res) {
+        try {
+            const filtered = await GeneralService.getFilteredService(req);
+            if (!filtered) return res.status(404).json({ message: 'Error in GeneralServices/getGeneralService' });
+            res.status(200).json({ message: `filtered retrieved successfully`, filtered });
+        } catch (error) {
+            res.status(500).json({ message: `Error in GeneralServices/getGeneral: ${error.message}` });
+        }
+    };
+
     static async geMultipleFiltered(res) {
         //if (!body) return res.status(400).json({ message: 'Error in GeneralServices/getGeneralService' });
         try {
