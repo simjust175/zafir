@@ -1,17 +1,16 @@
 <template>
   <v-text-field
+    v-model="inputData"
     variant="outlined"
     :type="showPwdStat ? 'text' : 'password'"
     :append-inner-icon="showPwdIcon"
     :rules="rule"
     :label="props.label"
     :prepend-inner-icon="icon"
+    class="mb-2 register-input"
     @click:append-inner="showPwdStat = !showPwdStat"
-    class="mb-2"
-    v-model="inputData"
     @input="emitData"
-  >
-  </v-text-field>
+  />
 </template>
 
 <script setup>
@@ -32,10 +31,10 @@ const rules = reactive({
     (value) => !!value || "Required field",
     (value) => value === props.pwd1 || "Passwords don't match",
   ],
-  name: [(value) => !!value || "Required field"],
+  user_name: [(value) => !!value || "Required field"],
 });
 
-const rule = computed(() => rules[props.type]);
+const rule = computed(() => rules[props.type] || []);
 
 const props = defineProps({
   type: String,
@@ -49,6 +48,7 @@ const iconList = {
   email: "mdi-account-outline",
   pwd: "mdi-lock-outline",
   pwd2: "mdi-lock",
+  user_name: "mdi-account-circle-outline"
 };
 const icon = computed(() => iconList[props.type]);
 
@@ -64,9 +64,11 @@ const showPwdIcon = computed(() =>
 const inputData = ref("");
 
 const emitData = () => {
-  if (rule.value.every((rule) => rule(inputData.value) === true)) {
+  const isValid = rule.value.length === 0 || rule.value.every(rule => rule(inputData.value) === true);
+  if (isValid) {
     emit("input", inputData.value);
   }
+
   if (props.type === "email") {
     localStorage.setItem("user_email", inputData.value);
   }
@@ -79,7 +81,11 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px rgb(186, 186, 186) inset !important;
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
   color: rgb(77, 76, 76);
+}
+
+.register-input.v-text-field .v-field--no-label input, .v-text-field .v-field--active input{
+  background-color: rgb(255, 255, 255);
 }
 </style>

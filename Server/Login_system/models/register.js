@@ -11,7 +11,7 @@ class Register {
     static async getByEmail(body) {
         const sql = `SELECT * FROM users where user_email = ?`;
         const [userNameAvailable, _] = await db.query(sql, [body.user_email]);
-        console.log("userAvailible", userNameAvailable);
+        console.log("userAvailible", sql, userNameAvailable);
         return userNameAvailable;
     };
 
@@ -29,6 +29,7 @@ class Register {
     static async validateUserData(body) {
         const registerSchema = joi.object({
             user_email: joi.string().email().required(),
+            user_name: joi.string(),
             pwd: joi.required()
         })
         return registerSchema.validate(body);

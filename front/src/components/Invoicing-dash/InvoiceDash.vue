@@ -80,7 +80,7 @@ const invoicedLoading = ref(false)
 const paidLoading = ref(false)
 const dialogType = ref(null)
 const isEditMode = ref(false)
-const originalAmount = ref(0)
+const originalAmount = ref('')
 
 const snack = ref({
   show: false,

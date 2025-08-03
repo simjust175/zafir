@@ -14,10 +14,10 @@ class AmountControllers {
     }
     static async postNewEmail({ body }, res) {
         const doesEmailExist = await General.getWithFilter('emails', 'email', `email = "${body.email}"`);
-        console.log("does this email exisist?", doesEmailExist);
+        console.log("does this email exists?", doesEmailExist);
         
         if (!body) return res.status(400).json({ message: 'Email must be provided' });
-        if (doesEmailExist.length > 0) return res.status(400).json({ message: 'Cannot re-post an existing email' });
+        if (doesEmailExist.length > 0) return res.status(400).json({ message: 'Email already exists' });
         try {
             const newAmount = await AmountService.postNewEmailService(body);
             if (!newAmount) return res.status(404).json({ message: 'Error in AmountServices/postAmountService()' });
@@ -30,7 +30,7 @@ class AmountControllers {
     static async postToExitingEmail({ body }, res) {
         if (!body) return res.status(400).json({ message: 'Email must be provided' });
         try {
-            const postedToExisting = await AmountService.postToExitingEmail(body);
+            const postedToExisting = await AmountService.postNewEmailService(body);
             if (!postedToExisting) return res.status(404).json({ message: 'Error in AmountServices/postAmountService()' });
             res.status(200).json({ message: `New Amount added successfully`, postedToExisting });
         } catch (error) {

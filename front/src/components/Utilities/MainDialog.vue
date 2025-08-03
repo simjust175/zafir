@@ -32,7 +32,7 @@
 <!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { ref, watch } from "vue";
-const emit = defineEmits(["confirm"]);
+const emit = defineEmits(['confirm']);
 
 const props = defineProps({
   activateDialog: Boolean,

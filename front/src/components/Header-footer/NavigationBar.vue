@@ -44,7 +44,7 @@
       />
       <NavItemWithTooltip
         title="Manage users"
-        prepend-icon="mdi-account-plus-outline"
+        prepend-icon="mdi-account-multiple-plus-outline"
         value="user"
         :rail="railStat"
         @click="router.push('/users')"
@@ -174,21 +174,27 @@ const openExpandedTable = () => {
 };
 
 const logout = async () => {
-  const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userName}`, {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userName}`, {
       method: "POST",
       headers: {
-          "Content-Type": "application/json"
-      }
-  });
-  const data = await res.json();
-  console.log("logout", data);
-  if (data.Success) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user_email") 
-      loginState.token = false;
-      router.push("/register")
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await res.json();
+    console.log("logout", data);
+
+    if (data.Success) {
+      loginState.logout(); // ✅ use centralized store method
+      router.push("/register");
+    } else {
+      console.warn("Logout failed:", data?.message || "Unknown error");
+    }
+  } catch (err) {
+    console.error("❌ Logout request failed:", err);
   }
-}
+};
 </script>
 
 <style>

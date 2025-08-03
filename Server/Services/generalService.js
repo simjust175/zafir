@@ -28,17 +28,19 @@ class GeneralService {
       throw new Error(`error in generalService/getService: ${error.message}`);
     }
   }
+
   static async getFilteredService({ params, query }) {
     const what = query.what || "*";
-    const where = `${query.where}` || "";
+    const where = query.where || "";
+    console.log("query", query, !query, where, "||");
+    
     if (!params.db)
       throw new Error("⚠️ Service/getService.js - Need to define database");
     try {
       const getAmounts = await General.getWithFilter(
         params.db,
         what,
-        where,
-        values
+        where
       ); //user_id
       if (!getAmounts) return null;
       return getAmounts;

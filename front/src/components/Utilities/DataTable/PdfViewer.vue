@@ -193,7 +193,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useTheme } from 'vuetify'
-import { makeVTimelineItemProps } from 'vuetify/lib/components/VTimeline/VTimelineItem.mjs'
+//import { makeVTimelineItemProps } from 'vuetify/lib/components/VTimeline/VTimelineItem.mjs'
 
 // Props and emit
 const dialog = defineModel('dialog') // replaces prop: Boolean

@@ -1,5 +1,19 @@
 <template>
   <v-container fluid>
+    <v-fab
+    extended
+      color="primary"
+      density="comfortable"
+      prepend-icon="mdi-plus"
+      location="right bottom"
+      text="Add project"
+      height="50"
+      width="180"
+      @click="openDialog()"
+      app
+    >
+      Add User
+    </v-fab>
     <v-card
       class="pa-6"
       elevation="3"
@@ -19,13 +33,7 @@
       </v-card-title>
   
       <!-- Add User Button -->
-      <v-btn
-        color="primary"
-        prepend-icon="mdi-account-plus"
-        @click="openDialog()"
-      >
-        Add User
-      </v-btn>
+    
   
       <!-- Users Table -->
       <v-data-table
@@ -35,15 +43,29 @@
         class="mt-4"
         density="comfortable"
       >
+        <template #item.active="{ item }">
+          <v-chip 
+            :color="item.token? 'success' : 'warning'"
+            :class="{ 'px-4': item.token}"
+            label
+          >
+            {{ item.token ? 'Active' : 'Inactive' }}
+          </v-chip>
+        </template>
+        <template #item.user_name="{ item }">
+          <div class="text-capitalize">
+            {{ item.user_name }}
+          </div>
+        </template>
         <template #item.actions="{ item }">
-          <v-btn
+          <!-- <v-btn
             icon="mdi-pencil"
             color="primary"
             variant="text"
             @click="openDialog(item)"
-          />
+          /> -->
           <v-btn
-            icon="mdi-delete"
+            icon="mdi-close"
             color="error"
             variant="text"
             @click="deleteUser(item.id)"
@@ -56,12 +78,24 @@
     <v-dialog
       v-model="dialog"
     >
-      <v-card width="420" class="pa-2">
-        <v-card-title class="text-h6">
-          {{ editingUser ? 'Edit User' : 'Add User' }}
-        </v-card-title>
-        <v-card-text>
-          <v-form
+
+      <div class="d-flex justify-center">
+        <v-card
+          width="520"
+          class="pa-6"
+          rounded="xl"
+        >
+       
+          <v-card-title class="text-h6">
+            <v-btn
+              icon="mdi-arrow-left"
+              @click="dialog =false"
+              variant="flat"
+            />
+            {{ editingUser ? 'Edit User' : 'Add User' }}
+          </v-card-title>
+          <!--<v-card-text>
+           <v-form
             ref="form"
             v-model="valid"
           >
@@ -101,28 +135,30 @@
           >
             Save
           </v-btn>
-        </v-card-actions>
-      </v-card>
+        </v-card-actions> -->
+          <register-form @close="dialog = false" />
+        </v-card>
+      </div>
     </v-dialog>
   </v-container>
 </template>
   
   <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
   
   const headers = [
-    { title: 'Name', value: 'name' },
-    { title: 'Email', value: 'email' },
-    { title: 'Role', value: 'role' },
+    { title: 'Active', value: 'active' },
+    { title: 'Name', value: 'user_name' },
+    { title: 'Email', value: 'user_email' },
     { title: '', value: 'actions', sortable: false },
   ]
+   const getUsers= async()=> {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/filtered/users`)
+    const data = await res.json()
+    return data.filtered;
+     }
   
-  const roles = ['Admin', 'Manager', 'Employee']
-  
-  const users = ref([
-    { id: 1, name: 'Alice Johnson', email: 'alice@company.com', role: 'Admin' },
-    { id: 2, name: 'Bob Smith', email: 'bob@company.com', role: 'Employee' },
-  ])
+  const users = ref([])
   
   const dialog = ref(false)
   const editingUser = ref(null)
@@ -161,6 +197,8 @@ import { ref } from 'vue'
   function deleteUser(id) {
     users.value = users.value.filter(u => u.id !== id)
   }
+
+  onMounted(() => getUsers().then(data => users.value = data))
   </script>
   
   <!-- <style scoped>

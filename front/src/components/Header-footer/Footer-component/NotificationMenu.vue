@@ -97,6 +97,8 @@
     <pdf-viewer 
       :dialog="dialog"
       :url="selectedUrl"
+      :double-check="false"
+      :file-details="selectedMessage"
       @close="dialog = false"
     />
   </div>
@@ -120,9 +122,9 @@ const invoiceArray = invoices();
   const selectedUrl = ref('')
   
   function openDialog(message) {
-    selectedMessage.value = message
-    console.log("in pdf dialog in notification menu", message);
-    selectedUrl.value = message.messages[0].item.pdf_file
+    selectedMessage.value = message.item
+    console.log("in pdf dialog in notification menu", message, message.item.pdf_file);
+    selectedUrl.value = message.item.pdf_file
     dialog.value = true
   }
   </script>
