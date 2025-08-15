@@ -54,7 +54,7 @@
         </div>
         <v-progress-linear
           :model-value="percentPaid"
-          color="primary"
+          :color="progressColor"
           height="8"
           rounded
           bg-color="grey-lighten-3"
@@ -136,6 +136,10 @@ const handleProjectNameSaved = (newName) => {
   props.project.forEach(p => p.project_name = newName)
   //toast.success("Project name updated successfully!")
 }
+
+const progressColor = computed(()=> percentPaid.value < 50 ? 'warning' : 
+percentPaid.value < 75 ? 'amber' :
+'success')
 </script>
 
 <style scoped>

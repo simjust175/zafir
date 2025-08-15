@@ -50,11 +50,15 @@ const themeColor = computed(() =>
 
 
 onMounted(async () => {
-  const currentPath = router.currentRoute.value.fullPath;
-  if (currentPath === "/register") return;
   const { validateToken, getPayments } = useAuth();
   const isValid = await validateToken();
-
+  console.log("Is token valid?", isValid);
+ const currentPath = router.currentRoute.value.fullPath;
+  if (currentPath === "/register") {
+    if(isValid) return router.push('/')
+    return;
+  };
+  
   if (!isValid) {
     router.push("/register");
     return;
@@ -123,4 +127,5 @@ function handleThemeChange(newTheme) {
   align-items: center;
   justify-content: center;
 }
+
 </style>

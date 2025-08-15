@@ -12,7 +12,7 @@
           class="text-none"
           rounded="xl"
           text="Cancel"
-          @click="dialog = false"
+          @click="cancelDialog"
         />
 
         <v-btn
@@ -32,7 +32,7 @@
 <!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { ref, watch } from "vue";
-const emit = defineEmits(['confirm']);
+const emit = defineEmits(['confirm', 'close']);
 
 const props = defineProps({
   activateDialog: Boolean,
@@ -45,6 +45,11 @@ const dialog = ref(false);
 const emitConfirmed = () => {
   dialog.value = false
   emit("confirm")
+}
+
+const cancelDialog = () => {
+  dialog.value = false
+  emit('close')
 }
 
 watch(() => props.activateDialog, (newVal) => {

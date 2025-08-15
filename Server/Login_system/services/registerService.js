@@ -5,7 +5,6 @@ class RegisterService {
     static async registerNewUser(body) {
         //[step 1] JOI
         const isValueValid = await Register.validateUserData(body);
-        console.log("in register is value valid", isValueValid);
         if (isValueValid.error) throw new Error(isValueValid.error.details[0].message);
         try {
             //[step 2] check availability (front-end has to have the user name as "user_email")
@@ -30,13 +29,13 @@ class RegisterService {
     static async loginUser(body) {
         const isDataValid = await Register.validateUserData(body);
         const dataFromDB = await Register.getByEmail(body);
+        console.log("isdatavalid ->", isDataValid, "dataFromDb", dataFromDB, "BODY", body);
+
         if (!isDataValid || dataFromDB.length === 0) throw new Error("invalid user name");
         const [{ user_name, user_email, pwd, user_id }] = dataFromDB;
-        console.log("body", body, "form db", user_email, "||",  pwd, "||", user_id);
-        
+
         try {
             const isCredentialsValid = await bcrypt.compare(body.pwd, pwd);
-            console.log("validity", isCredentialsValid);
             if (!isCredentialsValid) return null;
             const newToken = { token: await Register.GenerateToken(user_email, pwd) };//, active: true
             await Register.patchUser(user_id, newToken);
@@ -49,9 +48,9 @@ class RegisterService {
     static async logoutUser(params) {
         if (!params.user_email) throw new Error("email must be provided")
         try {
-            const { user_id } = await Register.getByEmail(params)
-            //const setStatusAsInactive = await Register.patchUser(user_id)//, {active: false}
-            const removeToken = await Register.patchUser(user_id, { token: NULL });
+            const [user] = await Register.getByEmail(params);
+            if (!user || !user.user_id) throw new Error("User not found");
+            const removeToken = await Register.patchUser(user.user_id, { token: null })
             //console.log("user status:", setStatusAsInactive);
             return removeToken;
         } catch (error) {
@@ -63,6 +62,16 @@ class RegisterService {
         if (!user_email || !token) throw new Error("You must be logged in to access info.")
         try {
             const isTokenValid = await Register.verifyLoggedInByToken(user_email, token);
+            if (isTokenValid.length < 1) return null;
+            return true
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
+    static async forgotPwdService({ user_email }) {
+        if (!user_email || !token) throw new Error("You must be logged in to access info.")
+        try {
+            const isTokenValid = await Register.forgotPwd(user_email);
             console.log("is the token valid: ", isTokenValid.length > 1);
             if (isTokenValid.length < 1) return null;
             console.log("its valid: ", isTokenValid);
@@ -72,11 +81,11 @@ class RegisterService {
         }
     }
 
-    static async patchUser(id, body){
-        if(!id || !body) throw new Error("Id and Body must be provided.", error)
+    static async patchUser(id, body) {
+        if (!id || !body) throw new Error("Id and Body must be provided.", error)
         try {
             const patch = Register.patchUser(id, body);
-            if(!patch) return null
+            if (!patch) return null
             return patch
         } catch (error) {
             throw new Error(error);

@@ -7,7 +7,7 @@
     :rules="rule"
     :label="props.label"
     :prepend-inner-icon="icon"
-    class="mb-2 register-input"
+    class="mb-2 register-input light"
     @click:append-inner="showPwdStat = !showPwdStat"
     @input="emitData"
   />
@@ -73,6 +73,7 @@ const emitData = () => {
     localStorage.setItem("user_email", inputData.value);
   }
 };
+
 </script>
 
 <style>
@@ -83,9 +84,5 @@ input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
   color: rgb(77, 76, 76);
-}
-
-.register-input.v-text-field .v-field--no-label input, .v-text-field .v-field--active input{
-  background-color: rgb(255, 255, 255);
 }
 </style>

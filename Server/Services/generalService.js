@@ -68,21 +68,19 @@ class GeneralService {
   }
 
   static async patchService(db, query, body) {
-    console.log(query, body);
+    console.log("in patch service =>", "query =", query, "body =",  body);
     
     if (!body || !db) {
       throw new Error("⚠️ patchService - body, and db must be provided.");
     }
     let whereClause = "";
-    if (Object.keys(body).includes('btwPercent')) {
-      console.log("includes");
-      
-    } else{
-      console.log("excluded!");
-    }
+    
     if (query.id) {
       whereClause = "invoice_id = ?";
       // whereParams.push(query.id);
+    }  else if (query.user) {
+      whereClause = "user_id = ?";
+      query.id = query.user
     } else if (query.margin) {
       const q = JSON.parse(query.margin)
       console.log("is it iterable?", q);
@@ -92,6 +90,8 @@ class GeneralService {
       console.log("is it iterable?", q);
       whereClause = `project_id = ${query.project}`;
     } else {
+      console.log("we fell here: Why?", !query.id);
+      
       throw new Error("⚠️ patchService - valid query must be provided.");
     }
 
