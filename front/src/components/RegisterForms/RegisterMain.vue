@@ -172,7 +172,5 @@ export default {
 -->
 
 <style>
-.background-grey{
-  background-color: red !important;
-}
+
 </style>

@@ -13,15 +13,14 @@
         icon="mdi-arrow-left"
         class="ml-2 zIndex"
         size="30"
-        @click="$router.push('/')"
+        @click="pushMainRoute"
       />
       <h1
         class="ml-5 zafir-text-primary cursor-pointer"
-        @click.stop="$router.push('/')"
+        @click.stop="pushMainRoute"
       >
         Z<span class="zafir-text-secondary">T</span>P
       </h1>
-
       <v-spacer />
 
       <!-- Live Email Watch Icon -->
@@ -81,6 +80,7 @@
         :activate-dialog="activateDialog"
         title="Confirm Log-out"
         text="Are you sure?"
+        @close="activateDialog = false"
         @confirm="logout"
       />
     </v-app-bar>
@@ -106,6 +106,7 @@ function toggleTheme() {
 }
 
 const activateDialog = ref(false)
+const pushMainRoute = ()=> loginState.token ? router.push('/') : "";
 
 const themeIcon = computed(() =>
   theme.global.current.value.dark
@@ -141,9 +142,10 @@ const logout = async () => {
   const data = await res.json();
   console.log("logout", data);
   if (data.Success) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user_email") 
-      loginState.token = false;
+      // localStorage.removeItem("token");
+      // localStorage.removeItem("user_email") 
+      // loginState.token = false;
+      loginState.logout()
       router.push("/register")
   }
 }

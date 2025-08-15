@@ -4,7 +4,6 @@ class RegisterControllers{
 
        //post
        static async postNewUser({ body }, res) {
-        console.log("in postNewUser", body);
         
         try {
             const addNew = await RegisterService.registerNewUser(body);
@@ -50,6 +49,8 @@ class RegisterControllers{
 
     //validate Token
     static async validateLoggedInController({ body }, res) {
+        console.log("in controllers / validate token", body);
+        
         try {
             const isTokenValid = await RegisterService.verifyLoggedInService((body));
             if (!isTokenValid) return res.status(401).json({ Error : "[registerControllers/validateLoggedInController token" });

@@ -1,12 +1,21 @@
 <template>
   <div>
     <!-- Trigger Button -->
-    <v-btn
-      icon="mdi-send-variant-outline"
-      :loading="loading"
-      :disabled="loading"
-      @click="dialog = true"
-    />
+    <v-tooltip
+      location="top"
+      open-delay="300"
+    >
+      <template #activator="{ props }">
+        <v-btn
+          v-bind="props"
+          icon="mdi-send-variant-outline"
+          :loading="loading"
+          :disabled="loading"
+          @click="dialog = true"
+        />
+      </template>
+      <span>Send summary</span>
+    </v-tooltip>
   
     <!-- Modal Dialog -->
     <v-dialog
@@ -79,17 +88,17 @@
   </div>
 </template>
   
+<!-- eslint-disable vue/require-default-prop -->
   <script setup>
   import { ref } from "vue";
-  import { invoices } from '@/stores/invoiceState'
-  const invoiceStore = invoices()
-
+  
   const emit =defineEmits(['email-sent'])
   const props = defineProps({
     includesBtw: Boolean,
     groupedInvoices: Array,
     total: Number,
-    projectName: String, 
+    projectName: String,
+    payments: Array, 
     currentProjectId: Number
   });
   
@@ -106,7 +115,6 @@
   if (!valid) return;
 
   loading.value = true;
-  console.log("try if works??????", invoiceStore.payments.filter(p => p.project === props.currentProjectId));
   
   try {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/email/send-invoice`, {
@@ -119,7 +127,7 @@
         projectName: props.projectName,
         total: props.total,
         groupedInvoices: props.groupedInvoices,
-        groupedPayments: invoiceStore.payments.filter(p => p.project === props.currentProjectId)
+        groupedPayments: props.payments
       })
     });
 

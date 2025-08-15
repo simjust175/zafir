@@ -108,7 +108,7 @@ const login = async () => {
   token,
   name: credentials.user_email,
   user: userName
-});;
+});
 
     localStorage.setItem("id", userId); // Optional: or store in Pinia if needed
     emit("loggedIn");

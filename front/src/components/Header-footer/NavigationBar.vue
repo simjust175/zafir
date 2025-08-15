@@ -4,6 +4,7 @@
     v-model="drawer"
     :permanent="true"
     class="pt-3"
+    width="200"
     :rail="railStat"
     :mobile="isMobile"
     :temporary="!rail"
@@ -109,6 +110,7 @@
     title="Confirm Log-out"
     text="Are you sure?"
     @confirm="logout"
+    @close="activateDialog = false"
   />
   <file-upload
     :active="activateUploadDialog"
@@ -174,6 +176,8 @@ const openExpandedTable = () => {
 };
 
 const logout = async () => {
+  console.log("=> =>", loginState.userName);
+  
   try {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userName}`, {
       method: "POST",

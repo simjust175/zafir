@@ -129,9 +129,10 @@
     </v-dialog>
 
     <!-- PDF Viewer Dialog -->
-    <pdf-viewer 
+    <pdf-viewer
       :dialog="pdfDialog"
       :double-check="doubleCheckTrigger"
+      :mode="doubleCheckTrigger ? 'double-check' : 'noraml'"
       :url="selectedUrl"
       :file-details="selectedPdf"
       @close="closePdfDialog"
@@ -157,7 +158,7 @@
       :original-item="{ ...editedItem }"
       :form-title="formTitle"
       @close="close"
-      @save="patchChanges($event)"
+      @save="prepareEditChanges"
     />
 
     <DeleteDialogComponent
@@ -278,6 +279,30 @@ function formatDateToMySQL(date) {
     String(date.getMinutes()).padStart(2, '0') + ':' +
     String(date.getSeconds()).padStart(2, '0');
 }
+
+const prepareEditChanges = ({ body, id }) => {
+  console.log("event in prepare", body, id);
+  
+  const updatedBody = { ...body };
+
+  // If btwPercent changed and amount exists
+  if ('btwPercent' in updatedBody && 'amount' in updatedBody) {
+    const currentInvoice = invoiceArray.value.find(inv => inv.invoice_id === id);
+    if (currentInvoice) {
+      // Determine net amount without BTW
+      const netAmount = currentInvoice.btwPercent
+        ? currentInvoice.amount / (1 + currentInvoice.btwPercent / 100)
+        : currentInvoice.amount;
+
+      // Apply new BTW percent
+      updatedBody.amount = Number(
+        (netAmount * (1 + (Number(updatedBody.btwPercent) || 0) / 100)).toFixed(2)
+      );
+    }
+  }
+
+  patchChanges({ id, body: updatedBody });
+};
 
 const deleteItem = (item) => {
   editedIndex.value = invoiceArray.value.indexOf(item);

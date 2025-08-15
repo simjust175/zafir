@@ -87,7 +87,8 @@ class General {
       invoices: ['issuer', 'amount', 'includesBtw', 'btwPercent', 'margin', 'deleted_at', 'double_checked'],
       projects: [ 'project_name', 'amount_invoiced', 'amount_paid', 'completed_on'],
       payments: ['payment_amount'],
-      invoicing: ['invoicing_amount']
+      invoicing: ['invoicing_amount'],
+      users:['deleted_at', 'user_name', 'user_email'],
 
       // add more tables and fields as needed
     };

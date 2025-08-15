@@ -1,7 +1,16 @@
 <template>
-  <v-container :class="{ 'pt-0': expanded }" fluid>
-    <v-card class="pa-6 pt-1" flat>
-      <v-container class="rounded-xl pa-1 pb-3" fluid>
+  <v-container
+    :class="{ 'pt-0': expanded }"
+    fluid
+  >
+    <v-card
+      class="pa-6 pt-1"
+      flat
+    >
+      <v-container
+        class="rounded-xl pa-1 pb-3"
+        fluid
+      >
         <v-row dense>
           <invoice-dash :current-project-id="project_id" />
         </v-row>
@@ -26,8 +35,14 @@
         </template>
 
         <template #top>
-          <v-toolbar :class="themeColor" flat>
-            <v-toolbar-title v-if="expanded" class="text-capitalize text-h6 mx-8">
+          <v-toolbar
+            :class="themeColor"
+            flat
+          >
+            <v-toolbar-title
+              v-if="expanded"
+              class="text-capitalize text-h6 mx-8"
+            >
               {{ projectName }}
             </v-toolbar-title>
 
@@ -49,11 +64,13 @@
               :grouped-invoices="groupedInvoices"
               :project-name="projectName"
               :total="overallTotalWithMargin"
+              :payments="invoiceArray.payments.filter(p => p.project === project_id)"
               :print="false"
             />
             <download-file
               :grouped-invoices="groupedInvoices"
               :project-name="projectName"
+              :payments="invoiceArray.payments.filter(p => p.project === project_id)"
               :total="overallTotalWithMargin"
               :print="true"
             />
@@ -61,11 +78,19 @@
               :grouped-invoices="groupedInvoices"
               :project-name="projectName"
               :current-project-id="project_id"
+              :payments="invoiceArray.payments.filter(p => p.project === project_id)"
               :total="overallTotalWithMargin"
             />
 
-            <v-divider class="mx-2" inset vertical />
-            <table-parent-toolbar-menu :project="invoices" class="pr-1" />
+            <v-divider
+              class="mx-2"
+              inset
+              vertical
+            />
+            <table-parent-toolbar-menu
+              :project="invoices"
+              class="pr-1"
+            />
           </v-toolbar>
         </template>
 
@@ -82,15 +107,27 @@
         </template>
 
         <template #item.totalMargin="{ item }">
-          <margin-setter :item="item" @margin-update="(newMargin) => updateMargin(item, newMargin)" />
+          <margin-setter
+            :item="item"
+            @margin-update="(newMargin) => updateMargin(item, newMargin)"
+          />
         </template>
 
         <template #item.actions>
-          <v-icon size="22" color="primary" class="ml-3">mdi-unfold-more-horizontal</v-icon>
+          <v-icon
+            size="22"
+            color="primary"
+            class="ml-3"
+          >
+            mdi-unfold-more-horizontal
+          </v-icon>
         </template>
 
         <template #no-data>
-          <empty-state class="my-12" @refresh="initialize()" />
+          <empty-state
+            class="my-12"
+            @refresh="initialize()"
+          />
         </template>
       </v-data-table>
     </v-card>
@@ -100,7 +137,10 @@
       class="text-subtitle-1 d-flex justify-end align-center px-7 text-one-line"
       :class="themeColor"
     >
-      <div class="d-flex align-center" style="height: 24px;">
+      <div
+        class="d-flex align-center"
+        style="height: 24px;"
+      >
         <strong class="mx-4 text-capitalize d-flex align-center">
           Total for {{ projectName }}:
         </strong>

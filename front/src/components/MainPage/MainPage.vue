@@ -23,16 +23,20 @@ const warnings = ref([]); // Will store objects like: { title: 'duplicate', item
 
 // Helper to process data: find unknown issuers and duplicates
 const processIncomingData = (rawArray) => {
-  const seen = new Set();
+  
+  //check for duplicates
   const unique = [];
+  const seen = new Map()
 
   rawArray.forEach((item) => {
-    const uniqueKey = item.invoiceNumber || item.id || JSON.stringify(item); // Adjust key logic as needed
+    // console.log("item in items", item);
+    const a = item
+    const uniqueKey = `${a.amount}-${a.issuer}-${a.email}-${a.project_id}`; // Adjust key logic as needed
 
     // Check for UNKNOWN ISSUER
     if (item.issuer === "UNKNOWN ISSUER") {
       warnings.value.push({
-        title: `unknown supplier`,
+        title: `unknown-supplier`,
         item,
       });
       unique.push(item); // allow UNKNOWN ISSUER in data
@@ -43,13 +47,14 @@ const processIncomingData = (rawArray) => {
     if (seen.has(uniqueKey)) {
       warnings.value.push({
         title: `duplicate`,
-        item,
+        item: [item, seen.get(uniqueKey)]
       });
     } else {
-      seen.add(uniqueKey);
+      seen.set(uniqueKey, item);
       unique.push(item);
     }
   });
+  
    invoiceArray.warnings = warnings.value
   return unique;
 };

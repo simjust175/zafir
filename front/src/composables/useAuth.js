@@ -9,11 +9,15 @@ export default function useAuth() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_email: localStorage.getItem("user_email") || loginState.user_email,
-          token: localStorage.getItem("token") || loginState.token,
+          user_email: loginState.user_email || localStorage.getItem("user_email"),
+          token: loginState.token || localStorage.getItem("token") 
         }),
       });
       const result = await res.json();
+      console.log("Is res valid?", {
+        user_email: loginState.user_email || localStorage.getItem("user_email"),
+        token: loginState.token || localStorage.getItem("token") 
+      });
       return result.Success;
     } catch (err) {
       console.error("❌ Token validation failed:", err);

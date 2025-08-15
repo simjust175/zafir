@@ -10,7 +10,7 @@ class Register {
 
     static async getByEmail(body) {
         const sql = `SELECT * FROM users where user_email = ?`;
-        const [userNameAvailable, _] = await db.query(sql, [body.user_email]);
+        const [userNameAvailable] = await db.query(sql, [body.user_email]);
         console.log("userAvailible", sql, userNameAvailable);
         return userNameAvailable;
     };
@@ -20,6 +20,8 @@ class Register {
         const patch = user.map(entry => `${entry[0]} = ${typeof entry[1] === 'string' ? `"${entry[1]}"` : entry[1]}`).join(" ,");
         const sql = `UPDATE users SET ${patch} WHERE user_id = ?`;
         const [patchedUser, _] = await db.query(sql, [id]);
+        console.log("sql", sql);
+        
         return patchedUser;
     }
 
@@ -67,6 +69,14 @@ class Register {
     static async verifyLoggedInByToken(user_email, token){
         const sql = "SELECT user_email, token FROM users WHERE user_email = ? AND token = ?"
         const [tokenIsValid, _] = await db.query(sql, [user_email, token]);
+        return tokenIsValid;
+    }
+
+
+    static async forgotPwd(user_email){
+
+        const sql = "SELECT user_email FROM users WHERE user_email = ? AND token = ?"
+        const [tokenIsValid, _] = await db.query(sql, [user_email]);
         return tokenIsValid;
     }
 
