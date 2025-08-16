@@ -12,6 +12,11 @@ import AmountService from "../Services/amountService.js";
 //get filtered
 route.get("/filtered/:db", GeneralControllers.getFilteredGeneral)
 
+//get filtered
+route.get("/test", (req, res)=> {
+    res.status(202).json({Success: 'YAY!'})
+})
+
 //POST
 route.post("/post", AmountControllers.postAmount);
 
