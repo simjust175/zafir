@@ -1,79 +1,12 @@
-import express from "express";
-import http from "http";
-import { Server as SocketIOServer } from "socket.io";
-import dotenv from "dotenv";
-import cors from "cors";
-import path from "path";
-import { fileURLToPath } from 'url';
+import express from 'express';
 
-import invoiceRoutes from "./Routers/invoiceRoutes.js";
-import RegisterRoutes from "./Login_system/Router/registerRoutes.js";
-import AmountServices from "./Services/amountService.js";
-// import startListeningForAll from "./email-service/imap/index.js";
-import { startEmailListeners, getEmailListenerStatus } from "./email-service/imap/useEmailListners.js";
-import emailRoutes from "./Routers/emailRoutes.js"
-
-
-dotenv.config();
-
-// ----------- Server Setup -----------
 const app = express();
+const PORT = process.env.PORT || 8080;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const server = http.createServer(app);
-
-const io = new SocketIOServer(server, {
-  cors: { origin: "*" },
-});
-app.set("io", io); // Optional: make io available in routes/middleware
-
-// ----------- Middleware -----------
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-//❤️‍🩹 IMAP health
-app.get("/health/email-listeners", (req, res) => {
-  res.json(getEmailListenerStatus());
+app.get('/', (req, res) => {
+  res.send('Hello from Zafir backend!');
 });
 
-// ----------- Routes -----------
-app.use("/invoice", invoiceRoutes);
-app.use("/file/", express.static(path.join(__dirname, "email-service/downloads")));
-app.use("/register", RegisterRoutes);
-app.use("/email", emailRoutes);
-
-// ----------- Invoice Posting with Socket Emission -----------
-const postInvoices = async (inv) => {
-  try {
-    console.log("📦 Posting invoice to DB:", inv);
-    await AmountServices.postService(inv);
-    
-    //🔊 Push invoice to connected clients
-    io.emit("new-invoice", inv);
-  } catch (error) {
-    console.error("❌ Error handling invoice:", error);
-  }
-};
-
-// ----------- Start IMAP Email Listener -----------
-//startListeningForAll(async(inv)=> await postInvoices(inv))
-
-
-// ----------- WebSocket Logging -----------
-io.on("connection", (socket) => {
-  console.log("🔌 Socket connected:", socket.id);
-
-  socket.on("disconnect", () => {
-    console.log("❎ Socket disconnected:", socket.id);
-  });
-});
-
-// ----------- Start Server -----------
-const port = process.env.PORT || 8080;
-server.listen(port, () => {
-  console.log("🚀 Zafir management running on port - ", port);
-  startEmailListeners(async (inv) => await postInvoices(inv));
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
