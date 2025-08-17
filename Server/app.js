@@ -72,7 +72,7 @@ io.on("connection", (socket) => {
 });
 
 // ----------- Start Server -----------
-const port = process.env.PORT || 1221;
+const port = process.env.PORT || 8080;
 server.listen(port, () => {
   console.log("🚀 Zafir management running on port - ", port);
   startEmailListeners(async (inv) => await postInvoices(inv));
