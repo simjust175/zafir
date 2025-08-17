@@ -13,9 +13,14 @@ import AmountService from "../Services/amountService.js";
 route.get("/filtered/:db", GeneralControllers.getFilteredGeneral)
 
 //get filtered
-route.get("/test", (req, res)=> {
-    res.status(202).json({Success: 'YAY!'})
-})
+app.get("/test", async (req, res) => {
+    try {
+      const [rows] = await pool.query("SHOW TABLES");
+      res.json(rows);
+    } catch (err) {
+      res.status(500).send("❌ DB connection failed");
+    }
+  });
 
 //POST
 route.post("/post", AmountControllers.postAmount);
