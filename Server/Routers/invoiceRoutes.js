@@ -12,15 +12,6 @@ import AmountService from "../Services/amountService.js";
 //get filtered
 route.get("/filtered/:db", GeneralControllers.getFilteredGeneral)
 
-//get filtered
-app.get("/test", async (req, res) => {
-    try {
-      const [rows] = await pool.query("SHOW TABLES");
-      res.json(rows);
-    } catch (err) {
-      res.status(500).send("❌ DB connection failed");
-    }
-  });
 
 //POST
 route.post("/post", AmountControllers.postAmount);
