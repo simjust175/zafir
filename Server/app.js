@@ -81,15 +81,6 @@ try {
   console.error("❌ Failed to load email listener module:", err);
 }
 
-//Test tes test test delete!!!
-app.get("/db-test", async (req, res) => {
-  try {
-    const [rows] = await pool.query("SHOW TABLES");
-    res.json(rows);
-  } catch (err) {
-    res.status(500).send("❌ DB connection failed");
-  }
-});
 
 // ----------- Invoice Posting with Socket Emission -----------
 const postInvoices = async (inv) => {

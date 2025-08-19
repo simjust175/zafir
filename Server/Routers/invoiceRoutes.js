@@ -12,7 +12,6 @@ import AmountService from "../Services/amountService.js";
 //get filtered
 route.get("/filtered/:db", GeneralControllers.getFilteredGeneral)
 
-
 //POST
 route.post("/post", AmountControllers.postAmount);
 
@@ -35,7 +34,6 @@ route.get("/freeEmails", AmountControllers.getFreeEmails)
 route.get("/projects/:db", GeneralService.getMultipleFilteredService);
 
 //Get payment
-//route.get("/payments/:db", AmountControllers.getPayments);
 route.get("/payments", AmountControllers.getPayments);
 
 //Patch
