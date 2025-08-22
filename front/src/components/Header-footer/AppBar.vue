@@ -19,7 +19,7 @@
         class="ml-5 zafir-text-primary cursor-pointer"
         @click.stop="pushMainRoute"
       >
-        Z<span class="zafir-text-secondary">T</span>P
+        B<span class="zafir-text-secondary">illi</span>o
       </h1>
       <v-spacer />
 
