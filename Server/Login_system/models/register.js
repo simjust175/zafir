@@ -16,12 +16,15 @@ class Register {
     };
 
     static async patchUser(id, body) {
-        const user = Object.entries(body)
-        const patch = user.map(entry => `${entry[0]} = ${typeof entry[1] === 'string' ? `"${entry[1]}"` : entry[1]}`).join(" ,");
-        const sql = `UPDATE users SET ${patch} WHERE user_id = ?`;
-        const [patchedUser, _] = await db.query(sql, [id]);
-        console.log("sql", sql);
-        
+        const fields = Object.keys(body);
+        const values = Object.values(body);
+    
+        // Build placeholders for each field
+        const placeholders = fields.map(field => `${field} = ?`).join(", ");
+    
+        const sql = `UPDATE users SET ${placeholders} WHERE user_id = ?`;
+        const [patchedUser] = await db.query(sql, [...values, id]);
+    
         return patchedUser;
     }
 
