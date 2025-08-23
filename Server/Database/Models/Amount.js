@@ -1,75 +1,75 @@
 import db from "../config/db.js";
-import joi from "joi";
-//~ES5~ const db = require("db");
-//~ES5~ const joi = require("joi");
-
-const isNotDeleted = "deleted_at IS NULL";
 
 class Amount {
-  static async validateInfo(amount_data) {
-    const amountSchema = joi.object({
-      amount: joi.number().required(),
-    });
-    return amountSchema.validate(amount_data);
-  }
-
   static async postAmount(body) {
-    const INSERT_amount = "INSERT INTO invoices SET ?";
-    const [amountInserted, _] = await db.query(INSERT_amount, [body]);
-    return amountInserted;
+    const sql = "INSERT INTO invoices SET ?";
+    const [result] = await db.query(sql, [body]);
+    return result;
   }
 
-  static async ValidateByToken(token) {
+  static async validateByToken(token) {
     const sql = "SELECT user_id FROM users WHERE token = ?";
-    const [user_id, _] = await db.query(sql, [token]);
-    return user_id;
+    const [rows] = await db.query(sql, [token]);
+    return rows;
   }
 
-  static async GetAmounts() {
-    const SELECT_amounts = `SELECT 
-  *,
-  invoices.created_at AS invoice_date
-FROM projects
-LEFT JOIN invoices 
-  ON invoices.project = projects.project_id AND invoices.deleted_at IS NULL
-WHERE 
-  projects.deleted_at IS NULL
-  AND projects.completed_on IS NULL;`; //user = ? AND
-    const [amountSelected] = await db.query(SELECT_amounts); //, [user_id]
-    return amountSelected;
+  static async getAmounts() {
+    const sql = `
+      SELECT 
+        *,
+        invoices.created_at AS invoice_date
+      FROM projects
+      LEFT JOIN invoices 
+        ON invoices.project = projects.project_id 
+        AND invoices.deleted_at IS NULL
+      WHERE projects.deleted_at IS NULL
+      AND projects.completed_on IS NULL;
+    `;
+    const [rows] = await db.query(sql);
+    return rows;
   }
+
   static async getFreeEmails() {
-    const SELECT_amounts = `SELECT e.email AS email_address, e.password AS password, e.email_id AS email_id
-FROM emails e
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM projects p
-  WHERE p.email = e.email_id
-    AND p.completed_on IS NULL
-);`;
-    const [amountSelected] = await db.query(SELECT_amounts); //, [user_id]
-    return amountSelected;
-  }
-  static async getActiveEmails() {
-    const SELECT_amounts = `select emails.email_id AS email_id, emails.password AS password, emails.email AS email_address, projects.project_id AS project_id FROM projects INNER JOIN emails ON projects.email = emails.email_id WHERE projects.completed_on IS NULL;`;
-    const [amountSelected] = await db.execute(SELECT_amounts); //, [user_id]
-    return amountSelected;
+    const sql = `
+      SELECT e.email AS email_address, e.password, e.email_id
+      FROM emails e
+      WHERE NOT EXISTS (
+        SELECT 1 FROM projects p
+        WHERE p.email = e.email_id
+        AND p.completed_on IS NULL
+      );
+    `;
+    const [rows] = await db.query(sql);
+    return rows;
   }
 
-  static async getProjectId(email) {
-    const Select_projectId = `Select project_id FROM projects WHERE email = ? AND completed_on IS NULL`;
-    const [projectId] = await db.query(Select_projectId, [email]);
-    return projectId;
+  static async getActiveEmails() {
+    const sql = `
+      SELECT e.email_id, e.password, e.email AS email_address, p.project_id
+      FROM projects p
+      INNER JOIN emails e ON p.email = e.email_id
+      WHERE p.completed_on IS NULL;
+    `;
+    const [rows] = await db.query(sql);
+    return rows;
+  }
+
+  static async getProjectId(emailId) {
+    const sql = "SELECT project_id FROM projects WHERE email = ? AND completed_on IS NULL";
+    const [rows] = await db.query(sql, [emailId]);
+    return rows;
   }
 
   static async getPayments(table) {
-    const sql = `SELECT ${table}.amount, ${table}.project, ${table}.created_on, projects.project_name FROM ${table} INNER JOIN projects ON ${table}.project = projects.project_id WHERE projects.completed_on IS NULL;`;
-    const [payments, _] = await db.execute(sql);
-    return payments;
+    const sql = `
+      SELECT t.amount, t.project, t.created_on, p.project_name
+      FROM ${table} t
+      INNER JOIN projects p ON t.project = p.project_id
+      WHERE p.completed_on IS NULL;
+    `;
+    const [rows] = await db.query(sql);
+    return rows;
   }
-
-
 }
 
-//~ES5~ module.export = AmountModel
 export default Amount;

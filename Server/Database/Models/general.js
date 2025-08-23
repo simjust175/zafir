@@ -1,123 +1,101 @@
 import db from "../config/db.js";
 
-const isNotDeleted = "deleted_at IS NULL";
-
+const isNotDeleted = "`deleted_at` IS NULL";
 const allowedTables = ["emails", "invoices", "projects", "users", "payments", "invoicing"];
 
-function isTableAllowed(database) {
-  return allowedTables.includes(database);
+function validateTable(table) {
+  if (!allowedTables.includes(table)) {
+    throw new Error(`Invalid table name: ${table}`);
+  }
 }
 
 class General {
-  static async get(database) {
-    if (!isTableAllowed(database)) throw new Error("Invalid table name");
-
-    const query = `SELECT * FROM \`${database}\` WHERE ${isNotDeleted}`;
-    const [rows] = await db.query(query);
+  static async get(table) {
+    validateTable(table);
+    const sql = `SELECT * FROM \`${table}\` WHERE ${isNotDeleted}`;
+    const [rows] = await db.query(sql);
     return rows;
   }
 
-  static async getWithFilter(database, columns = "*", whereClause = "") {
-    if (!isTableAllowed(database)) throw new Error("Invalid table name");
+  static async getWithFilter(table, columns = "*", whereClause = "", params = []) {
+    validateTable(table);
 
-    const selectedColumns = Array.isArray(columns) ? columns.map(col => `\`${col}\``).join(", ") : columns;
-
-    let query = `SELECT ${selectedColumns} FROM \`${database}\` WHERE ${isNotDeleted}`;
-    if (whereClause) query += ` AND ${whereClause}`;
-    
-    const [rows] = await db.query(query);
-    console.log("in filtered models: --> ", query, rows);
-    
-    return rows;
-  }
-
-  static async getMultipleFilteredGroups(database, columns = "*", filterField = "id", filterValues = []) {
-    console.log("val val val", filterValues, !Array.isArray(filterValues));
-    
-    if (!isTableAllowed(database)) throw new Error("Invalid table name");
-    if (!Array.isArray(filterValues) || filterValues.length === 0) return [];
-  
     const selectedColumns = Array.isArray(columns)
       ? columns.map(col => `\`${col}\``).join(", ")
       : columns;
-  
+
+    let sql = `SELECT ${selectedColumns} FROM \`${table}\` WHERE ${isNotDeleted}`;
+    if (whereClause) sql += ` AND ${whereClause}`;
+
+    const [rows] = await db.query(sql, params);
+    return rows;
+  }
+
+  static async getMultipleFilteredGroups(table, columns = "*", filterField = "id", filterValues = []) {
+    validateTable(table);
+    if (!Array.isArray(filterValues) || filterValues.length === 0) return [];
+
+    const selectedColumns = Array.isArray(columns)
+      ? columns.map(col => `\`${col}\``).join(", ")
+      : columns;
+
     const placeholders = filterValues.map(() => "?").join(", ");
     const whereClause = `\`${filterField}\` IN (${placeholders})`;
-  
-    const query = `SELECT ${selectedColumns} FROM \`${database}\` WHERE ${isNotDeleted} AND ${whereClause}`;
-    console.log("in get filtered ", query);
-    
-    const [rows] = await db.query(query, filterValues);
-    
-    
-    // Optional: group by filterField
-    const grouped = {};
-    for (const row of rows) {
+
+    const sql = `SELECT ${selectedColumns} FROM \`${table}\` WHERE ${isNotDeleted} AND ${whereClause}`;
+    const [rows] = await db.query(sql, filterValues);
+
+    // Group rows by filterField
+    return rows.reduce((acc, row) => {
       const key = row[filterField];
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(row);
-    }
-  
-    return grouped;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(row);
+      return acc;
+    }, {});
   }
 
   static async post(table, body) {
-    if (!isTableAllowed(table)) throw new Error("Invalid table name");
-  
-    const INSERT_SQL = `INSERT INTO \`${table}\` SET ?`;
-    const [insertResult] = await db.query(INSERT_SQL, [body]);
-  
-    if (!insertResult.insertId) throw new Error("Insert failed");
-  
-    // Fetch and return the inserted row using insertId
-    const SELECT_SQL = `SELECT * FROM \`${table}\` WHERE ${table === 'invoicing' ? table : table.slice(0, -1)}_id = ?`;
-    const [rows] = await db.query(SELECT_SQL, [insertResult.insertId]);
-  
+    validateTable(table);
+
+    const sqlInsert = `INSERT INTO \`${table}\` SET ?`;
+    const [result] = await db.query(sqlInsert, [body]);
+
+    if (!result.insertId) {
+      throw new Error("Insert failed");
+    }
+
+    const idField = table === "invoicing" ? "invoicing_id" : `${table.slice(0, -1)}_id`;
+    const sqlSelect = `SELECT * FROM \`${table}\` WHERE ${idField} = ?`;
+    const [rows] = await db.query(sqlSelect, [result.insertId]);
+
     return rows[0];
   }
 
-  static async patch(table, body, whereClause, id) {    
-    if (!allowedTables.includes(table)) {
-      throw new Error("Invalid table name");
-    }
-    console.log("in patch", table, body, whereClause);
-    
-    // Optional: Define updatable fields per table
-    const fieldList = {
-      invoices: ['issuer', 'amount', 'includesBtw', 'btwPercent', 'margin', 'deleted_at', 'double_checked'],
-      projects: [ 'project_name', 'amount_invoiced', 'amount_paid', 'completed_on'],
-      payments: ['payment_amount'],
-      invoicing: ['invoicing_amount'],
-      users:['deleted_at', 'user_name', 'user_email'],
+  static async patch(table, body, whereClause, params = []) {
+    validateTable(table);
 
-      // add more tables and fields as needed
+    const fieldWhitelist = {
+      invoices: ["issuer", "amount", "includesBtw", "btwPercent", "margin", "deleted_at", "double_checked"],
+      projects: ["project_name", "amount_invoiced", "amount_paid", "completed_on"],
+      payments: ["payment_amount"],
+      invoicing: ["invoicing_amount"],
+      users: ["deleted_at", "user_name", "user_email"]
     };
 
-    const validFields = fieldList[table] || [];
-    const entries = Object.entries(body).filter(([key]) => validFields.includes(key));
+    const validFields = fieldWhitelist[table] || [];
+    const updates = Object.entries(body).filter(([key]) => validFields.includes(key));
 
-    if (entries.length === 0) {
-      throw new Error("No valid fields to update");
+    if (updates.length === 0) {
+      throw new Error(`No valid fields to update for table: ${table}`);
     }
 
-    // const setClauses = entries.map(([key]) => `${key} = ?`).join(', ');
-    // const values = entries.map(([_, value]) => value);
-    const itemsToPatch = Object.entries(body)
-    console.log(" in Patch", itemsToPatch);
-    const patch = itemsToPatch.map(entry => `${entry[0]} = ${typeof entry[1] === 'string' ? `"${entry[1]}"` : entry[1]}`).join(" ,");
-    console.log("patch pathchy", patch);
-    
-    const sql = `UPDATE \`${table}\` SET ${patch} WHERE ${whereClause}`;
-    const [result] = await db.query(sql, [id]);
-    console.log("sql", sql, "ID", id, "res", result);
-    return result;
-  }
+    const setClause = updates.map(([key]) => `\`${key}\` = ?`).join(", ");
+    const values = updates.map(([, value]) => value);
 
-  static async validateInfo(amount_data) {
-    // Implement your schema validation logic here
-    // Example:
-    // return amountSchema.validate(amount_data);
-    return true; // placeholder
+    const sql = `UPDATE \`${table}\` SET ${setClause} WHERE ${whereClause}`;
+    const [result] = await db.query(sql, [...values, ...params]);
+
+    return result;
   }
 }
 
