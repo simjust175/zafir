@@ -216,7 +216,7 @@ const headers = computed(() => [
   { title: '', key: 'actions', sortable: false },
 ]);
 
-// Computed: Grouped Invoices
+// ✅ Fixed: Grouped Invoices (margin taken once per group, not summed)
 const groupedInvoices = computed(() => {
   const groups = {};
   dbContents.value.forEach(inv => {
@@ -228,13 +228,14 @@ const groupedInvoices = computed(() => {
   return Object.keys(groups).map(issuer => {
     const invoices = groups[issuer];
     const totalAmount = invoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
-    const totalMargin = invoices.reduce((sum, inv) => sum + Number(inv.margin || 0), 0);
+    const groupMargin = Number(invoices[0]?.margin || 0); // only use first invoice’s margin
+
     return {
       issuer,
       invoices,
       totalAmount,
-      totalMargin,
-      totalWithMargin: totalAmount + (totalAmount * totalMargin / 100),
+      totalMargin: groupMargin,
+      totalWithMargin: totalAmount + (totalAmount * groupMargin / 100),
       marginChanged: false
     };
   });
