@@ -1,150 +1,77 @@
-import Amount from "../Database/Models/Amount.js";
+import Amount from "../Database/Models/amount.js";
 import General from "../Database/Models/general.js";
 
 class AmountService {
   static async postService(body) {
-    console.log("POST BODY💪", body);
-    
-    try {
-      const postAmount = await Amount.postAmount(body);
-      if (!postAmount) return null;
-      return postAmount;
-    } catch (error) {
-      throw new Error(`in Services/postService: ${error.message}`);
-    }
+    return await Amount.postAmount(body);
   }
 
   static async getEmailsNotConnectedToProjects() {
-    try {
-      return await Amount.getFreeEmails();
-    } catch (error) {
-      throw new Error(`in amountServices/getEmailsNotConnectedToProjects: ${error.message}`);
-    }
+    return await Amount.getFreeEmails();
   }
 
   static async getActiveEmailsService() {
-    try {
-      return await Amount.getActiveEmails();
-    } catch (error) {
-      throw new Error(`in amountServices/getActiveEmailsService: ${error.message}`);
-    }
+    return await Amount.getActiveEmails();
   }
 
   static async postNewEmailService({ email, password, project_name }) {
-    try {
-      const emailStr = (email || '').trim().toLowerCase();
-      if (!emailStr) throw new Error("Email is required");
+    const emailStr = (email || "").trim().toLowerCase();
+    if (!emailStr) throw new Error("Email is required");
 
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(emailStr)) throw new Error("Invalid email format");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailStr)) throw new Error("Invalid email format");
 
-      let finalProjectName = (project_name || '').trim();
-      if (!finalProjectName) finalProjectName = `project${Date.now()}`;
+    let projectName = (project_name || "").trim() || `project${Date.now()}`;
 
-      // 1. Check if email exists
-      const existingEmails = await General.getWithFilter('emails', '*', `email = "${emailStr}"`);
-      let emailRow;
-
-      if (existingEmails && existingEmails.length > 0) {
-        emailRow = existingEmails[0];
-      } else {
-        if (!password || !password.trim()) {
-          throw new Error("Password is required to create a new email");
-        }
-
-        emailRow = await General.post("emails", { email: emailStr, password });
-        if (!emailRow || !emailRow.email_id) {
-          throw new Error("Failed to insert new email");
-        }
-      }
-
-      // 2. Check if project with same name already exists for this email
-      const existingProjects = await General.getWithFilter(
-        "projects",
-        "*",
-        `email = ${emailRow.email_id} AND project_name = "${finalProjectName}"`
-      );
-
-      if (existingProjects && existingProjects.length > 0) {
-        return {
-          email: emailRow,
-          project: existingProjects[0],
-          created: false,
-        };
-      }
-
-      // 3. Create new project linked to the email
-      const newProject = await General.post("projects", {
-        project_name: finalProjectName,
-        email: emailRow.email_id,
-      });
-
-      if (!newProject) throw new Error("Failed to insert new project");
-
-      return {
-        email: emailRow,
-        project: newProject,
-        created: true,
-      };
-    } catch (error) {
-      throw new Error(`in Services/postNewEmailService: ${error.message}`);
+    // 1. Check if email exists
+    let [emailRow] = await General.getWithFilter("emails", "*", "email = ?", [emailStr]);
+    if (!emailRow) {
+      if (!password || !password.trim()) throw new Error("Password required for new email");
+      emailRow = await General.post("emails", { email: emailStr, password });
     }
+
+    // 2. Check for existing project
+    const existingProjects = await General.getWithFilter(
+      "projects",
+      "*",
+      "email = ? AND project_name = ?",
+      [emailRow.email_id, projectName]
+    );
+
+    if (existingProjects.length > 0) {
+      return { email: emailRow, project: existingProjects[0], created: false };
+    }
+
+    // 3. Create new project
+    const newProject = await General.post("projects", {
+      project_name: projectName,
+      email: emailRow.email_id,
+    });
+
+    return { email: emailRow, project: newProject, created: true };
   }
 
   static async getService({ token }) {
-    const [{ user_id }] = await Amount.ValidateByToken(token);
-    if (!user_id) throw new Error("not the correct user");
-    try {
-      const getAmounts = await Amount.GetAmounts(user_id); //user_id
-      if (!getAmounts) return null;
-      return getAmounts;
-    } catch (error) {
-      throw new Error(`error in amountService/getService: ${error.message}`);
-    }
+    const [{ user_id }] = await Amount.validateByToken(token);
+    if (!user_id) throw new Error("Invalid user token");
+    return await Amount.getAmounts();
   }
 
-  static async getPaymentService() { //table
-    console.log("table to get");
-    
-    try {
-      //const payments = await Amount.getPayments(table)
-      const payments = await Amount.getPayments('payments')
-      const invoicing = await Amount.getPayments('invoicing')
-      if (!payments) return null;
-      return { payments, invoicing };
-    } catch (error) {
-      throw new Error(`error in amountService/getProjectIdService: ${error.message}`);
-    }
+  static async getPaymentService() {
+    const payments = await Amount.getPayments("payments");
+    const invoicing = await Amount.getPayments("invoicing");
+    return { payments, invoicing };
   }
 
   static async getProjectIdService(email) {
-    try {
-      const emailId = await General.getWithFilter(
-        "emails",
-        "email_id",
-        `email = "${email}"`
-      );
-      
-      const [{ project_id }] = await Amount.getProjectId(emailId[0].email_id);
-      console.log("project_id", project_id);
-      
-      if (!project_id) return null;
-      return project_id;
-    } catch (error) {
-      throw new Error(`error in amountService/getProjectIdService: ${error.message}`);
-    }
+    const [{ email_id }] = await General.getWithFilter("emails", "email_id", "email = ?", [email]);
+    const [{ project_id }] = await Amount.getProjectId(email_id);
+    return project_id;
   }
 
   static async getActiveProjectIdService(email_id) {
-    try {
-      const [{ project_id }] = await Amount.getProjectId(email_id);
-      console.log("project_id", project_id);
-      
-      if (!project_id) return null;
-      return project_id;
-    } catch (error) {
-      throw new Error(`error in amountService/getProjectIdService: ${error.message}`);
-    }
+    const [{ project_id }] = await Amount.getProjectId(email_id);
+    return project_id;
   }
 }
 

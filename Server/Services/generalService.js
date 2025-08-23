@@ -1,106 +1,53 @@
 import General from "../Database/Models/general.js";
 
 class GeneralService {
-  static async postService(db, body) {
-    console.log("in controllers: ---", db, body);
-    
-    if (!db || !body)
-      throw new Error("⚠️ Service/postService.js - Need to define database");
-    try {
-      const postAmount = await General.post(db, body);
-      if (!postAmount) return null;
-      return postAmount;
-    } catch (error) {
-      throw new Error(`in Services/postService: ${error.message}`);
-    }
+  static async postService(table, body) {
+    if (!table || !body) throw new Error("Database and body must be provided");
+    return await General.post(table, body);
   }
 
   static async getService({ params }) {
-    // const [{user_id}] = await general.ValidateByToken(token);
-    // if (!user_id) throw new Error("not the correct user");
-    if (!params.db)
-      throw new Error("⚠️ Service/getService.js - Need to define database");
-    try {
-      const getAmounts = await General.get(params.db); //user_id
-      if (!getAmounts) return null;
-      return getAmounts;
-    } catch (error) {
-      throw new Error(`error in generalService/getService: ${error.message}`);
-    }
+    if (!params.db) throw new Error("Database name is required");
+    return await General.get(params.db);
   }
 
   static async getFilteredService({ params, query }) {
-    const what = query.what || "*";
-    const where = query.where || "";
-    console.log("query", query, !query, where, "||");
-    
-    if (!params.db)
-      throw new Error("⚠️ Service/getService.js - Need to define database");
-    try {
-      const getAmounts = await General.getWithFilter(
-        params.db,
-        what,
-        where
-      ); //user_id
-      if (!getAmounts) return null;
-      return getAmounts;
-    } catch (error) {
-      throw new Error(`error in generalService/getService: ${error.message}`);
-    }
-  }
-  static async getMultipleFilteredService({ params, query }) {
-    const what = query.what || "*";
-    const where = `${query.where}` || "";
-    if (!params.db)
-      throw new Error("⚠️ Service/getService.js - Need to define database");
-    try {
-      const getAmounts = await General.getMultipleFilteredGroups(
-        params.db,
-        what,
-        where,
-        query.filterValues
-      ); //user_id
-      if (!getAmounts) return null;
-      return getAmounts;
-    } catch (error) {
-      throw new Error(`error in generalService/getService: ${error.message}`);
-    }
+    const columns = query.what || "*";
+    const whereClause = query.where || "";
+    return await General.getWithFilter(params.db, columns, whereClause);
   }
 
-  static async patchService(db, query, body) {
-    console.log("in patch service =>", "query =", query, "body =",  body);
-    
-    if (!body || !db) {
-      throw new Error("⚠️ patchService - body, and db must be provided.");
-    }
+  static async getMultipleFilteredService({ params, query }) {
+    const columns = query.what || "*";
+    const filterField = query.filterField || "id";
+    const filterValues = query.filterValues || [];
+    return await General.getMultipleFilteredGroups(params.db, columns, filterField, filterValues);
+  }
+
+  static async patchService(table, query, body) {
+    if (!table || !body) throw new Error("Database and body must be provided");
+
     let whereClause = "";
-    
+    let params = [];
+
     if (query.id) {
       whereClause = "invoice_id = ?";
-      // whereParams.push(query.id);
-    }  else if (query.user) {
+      params = [query.id];
+    } else if (query.user) {
       whereClause = "user_id = ?";
-      query.id = query.user
+      params = [query.user];
     } else if (query.margin) {
-      const q = JSON.parse(query.margin)
-      console.log("is it iterable?", q);
-      whereClause = `project = ${q[0].project} AND issuer = "${q[1].issuer}"`;
-    }  else if (query.project) {
-      const q = JSON.parse(query.project)
-      console.log("is it iterable?", q);
-      whereClause = `project_id = ${query.project}`;
+      const [proj, issuer] = JSON.parse(query.margin);
+      whereClause = "project = ? AND issuer = ?";
+      params = [proj.project, issuer.issuer];
+    } else if (query.project) {
+      whereClause = "project_id = ?";
+      params = [query.project];
     } else {
-      console.log("we fell here: Why?", !query.id);
-      
-      throw new Error("⚠️ patchService - valid query must be provided.");
+      throw new Error("Valid query must be provided for patch");
     }
 
-    try {
-      const result = await General.patch(db, body, whereClause, query.id);
-      return result;
-    } catch (err) {
-      throw new Error("🔴 patchService Error: " + err.message);
-    }
+    return await General.patch(table, body, whereClause, params);
   }
 }
 
