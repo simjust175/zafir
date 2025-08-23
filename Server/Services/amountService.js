@@ -1,4 +1,4 @@
-import Amount from "../Database/Models/amount.js";
+import Amount from "../Database/Models/Amount.js";
 import General from "../Database/Models/general.js";
 
 class AmountService {
