@@ -12,17 +12,17 @@
       />
 
       <register-input
-        label="Enter Email"
+        label="Email"
         type="email"
         @input="credentials.user_email = $event"
       />
       <register-input
-        label="Enter Name"
+        label="Name"
         type="user_name"
         @input="credentials.user_name = $event"
       />
       <register-input
-        label="Enter Password"
+        label="Password"
         type="pwd"
         @input="pwd1 = $event"
       />
@@ -32,17 +32,26 @@
         :pwd1="pwd1"
         @input="pwd2 = $event"
       />
-
-      <v-btn
-        color="primary"
-        block
-        class="mt-4"
-        append-icon="mdi-plus"
-        @click.prevent="register"
-        :loading="loading"
-      >
-        Add user
-      </v-btn>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn
+          text
+          @click="$emit('close')"
+        >
+          Cancel
+        </v-btn>
+        <v-btn
+          color="primary"
+          variant="elevated"
+          append-icon="mdi-plus"
+          class="px-2 pl-3"
+          :loading="loading"
+          :disabled="!isFormValid"
+          @click.prevent="register"
+        >
+          Add user
+        </v-btn>
+      </v-card-actions>
     </v-form>
 
     <!-- ✅ Success Snackbar -->
