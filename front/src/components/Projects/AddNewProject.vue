@@ -7,7 +7,8 @@
       <v-card
         v-if="adding || !inTabs"
         key="login"
-        class="pa-4 mt-12"
+        class="pa-5 mt-12"
+        rounded="xl"
         min-width="500"
         max-width="600"
         flat
@@ -89,7 +90,7 @@
             required
           />
 
-          <div class="d-flex justify-end mt-4 gap-2">
+          <div class="d-flex justify-end mt-4 pb-5 gap-2">
             <v-btn
               v-if="inTabs"
               variant="text"

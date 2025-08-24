@@ -43,7 +43,7 @@
       >
         <template #item.active="{ item }">
           <v-chip
-          :class="{'px-4' : item.token}"
+            :class="{'px-4' : item.token}"
             :color="item.token ? 'success' : 'warning'"
             label
           >
@@ -81,58 +81,80 @@
     <v-dialog
       v-model="dialog"
     >
-      <v-card
-        class="py-6 px-4"
-        min-width="300"
-        rounded="xl"
-      >
-        <v-card-title class="text-h6">
-          <v-btn
-            icon="mdi-arrow-left"
-            variant="flat"
-            @click="dialog = false"
+      <div class="d-flex align-center justify-center">
+        <v-card
+          v-if="editingUser"
+          class="py-4 px-3"
+          width="350"
+          rounded="xl"
+        >
+          <v-card-title class="text-h6">
+            <v-btn
+              icon="mdi-arrow-left"
+              variant="flat"
+              @click="dialog = false"
+            />
+            {{ editingUser ? 'Edit User' : 'Add User' }}
+          </v-card-title>
+
+          <v-card-text>
+            <v-form
+              ref="formRef"
+              v-model="valid"
+            >
+              <v-text-field
+                v-model="form.name"
+                label="Full Name"
+                :rules="[v => !!v || 'Name is required']"
+                required
+              />
+              <v-text-field
+                v-model="form.email"
+                label="Email"
+                type="email"
+                :rules="[v => !!v || 'Email is required']"
+                required
+              />
+            </v-form>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer />
+            <v-btn
+              text
+              @click="dialog = false"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+              color="primary"
+              :loading="loading"
+              @click="saveUser"
+            >
+              Save
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+        <v-card
+          v-else
+          class="pa-2"
+          rounded="xl"
+          width="450"
+        >
+          <v-card-title class="text-h6 pl-0 ml-0">
+            <v-btn
+              icon="mdi-arrow-left"
+              variant="flat"
+              @click="dialog = false"
+            />
+            {{ editingUser ? 'Edit User' : 'Add User' }}
+          </v-card-title>
+          <register-form
+            class="px-6"
+            @close="dialog = false"
           />
-          {{ editingUser ? 'Edit User' : 'Add User' }}
-        </v-card-title>
-
-        <v-card-text>
-          <v-form
-            ref="formRef"
-            v-model="valid"
-          >
-            <v-text-field
-              v-model="form.name"
-              label="Full Name"
-              :rules="[v => !!v || 'Name is required']"
-              required
-            />
-            <v-text-field
-              v-model="form.email"
-              label="Email"
-              type="email"
-              :rules="[v => !!v || 'Email is required']"
-              required
-            />
-          </v-form>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            text
-            @click="dialog = false"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-            color="primary"
-            :loading="loading"
-            @click="saveUser"
-          >
-            Save
-          </v-btn>
-        </v-card-actions>
-      </v-card>
+        </v-card>
+      </div>
     </v-dialog>
 
     <!-- Delete Confirmation Dialog -->

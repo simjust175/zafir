@@ -45,7 +45,7 @@ const props = defineProps({
 const emit = defineEmits(["input"]);
 
 const iconList = {
-  email: "mdi-account-outline",
+  email: "mdi-email-outline",
   pwd: "mdi-lock-outline",
   pwd2: "mdi-lock",
   user_name: "mdi-account-circle-outline"
@@ -77,12 +77,4 @@ const emitData = () => {
 </script>
 
 <style>
-/* Change the white to any color */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
-  color: rgb(77, 76, 76);
-}
 </style>
