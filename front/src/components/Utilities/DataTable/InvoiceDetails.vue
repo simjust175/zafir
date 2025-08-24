@@ -2,7 +2,7 @@
   <v-main>
     <v-dialog
       v-model="dialog"
-      max-width="70%"
+      max-width="70vw"
       max-height="95%"
       scrollable="y"
     >
@@ -129,7 +129,7 @@
     </v-dialog>
 
     <!-- PDF Viewer Dialog -->
-    <pdf-viewer
+    <pdf-viewer-dialog
       :dialog="pdfDialog"
       :double-check="doubleCheckTrigger"
       :mode="doubleCheckTrigger ? 'double-check' : 'noraml'"

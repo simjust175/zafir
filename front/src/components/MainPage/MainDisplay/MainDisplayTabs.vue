@@ -31,8 +31,8 @@
             <v-tabs
               v-model="tab"
               direction="vertical"
-              :stacked="!$vuetify.display.mdAndUp"
-              class="pt-1 d-flex flex-column justify-start"
+              :stacked="$vuetify.display.mdAndUp && expanded"
+              class="pt-2 d-flex flex-column justify-start"
               :selected-class="selectedTab"
               :ripple="true"
               color="primary"
@@ -137,7 +137,7 @@
                 </v-tab>
               </v-tabs>
 
-              <div class="sticky-actions">
+              <div>
                 <v-btn
                   color="primary"
                   rounded="md"

@@ -1,15 +1,21 @@
 <template>
   <v-row dense>
     <!-- 💳 Total Invoiced -->
-    <v-col cols="12" md="6">
+    <v-col
+      cols="12"
+      md="6"
+    >
       <v-card
         v-if="!animateLoading"
-        class="stat-card bg-indigo-lighten-5 d-flex align-center rounded-xl overflow-hidden"
+        class="stat-card bg-indigo-lighten-5 d-flex align-center rounded-lg overflow-hidden"
         
         elevation="0"
       >
         <!-- Icon Section -->
-        <v-card class="icon-section bg-indigo-lighten-4 d-flex align-center justify-center" height="100">
+        <v-card
+          class="icon-section bg-indigo-lighten-4 d-flex align-center justify-center"
+          height="100"
+        >
           <v-img
             src="/invoice.png"
             height="32"
@@ -45,20 +51,26 @@
         v-else
         type="card"
         height="100"
-        class="rounded-xl"
+        class="rounded-lg"
       />
     </v-col>
 
     <!-- 💰 Total Paid -->
-    <v-col cols="12" md="6">
+    <v-col
+      cols="12"
+      md="6"
+    >
       <v-card
         v-if="!animateLoading"
-        class="stat-card d-flex align-center rounded-xl overflow-hidden"
+        class="stat-card d-flex align-center rounded-lg overflow-hidden"
         elevation="0"
         height="50"
       >
         <!-- Icon Section -->
-        <v-card class="icon-section bg-green-lighten-4 d-flex align-center justify-center" height="100">
+        <v-card
+          class="icon-section bg-green-lighten-4 d-flex align-center justify-center"
+          height="100"
+        >
           <v-img
             src="/paid.png"
             height="32"
@@ -105,7 +117,7 @@
         v-else
         type="card"
         height="100"
-        class="rounded-xl"
+        class="rounded-lg"
       />
     </v-col>
   </v-row>
