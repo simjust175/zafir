@@ -14,16 +14,49 @@
         <v-btn
           v-bind="props"
           :icon="print ? 'mdi-printer-outline' : 'mdi-download-outline'"
-          @click="print ? handlePrint() : handleDownload()"
+          @click="checkBeforeAction"
         />
       </template>
-      <span>{{ print ? 'Print' : 'Download' }} summary </span>
+      <span>{{ print ? 'Print' : 'Download' }} summary</span>
     </v-tooltip>
+
+    <!-- ⚠️ Warning Confirmation Dialog -->
+    <v-dialog
+      v-model="warningDialog"
+      max-width="450"
+    >
+      <v-card
+        rounded="xl"
+        class="pa-4"
+      >
+        <v-card-title class="text-h6 font-weight-bold text-warning-darken-2">
+          ⚠️ Not all invoices are double-checked
+        </v-card-title>
+        <v-card-text class="text-body-2 text-grey-darken-2">
+          Some invoices have not been double-checked yet.  
+          Are you sure you want to continue {{ print ? 'printing' : 'downloading' }} this summary?
+        </v-card-text>
+        <v-card-actions class="justify-end">
+          <v-btn
+            text
+            @click="warningDialog = false"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            color="warning"
+            @click="forceContinue"
+          >
+            Yes, Continue
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
-import { onMounted, watch } from "vue";
+import { onMounted, watch, ref } from "vue";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Chart from "chart.js/auto";
@@ -33,8 +66,35 @@ const props = defineProps({
   total: Number,
   projectName: String,
   payments: { type: Array, default: () => [] },
-  print: Boolean
+  print: Boolean,
+  doubleChecked: Boolean
 });
+
+const warningDialog = ref(false)
+let pendingAction = null
+
+// ===== CHECK BEFORE ACTION =====
+const checkBeforeAction = () => {
+  if (!props.doubleChecked) {
+    // ⚠️ Not all invoices double-checked → show dialog
+    warningDialog.value = true
+    pendingAction = props.print ? "print" : "download"
+  } else {
+    // ✅ Safe to proceed
+    props.print ? handlePrint() : handleDownload()
+  }
+}
+
+// ===== Force continue after warning =====
+const forceContinue = () => {
+  warningDialog.value = false
+  if (pendingAction === "print") {
+    handlePrint()
+  } else {
+    handleDownload()
+  }
+  pendingAction = null
+}
 
 // ===== TABLE DATA =====
 const generateInvoiceSummary = () => {
@@ -54,14 +114,9 @@ const generatePaymentsTable = () => {
     new Date(p.created_on).toLocaleDateString(),
     `€${parseFloat(p.amount).toFixed(2)}`,
   ]);
-
-  // Calculate total payments
   const totalPayments = props.payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
   const totalRow = ["TOTAL", `€${totalPayments.toFixed(2)}`];
-  return {
-    head: [["Date", "Amount"]],
-    body: [...tableData, totalRow]
-  };
+  return { head: [["Date", "Amount"]], body: [...tableData, totalRow] };
 };
 
 // ===== CHART =====
@@ -86,13 +141,10 @@ const renderChart = () => {
         legend: { display: false },
         title: { display: true, text: `Totals with Margin by Supplier`, font: { size: 16 } }
       },
-      scales: {
-        y: { beginAtZero: true, ticks: { callback: v => `€${v}` } }
-      }
+      scales: { y: { beginAtZero: true, ticks: { callback: v => `€${v}` } } }
     }
   });
 };
-
 onMounted(renderChart);
 watch(() => props.groupedInvoices, renderChart, { deep: true });
 
@@ -150,13 +202,10 @@ const buildPdf = async () => {
   const doc = new jsPDF();
   await drawHeader(doc);
 
-  // Invoice summary table
   const invoiceData = generateInvoiceSummary();
   autoTable(doc, { head: invoiceData.head, body: invoiceData.body, startY: 35, theme: "grid", didDrawPage: () => drawFooter(doc, doc.internal.pageSize.getHeight()) });
-
   let bottomY = doc.lastAutoTable.finalY + 10;
 
-  // Payments table (if exists)
   const paymentsData = generatePaymentsTable();
   if (paymentsData) {
     doc.setFontSize(14);
@@ -167,20 +216,16 @@ const buildPdf = async () => {
 
   drawCompanyInfo(doc, bottomY);
 
-  // Chart page
   await new Promise(res => setTimeout(res, 300));
   const canvas = document.getElementById("invoice-chart");
   if (canvas) {
     const chartImage = canvas.toDataURL("image/png", 1.0);
     doc.addPage();
     await drawHeader(doc);
-    //drawFooter(doc, doc.internal.pageSize.getHeight());
     doc.setFontSize(14);
-    //doc.text("Visual Breakdown", 14, 20);
     doc.addImage(chartImage, "PNG", 10, 30, 190, 80);
     drawCompanyInfo(doc, 120);
   }
-
   return doc;
 };
 
@@ -189,7 +234,6 @@ const handleDownload = async () => {
   const doc = await buildPdf();
   doc.save(`invoice-summary-${props.projectName}.pdf`);
 };
-
 const handlePrint = async () => {
   const doc = await buildPdf();
   const blob = doc.output("blob");
