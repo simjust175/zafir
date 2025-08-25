@@ -7,8 +7,7 @@
     >
       <v-card
         v-if="!animateLoading"
-        class="stat-card bg-indigo-lighten-5 d-flex align-center rounded-lg overflow-hidden"
-        
+        class="stat-card bg-indigo-lighten-5 d-flex align-center rounded-xl overflow-hidden" 
         elevation="0"
       >
         <!-- Icon Section -->
@@ -18,8 +17,8 @@
         >
           <v-img
             src="/invoice.png"
-            height="32"
-            width="32"
+            height="37"
+            width="37"
           />
         </v-card>
 
@@ -62,7 +61,7 @@
     >
       <v-card
         v-if="!animateLoading"
-        class="stat-card d-flex align-center rounded-lg overflow-hidden"
+        class="stat-card d-flex align-center rounded-xl overflow-hidden bg-green-lighten-5"
         elevation="0"
         height="50"
       >
@@ -73,13 +72,13 @@
         >
           <v-img
             src="/paid.png"
-            height="32"
-            width="32"
+            height="37"
+            width="37"
           />
         </v-card>
 
         <!-- Content Section -->
-        <div class="content-section pa-4 mt- flex-grow-1 position-relative bg-green-lighten-5">
+        <div class="content-section pa-4 mt- flex-grow-1 position-relative">
           <!-- Add Button -->
           <v-btn
             icon="mdi-plus"
