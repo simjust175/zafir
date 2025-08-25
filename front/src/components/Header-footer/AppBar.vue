@@ -4,7 +4,8 @@
       prominent
       :collapse="collapse"
       elevate="4"
-      density="compact" 
+      density="compact"
+      class="py-1"
       scroll-behavior="hide"
       scroll-threshold="340"
     >
