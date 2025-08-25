@@ -245,7 +245,7 @@ const submitForm = async () => {
 
     if (addingNewEmail.value) {
       await snackbarRef.value.showSnack('Verifying email access...', 'info')
-      await snackbarRef.value.showSnack('✅ Email verified!...', 'info')
+      await snackbarRef.value.showSnack('✔️ Email verified!...', 'info')
       const { success, error } = await verifyEmail(emailToUse, pass)
       if (!success) return snackbarRef.value.showSnack(error || 'Email access failed', 'error')
     }
@@ -274,7 +274,7 @@ const submitForm = async () => {
 
     if (!response.ok) throw new Error(result?.message || 'Failed to add project')
 
-    await snackbarRef.value.showSnack('✅ Project successfully added!', 'success')
+    await snackbarRef.value.showSnack('✔️ Project successfully added!', 'success')
     emit('close')
     emit('newProjectAdded')
 

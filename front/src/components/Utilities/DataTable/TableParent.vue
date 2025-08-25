@@ -65,12 +65,14 @@
               :project-name="projectName"
               :total="overallTotalWithMargin"
               :payments="invoiceArray.payments.filter(p => p.project === project_id)"
+              :double-checked="invoiceArray.dbResponse.filter(i=> i.project === project_id).every(p => p.double_checked !== null )"
               :print="false"
             />
             <download-file
               :grouped-invoices="groupedInvoices"
               :project-name="projectName"
               :payments="invoiceArray.payments.filter(p => p.project === project_id)"
+              :double-checked="invoiceArray.dbResponse.filter(i=> i.project === project_id).every(p => p.double_checked !== null )"
               :total="overallTotalWithMargin"
               :print="true"
             />
@@ -79,6 +81,7 @@
               :project-name="projectName"
               :current-project-id="project_id"
               :payments="invoiceArray.payments.filter(p => p.project === project_id)"
+              :double-checked="invoiceArray.dbResponse.filter(i=> i.project === project_id).every(p => p.double_checked !== null )"
               :total="overallTotalWithMargin"
             />
 
