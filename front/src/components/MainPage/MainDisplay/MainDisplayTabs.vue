@@ -271,13 +271,17 @@ const invoicesByProject = computed(() => {
 });
 
 // Selected tab; ensure validity when projects/filters change
-const tab = ref(projects.value[0] || null);
+const tab = ref(projects.value.length ? projects.value[0] : 'add');
 
 // Keep tab valid for base list
 watch(projects, (val) => {
   if (!val.includes(tab.value)) {
     tab.value = val[0] || null;
   }
+    if (!val.includes(tab.value)) {
+    tab.value = val[0] || 'add';
+  }
+
 });
 
 // Keep tab valid while filtering (expanded)
@@ -288,6 +292,10 @@ watch(filteredProjects, (val) => {
   if (props.expanded && val.length === 0) {
     tab.value = "__none__";
   }
+  if (props.expanded && val.length === 0) {
+   tab.value = 'add';
+ }
+
 });
 
 const selectedTab = computed(() =>

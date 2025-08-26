@@ -16,12 +16,19 @@
         size="30"
         @click="pushMainRoute"
       />
-      <h1
+      <!-- <h1
         class="ml-5 zafir-text-primary cursor-pointer"
         @click.stop="pushMainRoute"
       >
         B<span class="zafir-text-secondary">illi</span>o
-      </h1>
+      </h1> -->
+      <img
+        class="pl-0 ml-4 cursor-pointer"
+        width="115"
+        height="35"
+        src="../../../public/logo.png"
+        @click="router.push('/')"
+      >
       <v-spacer />
 
       <!-- Live Email Watch Icon -->
