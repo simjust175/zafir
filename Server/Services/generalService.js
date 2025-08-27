@@ -26,11 +26,12 @@ class GeneralService {
 
   static async patchService(table, query, body) {
     if (!table || !body) throw new Error("Database and body must be provided");
-
+    console.log("table", table, "query", query);
+    
     let whereClause = "";
     let params = [];
 
-    if (query.id) {
+    if (query.id) { 
       whereClause = "invoice_id = ?";
       params = [query.id];
     } else if (query.user) {
@@ -43,6 +44,9 @@ class GeneralService {
     } else if (query.project) {
       whereClause = "project_id = ?";
       params = [query.project];
+    } else if (query.allWarnings) {
+      console.log("in allWarnings");
+      whereClause = "conflict_resolved IS NULL";
     } else {
       throw new Error("Valid query must be provided for patch");
     }
