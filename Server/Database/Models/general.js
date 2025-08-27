@@ -71,17 +71,19 @@ class General {
     return rows[0];
   }
 
+  //PATCH
   static async patch(table, body, whereClause, params = []) {
     validateTable(table);
-
     const fieldWhitelist = {
-      invoices: ["issuer", "amount", "includesBtw", "btwPercent", "margin", "deleted_at", "double_checked"],
+      invoices: ["issuer", "amount", "includesBtw", "btwPercent", "margin", "deleted_at", "double_checked", "conflict_resolved"],
       projects: ["project_name", "amount_invoiced", "amount_paid", "completed_on"],
       payments: ["payment_amount"],
       invoicing: ["invoicing_amount"],
       users: ["deleted_at", "user_name", "user_email"]
     };
 
+    console.log("in models => =>", table, body, whereClause, params);
+    
     const validFields = fieldWhitelist[table] || [];
     const updates = Object.entries(body).filter(([key]) => validFields.includes(key));
 
@@ -93,6 +95,8 @@ class General {
     const values = updates.map(([, value]) => value);
 
     const sql = `UPDATE \`${table}\` SET ${setClause} WHERE ${whereClause}`;
+    console.log("in models =>=>", sql);
+    
     const [result] = await db.query(sql, [...values, ...params]);
 
     return result;
