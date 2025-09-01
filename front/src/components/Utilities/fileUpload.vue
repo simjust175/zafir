@@ -19,7 +19,7 @@
           md="8"
         >
           <!-- File Input -->
-          <v-file-input
+          <!-- <v-file-input
             v-model="file"
             accept="application/pdf"
             label="Upload Invoice (PDF only)"
@@ -29,8 +29,8 @@
             dense
             class="mb-4"
             @change="handleFileSelect"
-          />
-
+          /> -->
+          <v-file-upload density="default" />
           <!-- Upload Success Alert -->
           <v-slide-y-transition>
             <v-alert

@@ -30,7 +30,7 @@
         @click="router.push('/')"
       />
       <NavItemWithTooltip
-        title="Chart"
+        title="Dashboard"
         prepend-icon="mdi-table-eye"
         value="table"
         :rail="railStat"

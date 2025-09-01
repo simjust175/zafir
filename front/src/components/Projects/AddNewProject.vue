@@ -20,7 +20,7 @@
           >
             mdi-plus-circle
           </v-icon>
-          <h3 class="mt-3">
+          <h3 class="mt-3 text-grey-darken-1">
             Add project
           </h3>
         </div>
@@ -124,11 +124,11 @@
       >
         <v-icon
           size="48"
-          color="primary"
+          color="grey-darken-3"
         >
           mdi-domain-plus
         </v-icon>
-        <h3 class="mt-3">
+        <h3 class="mt-3 grey-darken-1">
           Add a New Project
         </h3>
         <v-btn

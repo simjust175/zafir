@@ -9,7 +9,10 @@
     >
       <!-- Bell Icon -->
       <template #activator="{ props }">
-        <v-btn icon v-bind="props">
+        <v-btn
+          icon
+          v-bind="props"
+        >
           <v-badge
             v-if="messages.length > 0"
             :content="messages.length < 10 ? messages.length : '9+'"
@@ -18,12 +21,19 @@
           >
             <v-icon icon="mdi-bell-outline" />
           </v-badge>
-          <v-icon v-else icon="mdi-bell-outline" />
+          <v-icon
+            v-else
+            icon="mdi-bell-outline"
+          />
         </v-btn>
       </template>
 
       <!-- Notifications Dropdown -->
-      <v-card min-width="450" rounded="lg" class="elevation-5">
+      <v-card
+        min-width="450"
+        rounded="lg"
+        class="elevation-5"
+      >
         <v-card-title class="font-weight-bold pt-4 pl-5 text-h6">
           <div class="d-flex align-center justify-space-between">
             <span>Notifications</span>
@@ -39,8 +49,14 @@
         </v-card-title>
         <v-divider />
 
-        <v-list dense nav>
-          <transition-group name="fade" tag="div">
+        <v-list
+          dense
+          nav
+        >
+          <transition-group
+            name="fade"
+            tag="div"
+          >
             <!-- Empty state -->
             <v-list-item
               v-if="messages.length === 0"
@@ -52,10 +68,16 @@
                 rounded="lg"
               >
                 <v-list-item-content>
-                  <v-icon size="80" :class="themeColorText">
+                  <v-icon
+                    size="80"
+                    :class="themeColorText"
+                  >
                     mdi-alert-remove
                   </v-icon>
-                  <div class="text-h5 mt-3 mb-3" :class="themeColorText">
+                  <div
+                    class="text-h5 mt-3 mb-3"
+                    :class="themeColorText"
+                  >
                     Hurray! No issues
                   </div>
                 </v-list-item-content>
@@ -117,10 +139,17 @@
                     </div>
 
                     <!-- Right side: delete button (only on hover) -->
-                    <div v-if="isHovering" class="d-flex">
-                      <v-btn variant="tonal" density="comfortable" text="View" />
+                    <div
+                      v-if="isHovering"
+                      class="d-flex align-center"
+                    >
                       <v-btn
-                        text="Clear"
+                        variant="tonal"
+                        density="comfortable"
+                        text="View"
+                      />
+                      <v-btn
+                        icon="mdi-delete"
                         size="small"
                         variant="text"
                         color="error"
@@ -132,7 +161,10 @@
               </v-list-item>
 
               <!-- Divider between items -->
-              <v-divider v-if="index < messages.length - 1" class="mx-2" />
+              <v-divider
+                v-if="index < messages.length - 1"
+                class="mx-2"
+              />
             </template>
           </transition-group>
         </v-list>
@@ -149,14 +181,23 @@
       :double-check="false"
       :file-details="selectedMessage"
       @save-supplier="resolveSaveSupplier"
+      @keep-both="resolveKeepUnknown"
+      @keep-current="resolveDelete('current')"
+      @delete-both="resolveDelete('both')"
       @keep-unknown="resolveKeepUnknown"
       @close="dialog = false"
     />
 
     <!-- confirm delete dialog -->
-    <v-dialog v-model="confirmDialog" max-width="400" transition="dialog-bottom-transition">
+    <v-dialog
+      v-model="confirmDialog"
+      max-width="400"
+      transition="dialog-bottom-transition"
+    >
       <v-card>
-        <v-card-title class="text-h6 font-weight-bold">Confirm Deletion</v-card-title>
+        <v-card-title class="text-h6 font-weight-bold">
+          Confirm Deletion
+        </v-card-title>
         <v-card-text>
           <div v-if="confirmType === 'single'">
             Are you sure you want to delete this <strong>{{ confirmMessage.title }}</strong> alert for
@@ -167,17 +208,33 @@
           </div>
         </v-card-text>
         <v-card-actions class="justify-end">
-          <v-btn text="Cancel" variant="text" @click="confirmDialog = false" />
-          <v-btn text="Delete" color="error" variant="tonal" @click="confirmDelete" />
+          <v-btn
+            text="Cancel"
+            variant="text"
+            @click="confirmDialog = false"
+          />
+          <v-btn
+            text="Delete"
+            color="error"
+            variant="tonal"
+            @click="confirmDelete"
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- Snackbar -->
-    <v-snackbar v-model="snackbar" timeout="5000" location="bottom">
+    <v-snackbar
+      v-model="snackbar"
+      timeout="5000"
+      location="bottom"
+    >
       {{ snackbarText }}
       <template #actions>
-        <v-btn text="Undo" @click="undoCallback(); snackbar = false" />
+        <v-btn
+          text="Undo"
+          @click="undoCallback(); snackbar = false"
+        />
       </template>
     </v-snackbar>
   </div>
@@ -188,6 +245,9 @@ import { ref, computed } from "vue"
 import { useTheme } from "vuetify"
 import { invoices } from "@/stores/invoiceState"
 
+const invoiceArray = invoices()
+const messages = computed(() => invoiceArray.warnings)
+
 const theme = useTheme()
 const themeColor = computed(() =>
   theme.global.name.value === "dark" ? "bg-grey-darken-3" : "bg-grey-lighten-4"
@@ -195,9 +255,6 @@ const themeColor = computed(() =>
 const themeColorText = computed(() =>
   theme.global.name.value === "dark" ? "text-grey-lighten-2" : "text-grey-darken-1"
 )
-
-const invoiceArray = invoices()
-const messages = computed(() => invoiceArray.warnings)
 
 const menu = ref(false)
 const dialog = ref(false)
@@ -301,6 +358,8 @@ function confirmDelete() {
 }
 
 function resolveSaveSupplier(issuer) {
+  console.log("issuer from pef viewer:", issuer);
+  
   const index = invoiceArray.warnings.findIndex(w => w.id === selectedId.value)
   if (index !== -1) {
     resolveConflict({
@@ -309,6 +368,36 @@ function resolveSaveSupplier(issuer) {
       payload: { issuer, conflict_resolved: formatForMySQL(new Date()) },
       message: invoiceArray.warnings[index],
       undoMessage: `Supplier updated for "${invoiceArray.warnings[index].title}"`,
+    })
+  }
+  dialog.value = false
+}
+
+function resolveDelete(mode) {
+  const index = invoiceArray.warnings.findIndex(w => w.id === selectedId.value)
+  if (index === -1) return
+
+  const currentWarning = invoiceArray.warnings[index]
+  const message = currentWarning
+  const id = selectedId.value
+
+  if (mode === "both") {
+    // Delete both duplicate and current invoice
+    resolveConflict({
+      id,
+      index,
+      payload: { conflict_resolved: formatForMySQL(new Date()), delete_both: true },
+      message,
+      undoMessage: `Deleted both invoices for "${message.title}"`,
+    })
+  } else {
+    // Keep current, delete duplicate
+    resolveConflict({
+      id,
+      index,
+      payload: { conflict_resolved: formatForMySQL(new Date()), keep_current: true },
+      message,
+      undoMessage: `Kept original invoice for "${message.title}"`,
     })
   }
   dialog.value = false
