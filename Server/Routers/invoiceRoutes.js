@@ -27,8 +27,11 @@ route.post("/add-to-existing-email", AmountControllers.postToExitingEmail);
 //Get
 route.post("/get", AmountControllers.getAmounts);
 
-//Get emails not connected to projects
-route.get("/freeEmails", AmountControllers.getFreeEmails)
+// 🔴 Get emails not connected to projects
+route.get("/freeEmails", AmountControllers.getFreeEmails);
+
+// 🟢 Get ACTIVE emails 
+route.get("/activeEmails", AmountControllers.getActiveEmails)
 
 //Get projects
 route.get("/projects/:db", GeneralService.getMultipleFilteredService);

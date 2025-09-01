@@ -6,6 +6,7 @@ export const invoices = defineStore(
   () => {
     // state
     const dbResponse = reactive({});
+    const activeEmails = ref([])
     const payments = ref([]);
     const invoicing = ref([]);
     const warnings = ref([]);
@@ -18,6 +19,7 @@ export const invoices = defineStore(
     // Returns
     return {
       dbResponse,
+      activeEmails,
       warnings,
       payments,
       invoicing,

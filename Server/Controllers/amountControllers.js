@@ -58,6 +58,14 @@ class AmountControllers {
             res.status(500).json({ message: `Error in freeEmailServices/getFeeEmails: ${error.message}` });
         }
     }
+    static async getActiveEmails(req, res) {
+        try {
+            const activeEmails = await AmountService.getActiveEmailsService();
+            res.status(200).json({ message: `activeEmails retrieved successfully`, activeEmails });
+        } catch (error) {
+            res.status(500).json({ message: `Error in activeEmailServices/getFeeEmails: ${error.message}` });
+        }
+    }
 
     static async getPayments(req, res) { //{params}
         try {

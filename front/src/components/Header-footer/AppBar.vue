@@ -31,19 +31,9 @@
       >
       <v-spacer />
 
-      <!-- Live Email Watch Icon -->
-      <v-btn
+      <emails-live 
         v-if="loginState.token"
-        id="liveBanner"
-        variant="outlined"
-        class="mr-3"
-        color="error"
-        rounded="xl"
-        density="compact"
-      >
-        Live
-        <span class="live-dot ml-2" />
-      </v-btn>
+      />
       <!-- <v-tooltip
         activator="#liveBanner"
         location="bottom"
@@ -100,11 +90,15 @@ import { ref, computed, watch } from "vue";
 import { useTheme } from "vuetify";
 import { setLogin } from "@/stores/loginState"
 const loginState = setLogin()
+import { invoices  } from "@/stores/invoiceState";
+const invoiceArray = invoices()
 //import LanguageSwitch from "./LanguageSwitch.vue"
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
+//CHECK IF ONLICE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+const online = computed(()=> true)
 const theme = useTheme();
 const emit = defineEmits(['themeUpdate'])
 

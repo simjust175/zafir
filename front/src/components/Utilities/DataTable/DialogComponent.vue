@@ -16,7 +16,7 @@
       <v-toolbar
         :title="formTitle"
         class="px-8"
-        color="grey-lighten-2"
+        :color="theme.global.name.value === 'dark' ? 'bg-grey-darken-3' : 'bg-grey-lighten-4'"
       >
         <v-icon class="pr-2" left>
           mdi-pencil
@@ -75,6 +75,8 @@
 
 <script setup>
 import { ref, watch } from 'vue';
+import { useTheme } from 'vuetify';
+const theme = useTheme()
 
 const props = defineProps({
   dialogProp: Boolean,

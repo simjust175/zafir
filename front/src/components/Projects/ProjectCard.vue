@@ -5,6 +5,7 @@
       class="project-card hover:shadow-xl transition-all"
       elevation="2"
       border
+      hover
       rounded="xl"
       max-width="420"
     >
@@ -25,6 +26,9 @@
         <template #title>
           <div class="text-base font-weight-bold text-truncate text-capitalize">
             {{ projectName }}
+          </div>
+          <div class="text-grey-lighten-1 text-subtitle-2">
+            {{ projectEmail[0].email_address }}
           </div>
         </template>
 
@@ -48,7 +52,7 @@
           Payments
         </div>
         <div class="d-flex justify-space-between align-center mb-2">
-          <div class="text-h5 font-weight-bold text-primary">
+          <div class="text-h5 font-weight-bold text-grey-darken-1">
             {{ percentPaid }}%
           </div>
         </div>
@@ -89,9 +93,10 @@
     />
 
     <edit-project-name-dialog
-      v-model:open="editDialog"
+      :open="editDialog"
       :initial-name="projectName"
       :project-id="projectId"
+      @close="editDialog = false"
       @saved="handleProjectNameSaved"
     />
   </div>
@@ -116,6 +121,7 @@ const dialogTrigger = ref(false)
 const editDialog = ref(false)
 const projectId = computed(() => props.project[0].project_id )
 const projectName = computed(() => props.project[0]?.project_name || "Unnamed")
+const projectEmail = computed(()=> invoiceStore.activeEmails.activeEmails.filter(e => e.email_id === props.project[0].email))
 
 const reduceTotal = (array) => {
   return array.filter(inv => inv.project === projectId.value).reduce((sum, inv) => sum + Number(inv.amount || 0), 0)
