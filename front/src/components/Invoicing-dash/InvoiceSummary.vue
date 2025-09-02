@@ -7,8 +7,9 @@
     >
       <v-card
         v-if="!animateLoading"
-        class="stat-card bg-indigo-lighten-5 d-flex align-center rounded-xl overflow-hidden" 
-        elevation="0"
+        class="stat-card d-flex align-center rounded-xl overflow-hidden"
+        :color="themeBg"
+        elevation="1"
       >
         <!-- Icon Section -->
         <v-card
@@ -61,9 +62,9 @@
     >
       <v-card
         v-if="!animateLoading"
-        class="stat-card d-flex align-center rounded-xl overflow-hidden bg-green-lighten-5"
-        elevation="0"
-        height="50"
+        class="stat-card d-flex align-center rounded-xl overflow-hidden"
+        :color="themeBg"
+        elevation="1"
       >
         <!-- Icon Section -->
         <v-card
@@ -124,7 +125,13 @@
 
 <!-- eslint-disable vue/require-default-prop -->
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useTheme } from 'vuetify';
+const theme = useTheme();
+const themeBg = computed(() =>
+  theme.global.name.value === "dark" ? "grey-darken-4" : "grey-lighten-4"
+);
+
 
 defineProps({
   totalInvoiced: Number,
@@ -148,7 +155,7 @@ onMounted(() => {
 
 <style scoped>
 .stat-card {
-  min-height: 100px;
+  height: 90px;
 }
 .icon-section {
   width: 70px;
