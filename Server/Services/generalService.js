@@ -27,11 +27,32 @@ class GeneralService {
   static async patchService(table, query, body) {
     if (!table || !body) throw new Error("Database and body must be provided");
     console.log("table", table, "query", query);
-    
+
+    // If delete_both is requested, update both invoices
+    if (body.delete_both) {
+      const { duplicate_id, deleted_at } = body;
+      if (!duplicate_id) throw new Error("duplicate_id is required for delete_both");
+
+      // Soft delete the selected invoice
+      await General.patch(table,
+        { deleted_at },
+        "invoice_id = ?",
+        [query.id]
+      );
+
+      // Soft delete the duplicate invoice
+      await General.patch(table,
+        { deleted_at },
+        "invoice_id = ?",
+        [duplicate_id]
+      );
+
+      return { success: true, deleted: [query.id, duplicate_id] };
+    }
     let whereClause = "";
     let params = [];
 
-    if (query.id) { 
+    if (query.id) {
       whereClause = "invoice_id = ?";
       params = [query.id];
     } else if (query.user) {

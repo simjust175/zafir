@@ -9,7 +9,7 @@
         v-if="url"
         rounded="xl"
         elevation="4"
-        :width="mode === 'conflict' && conflictType === 'duplicate' ? 900 : 600"
+        :width="mode === 'conflict' && conflictType === 'duplicate' ? 900 : 650"
         class="pa-0 overflow-hidden"
         :class="cardBackground"
       >
@@ -54,8 +54,9 @@
         >
           <v-btn
             :text="duplicateSaveBtnText"
+            :color="selectedDocs.current || selectedDocs.duplicate ? 'primary' : 'error'"
             variant="flat"
-            color="primary"
+            
             block
             @click="handleDuplicateSave"
           />
@@ -73,8 +74,8 @@
           :editable-fields="editableFields"
           :editing="editing"
           class="mb-3"
-          @save-supplier="saveSupplier"
-          @keep-unknown="keepUnknown"
+          @save-supplier="$emit('save-supplier', $event)"
+          @keep-unknown="$emit('keep-unknown')"
           @toggle-confirm="toggleConfirm"
           @finish-edit="finishEdit"
           @confirm="confirmDoubleCheck"
@@ -240,7 +241,8 @@ const props = defineProps({
   fileDetails: Object,
   mode: { type: String, default: 'normal' },
   conflictType: String,
-  duplicateFileUrl: String
+  duplicateFileUrl: String,
+  duplicateId: Number
 })
 const emit = defineEmits([
   'close', 'double-checked', 'close-double-check',
@@ -249,7 +251,6 @@ const emit = defineEmits([
 
 // ================== STATE ==================
 const selectedDocs = ref({ current: false, duplicate: false })
-const selectedCount = computed(() => Object.values(selectedDocs.value).filter(Boolean).length)
 
 // Dynamically update save button text based on selection
 const duplicateSaveBtnText = computed(() => {
@@ -290,8 +291,8 @@ const handleDuplicateSave = () => {
 }
 
 const handleClose = () => { emit('close'); dialog.value = false }
-const saveSupplier = (issuer) => emit('save-supplier', issuer)
-const keepUnknown = () => emit('keep-unknown')
+// const saveSupplier = (issuer) => emit('save-supplier', issuer)
+// const keepUnknown = () => emit('keep-unknown')
 
 const confirmDoubleCheck = () => {
   emit('double-checked', props.fileDetails.invoice_id)

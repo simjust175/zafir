@@ -99,10 +99,10 @@
             <template #item.check="{ item }">
               <div class="d-flex align-center justify-center">
                 <v-icon
-                  icon="mdi-check-circle-outline"
+                  :icon="item.double_checked ? 'mdi-check-circle-outline' : 'mdi-eye-check-outline'"
                   size="32"
                   :disabled="item.double_checked"
-                  :color="item.double_checked ? 'success' : 'grey-lighten-2'"
+                  :color="item.double_checked ? 'success' : 'warning'"
                   class="ml-3"
                   @click="previewPdf(item, true)"
                 />
