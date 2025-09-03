@@ -1,6 +1,7 @@
 <template>
   <v-card
     class="d-flex flex-column"
+    rounded="xl"
     :class="{ 'rounded-xl': !expanded, 'elevation-3': !expanded, 'mx-2': !expanded }"
     :flat="expanded"
     min-height="75vh"

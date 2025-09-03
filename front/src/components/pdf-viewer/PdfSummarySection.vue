@@ -1,159 +1,140 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
-  <div :class="[summaryBackground, 'pa-6', 'text-body-2']">
-    <div class="d-flex flex-wrap justify-space-between ga-6">
-      <!-- Supplier Section -->
-      <div class="flex-grow-1 min-width-300">
-        <strong v-if="conflictType !== 'unknown-supplier'">Supplier:</strong>
-
-        <!-- Conflict Mode: Unknown Supplier -->
-        <template v-if="mode === 'conflict' && conflictType === 'unknown-supplier'">
-          <v-autocomplete
-            v-if="isNewSupplier"
-            v-model="editableFields.issuer"
-            autofocus
-            :items="suppliersInDb"
-            label="Enter or choose supplier"
-            variant="outlined"
-            class="w-100"
-            density="compact"
-            no-data-text="New supplier will be added"
-            hide-details
-            clearable
-            allow-overflow
-            :menu-props="{ maxHeight: '300px' }"
-            placeholder="Type supplier name or pick from list..."
-          />
-          <v-text-field
-            v-else
-            v-model="editableFields.issuer"
-            autofocus
-            label="Supplier"
-            variant="outlined"
-            class="w-100"
-            density="compact"
-            hide-details
-          />
-          <v-chip
-            v-if="editableFields.issuer"
-            class="mt-2"
-            :color="isNewSupplier ? 'info' : 'success'"
-            label
-            size="small"
-          >
-            <v-icon left>
-              {{ isNewSupplier ? 'mdi-plus-circle' : 'mdi-check-circle' }}
-            </v-icon>
-            {{ isNewSupplier ? 'New supplier will be added' : 'Existing supplier recognized' }}
-          </v-chip>
-        </template>
-
-        <!-- Non-conflict Mode -->
-        <template v-else>
-          <span v-if="!editing.issuer">{{ editableFields.issuer || fileDetails.issuer }}</span>
-          <v-text-field
-            v-else
-            v-model="editableFields.issuer"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="max-width-250"
-            @keyup.enter="$emit('finish-edit', 'issuer')"
-          />
-        </template>
-
-        <!-- Confirmation Chip + Edit Button -->
-        <div class="mt-2 d-flex align-center">
-          <v-chip
-            v-if="mode === 'double-check'"
-            :color="confirmed.issuer ? 'success' : 'warning'"
-            label
-            @click="$emit('toggle-confirm', 'issuer')"
-          >
-            <v-icon left>
-              {{ confirmed.issuer ? 'mdi-check-circle' : 'mdi-alert' }}
-            </v-icon>
-            {{ confirmed.issuer ? 'Looks good' : 'Check?' }}
-          </v-chip>
-
-          <v-btn
-            v-if="mode === 'double-check' && !confirmed.issuer"
-            icon="mdi-pencil"
-            :disabled="!editableFields.issuer.length"
-            size="small"
-            variant="text"
-            class="ml-2"
-            @click="editing.issuer = true"
-          />
-        </div>
-
-        <!-- Issued Date -->
-        <div
-          v-if="conflictType !== 'unknown-supplier'"
-          class="mt-4"
-        >
-          <strong>Issued:</strong> {{ formatDate(fileDetails.invoice_date) }}
-        </div>
-      </div>
-
-      <!-- Amounts Section -->
-      <div
-        v-if="conflictType !== 'unknown-supplier'"
-        class="flex-grow-1 min-width-300"
-      >
-        <div class="mb-2">
-          <strong>BTW percent:</strong> {{ fileDetails.btwPercent || 0 }}%
-          <v-chip
-            v-if="mode === 'double-check'"
-            :color="confirmed.btw ? 'success' : 'warning'"
-            label
-            class="ml-2"
-            @click="$emit('toggle-confirm', 'btw')"
-          >
-            <v-icon left>
-              {{ confirmed.btw ? 'mdi-check-circle' : 'mdi-alert' }}
-            </v-icon>
-            {{ confirmed.btw ? 'Looks good' : 'Check?' }}
-          </v-chip>
-        </div>
-
-        <div class="mt-2">
-          <strong>Total (invoice):</strong> €{{ formattedAmount }}
-          <v-chip
-            v-if="mode === 'double-check'"
-            :color="confirmed.amount ? 'success' : 'warning'"
-            label
-            class="ml-2"
-            @click="$emit('toggle-confirm', 'amount')"
-          >
-            <v-icon left>
-              {{ confirmed.amount ? 'mdi-check-circle' : 'mdi-alert' }}
-            </v-icon>
-            {{ confirmed.amount ? 'Looks good' : 'Check?' }}
-          </v-chip>
-        </div>
-      </div>
-    </div>
-
-    <!-- Conflict Action Buttons -->
-    <div
-      v-if="mode === 'conflict' && conflictType === 'unknown-supplier'"
-      class="text-right mt-6"
+  <v-card
+    class="pa-4 rounded-xl"
+    :class="summaryBackground"
+    elevation="2"
+  >
+    <v-container
+      fluid
+      class="pa-0"
     >
-      <v-btn
-        color="primary"
-        @click="$emit('save-supplier', editableFields.issuer)"
-      >
-        Save
-      </v-btn>
-      <v-btn
-        variant="outlined"
-        class="ml-2"
-        @click="$emit('keep-unknown')"
-      >
-        Keep as Unknown
-      </v-btn>
-    </div>
+      <v-row dense>
+        <!-- Conflict Mode: Unknown Supplier -->
+        <v-col
+          v-if="mode === 'conflict' && conflictType === 'unknown-supplier'"
+          cols="12"
+        >
+          <unknown-supplier-summary
+            :issuer="editableFields.issuer"
+            @save-supplier="$emit('save-supplier', $event)"
+            @keep-unknown="$emit('keep-unknown')"
+          />
+        </v-col>
+
+        <!-- Supplier Section -->
+        <v-col
+          v-if="conflictType !== 'unknown-supplier'"
+          cols="6"
+        >
+          <div class="summary-item">
+            <span class="label">Supplier:</span>
+
+            <!-- Inline Editable Field -->
+            <template v-if="currentlyEditing === 'issuer'">
+              <v-text-field
+                v-model="editableFields.issuer"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="max-width-200"
+              />
+              <v-btn
+                size="small"
+                color="primary"
+                variant="tonal"
+                icon="mdi-check"
+                @click="finishEditing('issuer')"
+              />
+            </template>
+            <template v-else>
+              <span class="value">{{ fileDetails.issuer }}</span>
+              <DoubleCheckChip
+                v-if="mode === 'double-check'"
+                :confirmed="confirmed.issuer"
+                @edit="startEditing('issuer')"
+                @toggle="$emit('toggle-confirm', 'issuer')"
+              />
+            </template>
+          </div>
+
+          <div class="summary-item">
+            <span class="label">Issued:</span>
+            <span class="value">{{ formatDate(fileDetails.invoice_date) }}</span>
+          </div>
+        </v-col>
+
+        <!-- Amounts Section -->
+        <v-col
+          v-if="conflictType !== 'unknown-supplier'"
+          cols="6"
+        >
+          <div class="summary-item">
+            <span class="label">BTW Percent:</span>
+
+            <!-- Inline Editable Field -->
+            <template v-if="currentlyEditing === 'btw'">
+              <v-text-field
+                v-model="editableFields.btwPercent"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="max-width-100"
+                type="number"
+              />
+              <v-btn
+                size="small"
+                color="primary"
+                variant="tonal"
+                icon="mdi-check"
+                @click="finishEditing('btw')"
+              />
+            </template>
+            <template v-else>
+              <span class="value">{{ fileDetails.btwPercent || 0 }}%</span>
+              <DoubleCheckChip
+                v-if="mode === 'double-check'"
+                :confirmed="confirmed.btw"
+                @edit="startEditing('btw')"
+                @toggle="$emit('toggle-confirm', 'btw')"
+              />
+            </template>
+          </div>
+
+          <div class="summary-item">
+            <span class="label">Total (Invoice):</span>
+
+            <!-- Inline Editable Field -->
+            <template v-if="currentlyEditing === 'amount'">
+              <v-text-field
+                v-model="editableFields.amount"
+                variant="outlined"
+                density="compact"
+                hide-details
+                class="max-width-150"
+                type="number"
+              />
+              <v-btn
+                size="small"
+                color="primary"
+                variant="tonal"
+                icon="mdi-check"
+                @click="finishEditing('amount')"
+              />
+            </template>
+            <template v-else>
+              <span class="value">€{{ formattedAmount }}</span>
+              <DoubleCheckChip
+                v-if="mode === 'double-check'"
+                :confirmed="confirmed.amount"
+                @edit="startEditing('amount')"
+                @toggle="$emit('toggle-confirm', 'amount')"
+              />
+            </template>
+          </div>
+        </v-col>
+      </v-row>
+    </v-container>
 
     <!-- Double-check Confirm Button -->
     <div
@@ -164,6 +145,7 @@
         color="primary"
         variant="flat"
         :disabled="!allConfirmed"
+        class="px-5"
         @click="$emit('confirm')"
       >
         <v-icon left>
@@ -178,13 +160,12 @@
         Confirm all fields before continuing.
       </div>
     </div>
-  </div>
+  </v-card>
 </template>
 
-<!-- eslint-disable vue/require-default-prop -->
 <script setup>
-import { ref, watch, computed } from 'vue'
-import { invoices } from "@/stores/invoiceState"
+import { computed, ref } from 'vue'
+import DoubleCheckChip from './DoubleCheckChip.vue'
 
 const props = defineProps({
   mode: String,
@@ -205,14 +186,17 @@ defineEmits([
   'confirm'
 ])
 
-const invoiceArray = invoices()
+const currentlyEditing = ref(null)
 
-const suppliersInDb = computed(() => {
-  const knownSuppliers = invoiceArray.dbResponse.filter(
-    i => i.issuer && i.issuer !== "UNKNOWN ISSUER"
-  )
-  return [...new Set(knownSuppliers.map(ks => ks.issuer))]
-})
+function startEditing(field) {
+  currentlyEditing.value = field
+}
+
+function finishEditing(field) {
+  currentlyEditing.value = null
+  // Emit to parent if needed
+  // Example: $emit('finish-edit', field)
+}
 
 const formatDate = (dateStr) => {
   const d = new Date(dateStr)
@@ -224,17 +208,34 @@ const formattedAmount = computed(() =>
     ? props.fileDetails.amount.toFixed(2)
     : "0.00"
 )
-
-// ✅ Use a ref for reactive state
-const isNewSupplier = ref(false)
-
-// ✅ Watch for changes and update the flag
-watch(
-  () => props.editableFields.issuer,
-  (newVal) => {
-    const trimmed = newVal?.trim()
-    isNewSupplier.value = !!trimmed && !suppliersInDb.value.includes(trimmed)
-  },
-  { immediate: true }
-)
 </script>
+
+<style scoped>
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.label {
+  font-weight: 600;
+  min-width: 120px;
+}
+
+.value {
+  flex: 1;
+}
+
+.max-width-100 {
+  max-width: 100px;
+}
+
+.max-width-150 {
+  max-width: 150px;
+}
+
+.max-width-200 {
+  max-width: 200px;
+}
+</style>

@@ -15,7 +15,6 @@
           <invoice-dash :current-project-id="project_id" />
         </v-row>
       </v-container>
-
       <v-data-table
         hover
         scrollable="y"
@@ -37,6 +36,7 @@
         <template #top>
           <v-toolbar
             :class="themeColor"
+            rounded="xl"
             flat
           >
             <v-toolbar-title
@@ -323,3 +323,23 @@ const themeColor = computed(() =>
   theme.global.name.value === 'dark' ? 'bg-grey-darken-3' : 'bg-grey-lighten-4'
 );
 </script>
+
+<style>
+:deep(.v-data-table) {
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.05);
+  background-color: var(--v-theme-surface);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+:deep(.v-data-table-header th) {
+  background-color: rgba(0, 0, 0, 0.02);
+  font-weight: 600;
+}
+
+:deep(.v-data-table tbody tr:hover) {
+  background-color: rgba(var(--v-theme-primary), 0.08);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+</style>

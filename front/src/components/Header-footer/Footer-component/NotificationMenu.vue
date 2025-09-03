@@ -178,12 +178,14 @@
       mode="conflict"
       :conflict-type="alertTitle"
       :duplicate-file-url="duplicateFile"
+      :duplicate-id = duplicateId
       :double-check="false"
       :file-details="selectedMessage"
       @save-supplier="resolveSaveSupplier"
       @keep-both="resolveKeepUnknown"
-      @keep-current="resolveDelete('current')"
-      @delete-both="resolveDelete('both')"
+      @keep-this="resolveDelete"
+      @keep-duplicate="resolveDelete"
+      @keep-none="resolveDelete('both')"
       @keep-unknown="resolveKeepUnknown"
       @close="dialog = false"
     />
@@ -261,6 +263,7 @@ const dialog = ref(false)
 const selectedMessage = ref(null)
 const selectedUrl = ref("")
 const selectedId = ref("")
+const duplicateId = ref(null)
 const alertTitle = ref("")
 const duplicateFile = ref("")
 
@@ -292,6 +295,7 @@ async function patchWarning(query, where) {
 
 /* ---------------- Core Resolution Logic ---------------- */
 function resolveConflict({ id, index, payload, message, undoMessage }) {
+  console.log("info as resolveConflict:", { id, index, payload, message, undoMessage })
   const backup = message
   invoiceArray.warnings.splice(index, 1)
 
@@ -316,6 +320,7 @@ function openDialog(message) {
   selectedUrl.value = item?.pdf_file || ""
   selectedId.value = message.id
   alertTitle.value = message.title
+  duplicateId.value = Array.isArray(message.item) ? message.item[1]?.invoice_id || "" : ""
   duplicateFile.value = Array.isArray(message.item) ? message.item[1]?.pdf_file || "" : ""
   dialog.value = true
 }
@@ -376,7 +381,6 @@ function resolveSaveSupplier(issuer) {
 function resolveDelete(mode) {
   const index = invoiceArray.warnings.findIndex(w => w.id === selectedId.value)
   if (index === -1) return
-
   const currentWarning = invoiceArray.warnings[index]
   const message = currentWarning
   const id = selectedId.value
@@ -386,7 +390,7 @@ function resolveDelete(mode) {
     resolveConflict({
       id,
       index,
-      payload: { conflict_resolved: formatForMySQL(new Date()), delete_both: true },
+      payload: { deleted_at: formatForMySQL(new Date()), delete_both: true, duplicate_id: duplicateId.value  },  
       message,
       undoMessage: `Deleted both invoices for "${message.title}"`,
     })
@@ -395,7 +399,7 @@ function resolveDelete(mode) {
     resolveConflict({
       id,
       index,
-      payload: { conflict_resolved: formatForMySQL(new Date()), keep_current: true },
+      payload: { deleted_at: formatForMySQL(new Date()), keep_current: true },
       message,
       undoMessage: `Kept original invoice for "${message.title}"`,
     })
@@ -404,6 +408,8 @@ function resolveDelete(mode) {
 }
 
 function resolveKeepUnknown() {
+  console.log("keeping unkown");
+  dialog.value = false;
   const index = invoiceArray.warnings.findIndex(w => w.id === selectedId.value)
   if (index !== -1) {
     resolveConflict({

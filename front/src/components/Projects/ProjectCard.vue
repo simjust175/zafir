@@ -64,7 +64,7 @@
           bg-color="grey-lighten-3"
         />
         <div class="text-caption text-medium-emphasis mt-1">
-          €{{ payments }} / €{{ invoicing }} paid
+          {{ formatCurrency(payments) }} / {{ formatCurrency(invoicing) }} paid
         </div>
       </v-card-text>
 
@@ -72,7 +72,7 @@
       <v-card-actions class="px-5 pb-4 pt-3 d-flex flex-column flex-sm-row gap-2 align-stretch">
         <v-btn
           block
-          variant="flat"
+          variant="outlined"
           color="primary"
           prepend-icon="mdi-check-outline"
           class="text-white font-weight-medium"
@@ -128,6 +128,8 @@ const reduceTotal = (array) => {
 }
 const payments = computed(() => reduceTotal(invoiceStore.payments))
 const invoicing = computed(() => reduceTotal(invoiceStore.invoicing))
+
+const formatCurrency = (val) => `€${Number(val).toLocaleString('nl-BE')}`
 
 const percentPaid = computed(() => {
   

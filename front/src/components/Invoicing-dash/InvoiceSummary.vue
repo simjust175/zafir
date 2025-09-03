@@ -7,7 +7,7 @@
     >
       <v-card
         v-if="!animateLoading"
-        class="stat-card d-flex align-center rounded-xl overflow-hidden"
+        class="stat-card d-flex align-center rounded-lg overflow-hidden"
         :color="themeBg"
         elevation="1"
       >
@@ -41,8 +41,11 @@
           <div class="text-subtitle-2 text-grey-darken-2">
             Total Invoiced
           </div>
-          <div class="text-h6 font-weight-bold text-indigo-darken-3">
-            €{{ (totalInvoiced || 0).toFixed(2) }}
+          <div
+            class="text-h6 font-weight-bold"
+            :class="themeInvoiceText"
+          >
+            {{ formatCurrency(totalInvoiced || 0) }}
           </div>
         </div>
       </v-card>
@@ -62,7 +65,7 @@
     >
       <v-card
         v-if="!animateLoading"
-        class="stat-card d-flex align-center rounded-xl overflow-hidden"
+        class="stat-card d-flex align-center rounded-lg overflow-hidden"
         :color="themeBg"
         elevation="1"
       >
@@ -96,8 +99,8 @@
           <div class="text-subtitle-2 text-grey-darken-2">
             Total Paid
           </div>
-          <div class="text-h6 font-weight-bold text-green-darken-3">
-            €{{ (totalPaid || 0).toFixed(2) }}
+          <div class="text-h6 font-weight-bold" :class="themePaymentText">
+            {{ formatCurrency(totalPaid || 0) }}
           </div>
 
           <!-- Progress -->
@@ -129,7 +132,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useTheme } from 'vuetify';
 const theme = useTheme();
 const themeBg = computed(() =>
-  theme.global.name.value === "dark" ? "grey-darken-4" : "grey-lighten-4"
+  theme.global.name.value === "dark" ? "grey-darken-3" : "grey-lighten-4"
+);
+const themeInvoiceText = computed(() =>
+  theme.global.name.value === "dark" ? "text-white" : "text-indigo-darken-3"
+);
+const themePaymentText = computed(() =>
+  theme.global.name.value === "dark" ? "text-white" : "text-green-darken-3"
 );
 
 
@@ -142,6 +151,7 @@ defineProps({
 })
 
 defineEmits(['open-dialog'])
+const formatCurrency = (val) => `€${Number(val).toLocaleString('en-BE')}`
 
 const animateLoading = ref(true)
 
@@ -163,5 +173,9 @@ onMounted(() => {
 }
 .content-section {
   flex: 1;
+}
+
+.rounded-lg {
+  border-radius: 15px;
 }
 </style>
