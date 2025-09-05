@@ -32,7 +32,6 @@
             <v-tabs
               v-model="tab"
               direction="vertical"
-              :stacked="$vuetify.display.mdAndUp && expanded"
               class="pt-2 d-flex flex-column justify-start"
               :selected-class="selectedTab"
               :ripple="true"
@@ -52,7 +51,7 @@
               <div class="flex-grow-1" />
 
               <v-tab
-                value="add"
+                value="__add__"
                 class="text-left font-weight-bold text-primary mb-2"
                 selected-class="bg-transparent"
               >
@@ -61,6 +60,7 @@
                   prepend-icon="mdi-plus"
                   class="px-10"
                   variant="outlined"
+                  @click="addProjectDialog = true"
                 >
                   Add Project
                 </v-btn>
@@ -73,7 +73,7 @@
         <v-col
           cols="12"
           md="9"
-          class="pa-4 d-flex flex-column"
+          class="pa-4 pt-0 d-flex flex-column"
         >
           <v-tabs-window
             v-model="tab"
@@ -96,14 +96,6 @@
                 @table-update="fetchFromSessionStorage"
               />
             </v-tabs-window-item>
-
-            <v-tabs-window-item value="add">
-              <add-new-project
-                fill-width
-                fill-height
-                :in-tabs="true"
-              />
-            </v-tabs-window-item>
           </v-tabs-window>
         </v-col>
       </template>
@@ -114,7 +106,6 @@
           cols="12"
           class="pa-0"
         >
-          <!-- One scroll container: tabs (sticky) + content -->
           <div class="content-scroll">
             <!-- Sticky bar -->
             <div class="sticky-bar position-sticky">
@@ -124,9 +115,10 @@
                 :show-arrows="true"
                 color="primary"
                 :ripple="false"
-                class="shrink-0 "
+                class="shrink-0"
                 :selected-class="selectedTab"
               >
+                <!-- Project tabs -->
                 <v-tab
                   v-for="project in filteredProjects"
                   :key="project"
@@ -136,18 +128,24 @@
                 >
                   {{ project }}
                 </v-tab>
-              </v-tabs>
 
-              <div>
-                <v-btn
-                  color="primary"
-                  rounded="md"
-                  class="px-1"
+                <!-- Add Project tab -->
+                <v-tab
+                  :value="'__add__'"
+                  variant="tonal"
+                  elevation="1"
+                  class="px-4 bg-primary text-white font-weight-bold"
                   @click="addProjectDialog = true"
                 >
-                  <v-icon icon="mdi-plus" />
-                </v-btn>
-              </div>
+                  <template #default>
+                    <v-icon
+                      icon="mdi-plus"
+                      class="mr-2"
+                    />
+                    Add Project
+                  </template>
+                </v-tab>
+              </v-tabs>
             </div>
 
             <!-- Content -->
@@ -173,7 +171,7 @@
                 />
               </v-tabs-window-item>
 
-              <!-- If filtering hides the selected tab, show an empty state -->
+              <!-- Empty state if no match -->
               <v-tabs-window-item
                 v-if="filteredProjects.length === 0"
                 :value="'__none__'"
@@ -194,7 +192,7 @@
       </template>
     </v-row>
 
-    <!-- Keep FAB if you like — optional when expanded since the sticky bar has the button -->
+    <!-- FAB (expanded mode) -->
     <v-fab
       v-if="expanded"
       extended
@@ -206,9 +204,10 @@
       height="40"
       width="170"
       app
-      @click="addProjectDialog = !addProjectDialog"
+      @click="addProjectDialog = true"
     />
 
+    <!-- Add Project Dialog -->
     <v-dialog v-model="addProjectDialog">
       <v-card class="px-2 py-4">
         <add-new-project
@@ -230,18 +229,18 @@ const invoiceStore = invoices();
 
 const theme = useTheme();
 const themeBg = computed(() =>
-  theme.global.name.value === "dark" ? "bg-grey-darken-4" : "bg-grey-lighten-4"
+  theme.global.name.value === "dark" ? "bg-grey-darken-4" : "bg-monday"
 );
 
 const props = defineProps({
   invoiceArray: { type: Array, required: true },
-  expanded: Boolean
+  expanded: Boolean,
 });
 
 const refresh = ref(false);
 const addProjectDialog = ref(false);
 
-// Build project list once from invoiceArray
+// Build project list from invoiceArray
 const projects = computed(() => {
   const set = new Set();
   for (const inv of props.invoiceArray) {
@@ -255,7 +254,7 @@ const search = ref("");
 const filteredProjects = computed(() => {
   const q = search.value.trim().toLowerCase();
   if (!q) return projects.value;
-  return projects.value.filter(p => p.toLowerCase().includes(q));
+  return projects.value.filter((p) => p.toLowerCase().includes(q));
 });
 
 // Map: project -> { invoices, projectId }
@@ -271,21 +270,17 @@ const invoicesByProject = computed(() => {
   return map;
 });
 
-// Selected tab; ensure validity when projects/filters change
-const tab = ref(projects.value.length ? projects.value[0] : 'add');
+// Selected tab starts as first project (or null if none)
+const tab = ref(projects.value.length ? projects.value[0] : null);
 
-// Keep tab valid for base list
+// Keep tab valid when projects change
 watch(projects, (val) => {
   if (!val.includes(tab.value)) {
     tab.value = val[0] || null;
   }
-    if (!val.includes(tab.value)) {
-    tab.value = val[0] || 'add';
-  }
-
 });
 
-// Keep tab valid while filtering (expanded)
+// Keep tab valid while filtering (expanded mode)
 watch(filteredProjects, (val) => {
   if (props.expanded && val.length && !val.includes(tab.value)) {
     tab.value = val[0];
@@ -293,10 +288,15 @@ watch(filteredProjects, (val) => {
   if (props.expanded && val.length === 0) {
     tab.value = "__none__";
   }
-  if (props.expanded && val.length === 0) {
-   tab.value = 'add';
- }
+});
 
+// Watch tab changes
+watch(tab, (val) => {
+  if (val === "__add__") {
+    addProjectDialog.value = true;
+    // Reset tab so dialog isn't triggered forever
+    tab.value = filteredProjects.value[0] || projects.value[0] || null;
+  }
 });
 
 const selectedTab = computed(() =>
@@ -307,7 +307,7 @@ const selectedTab = computed(() =>
 
 const handleProjectRemoved = (projectName) => {
   invoiceStore.dbResponse = invoiceStore.dbResponse.filter(
-    inv => inv.project_name !== projectName
+    (inv) => inv.project_name !== projectName
   );
 };
 
@@ -332,7 +332,8 @@ const fetchFromSessionStorage = () => {};
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding-left: 15px;
+  padding-right: 15px;
   background: var(--v-theme-surface); /* Vuetify theme surface color */
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   backdrop-filter: saturate(180%) blur(6px);

@@ -44,6 +44,13 @@
         @click="router.push('/projects')"
       />
       <NavItemWithTooltip
+        title="Manage invoices"
+        prepend-icon="mdi-currency-usd"
+        value="invoices"
+        :rail="railStat"
+        @click="router.push('/invoices')"
+      />
+      <NavItemWithTooltip
         title="Manage users"
         prepend-icon="mdi-account-multiple-plus-outline"
         value="user"
@@ -62,22 +69,29 @@
       />
       
       <!-- removed the: value="create" so that it should not be selected like a nav -->
-      <NavItemWithTooltip
+      <!-- <NavItemWithTooltip
         title="Create invoice"
         prepend-icon="mdi-invoice-plus-outline"
         
         :rail="railStat"
         @click="invoiceFormRef?.open()"
-      />
+      /> -->
       
       <!-- removed the: value="chat" so that it should not be selected like a nav -->
-      <NavItemWithTooltip
-        title="AI chat"
-        prepend-icon="mdi-robot-outline"
-        
-        :rail="railStat"
-        @click="showChatBot = true"
-      />
+      <div class="temp d-flex align-center">
+        <NavItemWithTooltip
+          title="AI chat"
+          prepend-icon="mdi-robot-outline"
+          :rail="railStat"
+          @click="showChatBot = true"
+        />
+        <v-chip
+          variant="tonal"
+          density="compact"
+          color="success"
+          text="soon..."
+        />
+      </div>
     </v-list>
     <template #append>
       <div
@@ -112,7 +126,7 @@
     @confirm="logout"
     @close="activateDialog = false"
   />
-  <file-upload
+  <invoice-upload-main
     :active="activateUploadDialog"
     @close="activateUploadDialog = false"
   />

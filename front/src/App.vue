@@ -5,14 +5,23 @@
     :class="themeColor"
   >
     <v-main>
-      <AppBar :logged-in-stat="loggedIn" @theme-update="handleThemeChange" />
+      <AppBar
+        :logged-in-stat="loggedIn"
+        @theme-update="handleThemeChange"
+      />
 
       <navigation-bar language="en" />
 
-      <overlay-component v-if="loading" :overlay-trigger="loading" />
+      <overlay-component
+        v-if="loading"
+        :overlay-trigger="loading"
+      />
 
       <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
+        <transition
+          name="fade"
+          mode="out-in"
+        >
           <component :is="Component" />
         </transition>
       </router-view>

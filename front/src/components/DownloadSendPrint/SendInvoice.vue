@@ -1,7 +1,10 @@
 <template>
   <div>
     <!-- Trigger Button -->
-    <v-tooltip location="top" open-delay="300">
+    <v-tooltip
+      location="top"
+      open-delay="300"
+    >
       <template #activator="{ props }">
         <v-btn
           v-bind="props"
@@ -15,14 +18,25 @@
     </v-tooltip>
 
     <!-- Main Send Dialog -->
-    <v-dialog v-model="dialog" max-width="500">
-      <v-card width="500" rounded="xl" class="pa-4">
-        <v-card-title class="text-h6 font-weight-medium">
+    <v-dialog
+      v-model="dialog"
+      max-width="500"
+    >
+      <v-card
+        width="500"
+        rounded="xl"
+        class="pa-4"
+      >
+        <v-card-title class="text-h6 font-weight-medium d-flex align-start justify-space-between">
           Send Invoice
+          <set-sender-email />
         </v-card-title>
 
         <v-card-text>
-          <v-form ref="form" v-model="formValid">
+          <v-form
+            ref="form"
+            v-model="formValid"
+          >
             <!-- Email Input -->
             <v-text-field
               v-model="email"
@@ -58,7 +72,12 @@
         </v-card-text>
 
         <v-card-actions class="justify-end">
-          <v-btn text @click="dialog = false">Cancel</v-btn>
+          <v-btn
+            text
+            @click="dialog = false"
+          >
+            Cancel
+          </v-btn>
           <v-btn
             color="primary"
             :loading="loading"
@@ -72,8 +91,14 @@
     </v-dialog>
 
     <!-- ⚠️ Warning Confirmation Dialog -->
-    <v-dialog v-model="warningDialog" max-width="450">
-      <v-card rounded="xl" class="pa-4">
+    <v-dialog
+      v-model="warningDialog"
+      max-width="450"
+    >
+      <v-card
+        rounded="xl"
+        class="pa-4"
+      >
         <v-card-title class="text-h6 font-weight-bold text-warning-darken-2">
           ⚠️ Not all invoices are double-checked
         </v-card-title>
@@ -82,15 +107,31 @@
           Are you sure you want to continue sending this summary?
         </v-card-text>
         <v-card-actions class="justify-end">
-          <v-btn text @click="warningDialog = false">Cancel</v-btn>
-          <v-btn color="warning" @click="forceSend">Yes, Continue</v-btn>
+          <v-btn
+            text
+            @click="warningDialog = false"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            color="warning"
+            @click="forceSend"
+          >
+            Yes, Continue
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- ✅ Success Dialog -->
-    <v-dialog v-model="successDialog" max-width="400">
-      <v-card rounded="xl" class="pa-6 text-center">
+    <v-dialog
+      v-model="successDialog"
+      max-width="400"
+    >
+      <v-card
+        rounded="xl"
+        class="pa-6 text-center"
+      >
         <!-- Animated Green Check -->
         <svg
           class="checkmark"
@@ -115,7 +156,12 @@
           Email Sent Successfully!
         </v-card-title>
         <v-card-actions class="justify-center mt-2">
-          <v-btn color="success" @click="successDialog = false">OK</v-btn>
+          <v-btn
+            color="success"
+            @click="successDialog = false"
+          >
+            OK
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -137,6 +183,7 @@ const props = defineProps({
 });
 
 const dialog = ref(false);
+const setSender = ref(false)
 const warningDialog = ref(false);
 const successDialog = ref(false);
 const loading = ref(false);
