@@ -16,17 +16,15 @@ import { VFileUpload } from 'vuetify/labs/VFileUpload'
 
 // https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
 export default createVuetify({
-  components: {
-    VFileUpload,
-  },
+  components: { VFileUpload },
   theme: {
-    defaultTheme: 'dark',
+    defaultTheme: 'light', // or 'dark', depending on what you want
     themes: {
       light: {
         dark: false,
         colors: {
-          background: '#FFFFFF',
-          'primary': '#7316E5FF',
+          background: '#FDFBFA',
+          primary: '#7316E5',
           secondary: '#424242',
         },
       },
@@ -34,7 +32,7 @@ export default createVuetify({
         dark: true,
         colors: {
           background: '#121212',
-          'primary': '#BB86FC',
+          primary: '#BB86FC',
           secondary: '#03DAC6',
         },
       },

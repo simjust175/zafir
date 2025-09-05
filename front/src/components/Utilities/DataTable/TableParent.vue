@@ -320,11 +320,14 @@ watch(() => props.refreshing, () => initialize());
 import { useTheme } from 'vuetify';
 const theme = useTheme();
 const themeColor = computed(() =>
-  theme.global.name.value === 'dark' ? 'bg-grey-darken-3' : 'bg-grey-lighten-4'
+  theme.global.name.value === 'dark' ? 'bg-grey-darken-3' : 'bg-monday'
 );
 </script>
 
 <style>
+.bg-monday {
+  background: #f0f3ff;
+}
 :deep(.v-data-table) {
   border-radius: 12px;
   border: 1px solid rgba(0,0,0,0.05);

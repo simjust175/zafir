@@ -17,26 +17,37 @@
         width="100%"
       >
         <!-- Main Content: Left (Form) and Right (Progress Bars + Pie Chart) -->
-        <v-row class="d-flex">
+        <v-row>
           <!-- Left: Main Form -->
           <v-col
+            v-for="button in 6"
+            :key="button" 
             cols="12"
-            md="12"
-            fill-height
+            md="4"
+            sm="6"
             class="mb-1"
           >
-            <!-- <main-form
-              v-bind="$attrs"
-              :language="props.language"
-              @method-update="updateChartOptions"
-            />
-            <v-spacer class="mt-5" /> -->
-            <main-display-tabs 
+            <!--<v-spacer class="mt-5" /> -->
+            <!-- <main-display-tabs 
               :invoice-array="invoices"
               :expanded="false"
               height="100%"
               class="overflow-y-auto scrollbar-style"
-            />
+            /> -->
+            <v-card
+              class="pa-4 d-flex flex-column align-center"
+              height="300"
+              rounded="xl"
+              color="grey-lighten-2"
+              @click="console.log(`/maybe`)"
+            >
+              <h6> Upload </h6>
+              <v-icon
+                icon="mdi-invoice-plus-outline"
+                color="grey-lighten-1"
+                size="100"
+              />
+            </v-card>
           </v-col>
           <!-- <v-col cols="3">
             <invoice-control-panel />

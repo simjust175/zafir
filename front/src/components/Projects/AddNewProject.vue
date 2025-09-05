@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex flex-column align-center justify-center">
+  <div class="d-flex flex-column align-center justify-center overflow-hidden">
     <transition
       name="slide-up"
       mode="out-in"

@@ -1,3 +1,4 @@
+
 <template>
   <v-tooltip
     v-if="rail"
@@ -23,6 +24,7 @@
   />
 </template>
 
+<!-- eslint-disable vue/require-default-prop -->
 <script setup>
 defineProps({
   title: String,
