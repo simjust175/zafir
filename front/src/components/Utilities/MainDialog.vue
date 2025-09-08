@@ -2,29 +2,34 @@
   <v-dialog
     v-model="dialog"
   >
-    <v-card rounded="lg" width="400">
-      <v-card-text class="px-6">
-        {{ props.text }}
-      </v-card-text>
+    <div class="d-flex justify-center">
+      <v-card
+        rounded="lg"
+        width="400"
+      >
+        <v-card-text class="px-6">
+          {{ props.text }}
+        </v-card-text>
 
-      <v-card-actions class="d-flex justify-end">
-        <v-btn
-          class="text-none"
-          rounded="xl"
-          text="Cancel"
-          @click="cancelDialog"
-        />
+        <v-card-actions class="d-flex justify-end">
+          <v-btn
+            class="text-none"
+            rounded="xl"
+            text="Cancel"
+            @click="cancelDialog"
+          />
 
-        <v-btn
-          class="text-none"
-          color="primary"
-          rounded="lg"
-          text="OK"
-          variant="outlined"
-          @click="emitConfirmed"
-        />
-      </v-card-actions>
-    </v-card>
+          <v-btn
+            class="text-none"
+            color="primary"
+            rounded="lg"
+            text="OK"
+            variant="outlined"
+            @click="emitConfirmed"
+          />
+        </v-card-actions>
+      </v-card>
+    </div>
   </v-dialog>
 </template>
 
