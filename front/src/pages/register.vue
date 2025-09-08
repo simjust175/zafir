@@ -18,4 +18,5 @@ const router = useRouter();
 const theme = useTheme();
 </script>
 
-<style></style>
+<style>
+</style>

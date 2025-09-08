@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!--  image="../../../public/construct_bg.jpeg" -->
     <v-card
       v-motion-fade
       class="project-card hover:shadow-xl transition-all"
