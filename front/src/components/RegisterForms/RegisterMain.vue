@@ -2,7 +2,7 @@
   <v-container
     fluid
     fill-height
-    class="pa-0 mt-4"
+    class="pa-0 mt-4 "
   >
   <!-- :class="themeBackgroundColor" -->
     <!-- <v-card
@@ -38,6 +38,7 @@
         <v-card
           class="py-4 px-7"
           width="450"
+          image="../../../public/construct_bg2.jpeg"
         >
           <LoginForm
             v-bind="$attrs"
