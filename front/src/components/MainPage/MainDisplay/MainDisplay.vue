@@ -19,21 +19,22 @@
         <!-- Main Content: Left (Form) and Right (Progress Bars + Pie Chart) -->
         <v-row>
           <!-- Left: Main Form -->
-          <v-col
+          <!-- <v-col
             v-for="button in 6"
             :key="button" 
             cols="12"
             md="4"
             sm="6"
             class="mb-1"
-          >
+          > -->
+          <v-col class="mt-2">
             <!--<v-spacer class="mt-5" /> -->
-            <!-- <main-display-tabs 
+            <main-display-tabs 
               :invoice-array="invoices"
               :expanded="false"
               height="100%"
               class="overflow-y-auto scrollbar-style"
-            /> -->
+            />
             <v-card
               class="pa-4 d-flex flex-column align-center"
               height="300"
