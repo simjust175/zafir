@@ -209,7 +209,7 @@
 
     <!-- Add Project Dialog -->
     <v-dialog v-model="addProjectDialog">
-      <v-card class="px-2 py-4">
+      <v-card class="px-2 pb-4 rounded-xl">
         <add-new-project
           @close="addProjectDialog = false"
           @new-project-added="handleProjectRemoved"
