@@ -103,7 +103,7 @@ const themeColor = computed(() =>
 
 const menu = ref(false)
 //CHECK IF ONLInE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-const online = computed(() => true)
+const online = computed(() => activeEmailAddresses.value.length)
 </script>
 
 <style scoped>
