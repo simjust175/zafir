@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // ----------- Health Check -----------
-app.get("/", (req, res) => res.send("✅ Zafir backend is alive"));
+app.get("/", (req, res) => res.send("✅ invoice-management backend is alive"));
 app.get("/health/email-listeners", (req, res) => {
   try {
     const status = getEmailListenerStatus?.() || {};
@@ -103,7 +103,7 @@ io.on("connection", (socket) => {
 
 // ----------- Start Server -----------
 server.listen(PORT, () => {
-  console.log(`🚀 Zafir management running on port ${PORT}`);
+  console.log(`🚀 Invoice management running on port ${PORT}`);
   try {
     startEmailListeners?.(async (inv) => await postInvoices(inv));
   } catch (err) {

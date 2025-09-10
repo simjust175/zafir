@@ -10,7 +10,7 @@
         class="pa-0 bg-blue"
       >
         <project-sidebar
-          v-model="selectedProject"
+          :selected-project="selectedProject"
           :projects="projects"
           @update:selected-project="selectedProject = $event"
         />

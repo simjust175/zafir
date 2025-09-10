@@ -229,7 +229,7 @@ const invoiceStore = invoices();
 
 const theme = useTheme();
 const themeBg = computed(() =>
-  theme.global.name.value === "dark" ? "bg-grey-darken-4" : "bg-monday"
+  theme.global.name.value === "dark" ? "bg-grey-darken-4" : "bg-grey-lighten-4"
 );
 
 const props = defineProps({

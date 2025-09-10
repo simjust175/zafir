@@ -6,7 +6,7 @@ export const invoices = defineStore(
   () => {
     // state
     const dbResponse = ref([]);
-    const activeEmails = ref([])
+    const activeEmails = ref([]);
     const payments = ref([]);
     const invoicing = ref([]);
     const warnings = ref([]);
