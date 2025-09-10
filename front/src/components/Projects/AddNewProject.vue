@@ -243,11 +243,27 @@ const submitForm = async () => {
     const emailToUse = addingNewEmail.value ? email.value : selectedEmail.value
     const pass = addingNewEmail.value ? password.value : undefined
 
+    console.log('[submitForm] Starting with:', {
+      addingNewEmail: addingNewEmail.value,
+      emailToUse,
+      project_name: project_name.value,
+      VITE_BASE_URL: import.meta.env.VITE_BASE_URL
+    })
+
     if (addingNewEmail.value) {
       await snackbarRef.value.showSnack('Verifying email access...', 'info')
-      await snackbarRef.value.showSnack('✔️ Email verified!...', 'info')
-      const { success, error } = await verifyEmail(emailToUse, pass)
-      if (!success) return snackbarRef.value.showSnack(error || 'Email access failed', 'error')
+
+      const verify = await verifyEmail(emailToUse, pass)
+      console.log('[submitForm] verifyEmail result:', verify)
+
+      if (!verify.success) {
+        return snackbarRef.value.showSnack(
+          verify.error || 'Email access failed',
+          'error'
+        )
+      }
+
+      await snackbarRef.value.showSnack('✔️ Email verified!', 'info')
     }
 
     await snackbarRef.value.showSnack('Checking availability...', 'info')
@@ -262,17 +278,46 @@ const submitForm = async () => {
       ? '/invoice/newproject'
       : '/invoice/add-to-existing-email'
 
+    const url = `${import.meta.env.VITE_BASE_URL}${endpoint}`
+    console.log('[submitForm] Sending request to:', url, 'with payload:', payload)
+
     await snackbarRef.value.showSnack('Creating project...', 'info')
 
-    const response = await fetch(`${import.meta.env.VITE_BASE_URL}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
+    let response
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+    } catch (networkErr) {
+      console.error('[submitForm] Network error:', networkErr)
+      return snackbarRef.value.showSnack('Network error: ' + networkErr.message, 'error')
+    }
 
-    const result = await response.json()
+    console.log('[submitForm] Response status:', response.status)
 
-    if (!response.ok) throw new Error(result?.message || 'Failed to add project')
+    let rawText
+    try {
+      rawText = await response.text()
+      console.log('[submitForm] Raw response text:', rawText)
+    } catch (parseErr) {
+      console.error('[submitForm] Failed to read response text:', parseErr)
+      return snackbarRef.value.showSnack('Failed to read server response', 'error')
+    }
+
+    let result
+    try {
+      result = JSON.parse(rawText)
+      console.log('[submitForm] Parsed JSON result:', result)
+    } catch (jsonErr) {
+      console.error('[submitForm] JSON parse error:', jsonErr)
+      return snackbarRef.value.showSnack('Invalid JSON from server', 'error')
+    }
+
+    if (!response.ok) {
+      throw new Error(result?.message || 'Failed to add project')
+    }
 
     await snackbarRef.value.showSnack('✔️ Project successfully added!', 'success')
     emit('close')
@@ -286,8 +331,8 @@ const submitForm = async () => {
     project_name.value = ''
     formRef.value?.resetValidation?.()
   } catch (err) {
-    console.error(err)
-    snackbarRef.value.showSnack( err.message, 'error')
+    console.error('[submitForm] Error caught:', err)
+    snackbarRef.value.showSnack(err.message || 'Unexpected error', 'error')
   }
 }
 </script>
