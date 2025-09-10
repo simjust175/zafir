@@ -19,7 +19,7 @@
           rounded="xl"
           density="comfortable"
         >
-          {{ online ? `Live` : 'Offline' }}
+          {{ online ? `Live` : 'No emails' }}
           <span
             class="ml-2"
             :class="{ 'live-dot': online }"
