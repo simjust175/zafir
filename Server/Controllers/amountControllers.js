@@ -13,7 +13,12 @@ class AmountControllers {
         }
     }
     static async postNewEmail({ body }, res) {
-        const doesEmailExist = await General.getWithFilter('emails', 'email', `email = "${body.email}"`);
+        const doesEmailExist = await General.getWithFilter(
+            'emails',
+            'email',
+            'email = ?',
+            [body.email] // <-- pass the email as a parameter
+          );
         console.log("does this email exists?", doesEmailExist);
         
         if (!body) return res.status(400).json({ message: 'Email must be provided' });
