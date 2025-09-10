@@ -11,6 +11,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/', // Ensures correct asset paths in production
   plugins: [
     VueRouter(),
     Vue({
@@ -35,31 +36,7 @@ export default defineConfig({
   define: { 'process.env': {} },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    },
-    extensions: [
-      '.js',
-      '.json',
-      '.jsx',
-      '.mjs',
-      '.ts',
-      '.tsx',
-      '.vue',
-    ],
-  },
-  server: {
-    port: 3000,
-  },
-  css: {
-    preprocessorOptions: {
-      sass: {
-        api: 'modern-compiler',
-      },
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-
-  // ✅ Add this block for jspdf
-  optimizeDeps: {
-    include: ['jspdf', 'jspdf-autotable']
-  }
 })
