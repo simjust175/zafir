@@ -19,7 +19,11 @@ route.post("/post", AmountControllers.postAmount);
 route.post("/post-general/:db", GeneralControllers.postGeneral);
 
 //POST new email/project
-route.post("/newproject", AmountControllers.postNewEmail);
+//route.post("/newproject", AmountControllers.postNewEmail);
+router.post("/newproject", (req, res) => {
+    console.log("✅ /newproject called", req.body);
+    res.json({ message: "Test received" });
+  });
 
 //POST new email/project
 route.post("/add-to-existing-email", AmountControllers.postToExitingEmail);
