@@ -20,7 +20,7 @@ route.post("/post-general/:db", GeneralControllers.postGeneral);
 
 //POST new email/project
 //route.post("/newproject", AmountControllers.postNewEmail);
-router.post("/newproject", (req, res) => {
+route.post("/newproject", (req, res) => {
     console.log("✅ /newproject called", req.body);
     res.json({ message: "Test received" });
   });
