@@ -19,8 +19,8 @@
               @click="$emit('close')"
             />
             <div class="text">
-            {{ showForm ? '📝 Invoice Details' : '📤 Upload Invoice' }}
-          </div>
+              {{ showForm ? '📝 Invoice Details' : '📤 Upload Invoice' }}
+            </div>
           </div>
 
           <!-- Fancy Switch -->

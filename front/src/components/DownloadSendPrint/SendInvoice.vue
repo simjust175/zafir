@@ -27,6 +27,7 @@
         rounded="xl"
         class="pa-4"
       >
+      {{ total }}
         <v-card-title class="text-h6 font-weight-medium d-flex align-start justify-space-between">
           Send Invoice
           <set-sender-email />
@@ -167,6 +168,7 @@
     </v-dialog>
   </div>
 </template>
+
 
 <script setup>
 import { ref } from "vue";

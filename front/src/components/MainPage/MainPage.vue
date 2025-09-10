@@ -3,6 +3,7 @@
     <main-display
       :currency-in-use="currencyInUse"
       :invoices="amountArray"
+      :emails="emails"
       @new-amount-posted="invoiceStore.getAmounts()"
     />
   </main>
@@ -15,6 +16,7 @@ const invoiceStore = invoices();
 
 const currencyInUse = ref("EUR");
 const amountArray = invoiceStore.dbResponse;
+const emails = invoiceStore.freeEmails
 //amountArray.warnings = invoiceStore.warnings; // Will store objects like: { title: 'duplicate', item: {...} }
 
 // Helper to process data: find unknown issuers and duplicate
@@ -28,10 +30,6 @@ const amountArray = invoiceStore.dbResponse;
 //   }
 // })
 onMounted(() => {
-  //test >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  console.log("Main page mounted.");
-  //end-test >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
   invoiceStore.getAmounts();
   invoiceStore.getActiveEmails()
 });

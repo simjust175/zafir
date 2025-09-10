@@ -11,8 +11,8 @@
         class="rounded-xl pa-1 pb-3"
         fluid
       >
-        <v-row dense>
-          <invoice-dash :current-project-id="project_id" />
+        <v-row dense v-if="expanded">
+          <invoice-dash :current-project-id="project_id" :expanded="expanded"/>
         </v-row>
       </v-container>
       <v-data-table
@@ -33,7 +33,7 @@
           <v-skeleton-loader :type="`table-row@${skeletonRows}`" />
         </template>
 
-        <template #top>
+        <template #top v-if="expanded">
           <v-toolbar
             :class="themeColor"
             rounded="xl"
@@ -176,13 +176,6 @@ import { invoices as invoiceStore } from '@/stores/invoiceState';
 import socket from '@/socket.js';
 
 import InvoiceDash from "@/components/Invoicing-dash/InvoiceDash.vue"
-// import SendInvoice from '@/components/DownloadSendPrint/SendInvoice.vue';
-// import EmptyState from '../EmptyState.vue';
-// import InvoiceDetails from './InvoiceDetails.vue';
-// import downloadFile from '@/components/DownloadSendPrint/DownloadFile.vue';
-// import tableParentToolbarMenu from './TableParentToolbarMenu.vue';
-// import snackBar from './SnackBar.vue';
-// import marginSetter from './MarginSetter.vue';
 
 const emit = defineEmits(['amountUpdate']);
 const props = defineProps({
@@ -191,7 +184,8 @@ const props = defineProps({
   expanded: Boolean,
   projectName: String,
   project_id: Number,
-  refreshing: Boolean
+  refreshing: Boolean,
+  searchVal: String
 });
 
 // Refs & State
@@ -211,6 +205,7 @@ const selectedInvoices = ref([]);
 const selectedIssuer = ref('');
 const updatedIssuer = ref(null);
 
+watch(()=> props.searchVal, (newVal)=> search.value = newVal)
 // Headers
 const headers = computed(() => [
   { title: 'Supplier', key: 'issuer' },
@@ -244,9 +239,14 @@ const groupedInvoices = computed(() => {
   });
 });
 
-const overallTotalWithMargin = computed(() =>
-  groupedInvoices.value.reduce((sum, group) => sum + group.totalWithMargin, 0).toFixed(2)
-);
+const overallTotalWithMargin = computed(() => {
+  let total = 0;
+  groupedInvoices.value.forEach(group => {
+    console.log(group.issuer, group.totalWithMargin, group);
+    total += group.totalWithMargin;
+  });
+  return Number(total.toFixed(2));
+});
 
 // Skeleton Loading Row Count
 const skeletonRows = computed(() => {
@@ -317,11 +317,9 @@ watch(() => props.invoices, () => initialize(), { immediate: true });
 watch(() => props.refreshing, () => initialize());
 
 // Theme
-import { useTheme } from 'vuetify';
-const theme = useTheme();
-const themeColor = computed(() =>
-  theme.global.name.value === 'dark' ? 'bg-grey-darken-3' : 'bg-monday'
-);
+import { globalFunctions } from '@/stores/globalFunctions';
+const functions = globalFunctions()
+const themeColor = computed(()=> functions.themeColor)
 </script>
 
 <style>

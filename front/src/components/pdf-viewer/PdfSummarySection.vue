@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
   <v-card
-    class="pa-4 rounded-xl"
+    class="pa-4"
     :class="summaryBackground"
     elevation="2"
   >
