@@ -18,7 +18,25 @@ app.set("io", io);
 const PORT = process.env.PORT || 8080;
 
 // ----------- Middleware -----------
-app.use(cors());
+const allowedOrigins = [
+  "https://billio.me",      // production frontend
+  "http://localhost:5173"   // dev frontend
+]; // your frontend
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
