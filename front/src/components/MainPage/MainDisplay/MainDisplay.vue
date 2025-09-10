@@ -4,11 +4,67 @@
       class="fill-height fill-width pa-1"
       fluid
     >
+      <!-- <v-banner
+        class="mb-6 px-6 py-4 rounded-xl text-h6 font-weight-medium"
+        color="primary"
+        elevation="2"
+      >
+        👋 Welcome back, Simcha! Ready to build something brilliant?
+      </v-banner> -->
+
       <v-responsive
         class="fill-height fill-width"
         width="100%"
       >
-        <v-row no-gutters>
+        <!-- <v-banner
+          class="mb-6 px-6 py-4 rounded-xl text-h6 font-weight-medium"
+          color="primary"
+          elevation="2"
+        >
+          👋 {{ greeting }}! Ready to take stock of your finances?
+        </v-banner> -->
+
+        <!-- 🎨 Elevated Empty State Card -->
+        <v-row
+          v-if="!invoices.length"
+          class="d-flex justify-center align-center"
+        >
+          <v-card
+            class="pa-8 ma-4 d-flex flex-column align-center justify-center rounded-xl"
+            width="100%"
+            style="backdrop-filter: blur(12px); background: linear-gradient(135deg, #f5f7fa, #e2e6ea); box-shadow: 0 8px 24px rgba(0,0,0,0.1);"
+          >
+            <v-icon
+              icon="mdi-folder-open-outline"
+              size="120"
+              color="primary"
+              class="mb-4 animate__animated animate__fadeInDown"
+            />
+
+            <h2 class="text-h5 font-weight-medium text-grey-darken-3 mb-2">
+              No projects yet
+            </h2>
+
+            <p class="text-body-2 text-grey-darken-1 mb-6 text-center">
+              You haven’t added any projects. When you do, they’ll show up here with all their invoices, payments, and drama-level UX.
+            </p>
+
+            <v-btn
+              prepend-icon="mdi-rocket-launch"
+              color="primary"
+              size="large"
+              class="mt-2"
+              @click="addProjectDialog = true"
+            >
+              Launch your first project
+            </v-btn>
+          </v-card>
+        </v-row>
+
+        <v-row
+          v-else
+          no-gutters
+        >
           <!-- Sidebar -->
           <v-col
             cols="3"
@@ -70,6 +126,27 @@
             </v-fade-transition>
           </v-col>
         </v-row>
+        <v-fab
+          extended
+          color="primary"
+          density="comfortable"
+          prepend-icon="mdi-plus"
+          location="right bottom"
+          text="Add project"
+          height="50"
+          width="180"
+          app
+          @click="addProjectDialog = !addProjectDialog"
+        />
+        <v-dialog
+          v-model="addProjectDialog"
+          :in-tabs="false"
+        >
+          <add-new-project
+            @close="addProjectDialog = false"
+            @new-project-added="handleProjectRemoved"
+          />
+        </v-dialog>
       </v-responsive>
     </v-container>
   </v-container>
@@ -95,6 +172,15 @@ const selectedProject = ref(null)
 const search = ref("")
 const statusFilter = ref("All")
 const addingInvoicing = ref([])
+const addProjectDialog = ref(false)
+
+//greeting
+const greeting = computed(() => {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning"
+  if (hour < 18) return "Good afternoon"
+  return "Good evening"
+})
 
 // Projects derived from invoices
 const projects = computed(() => {
