@@ -1,5 +1,8 @@
 <template>
-  <v-container fluid class="pa-0">
+  <v-container
+    fluid
+    class="pa-0"
+  >
     <!-- Expansion panel for xs/sm screens -->
     <v-expansion-panels
       multiple
@@ -23,10 +26,19 @@
         </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
-
     <!-- Regular row for md+ screens -->
     <InvoiceSummary
+      v-if="expanded"
       class="d-none d-md-flex mb-4"
+      :total-invoiced="totalInvoiced"
+      :total-paid="totalPaid"
+      :percent-paid="percentPaid"
+      :loading-invoiced="invoicedLoading"
+      :loading-paid="paidLoading"
+      @open-dialog="openInvoiceDialog"
+    />
+    <invoice-chips
+      v-else
       :total-invoiced="totalInvoiced"
       :total-paid="totalPaid"
       :percent-paid="percentPaid"
@@ -55,7 +67,10 @@
     >
       {{ snack.message }}
       <template #actions>
-        <v-btn icon @click="snack.show = false">
+        <v-btn
+          icon
+          @click="snack.show = false"
+        >
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </template>
@@ -64,11 +79,11 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, watch, ref } from 'vue'
 import InvoiceSummary from './InvoiceSummary.vue'
 import { invoices } from '@/stores/invoiceState'
 
-const props = defineProps({ currentProjectId: Number })
+const props = defineProps({ currentProjectId: Number, expanded: Boolean, addInvoicing: String })
 
 const invoiceStore = invoices()
 const payments = computed(() => invoiceStore.payments)
@@ -106,6 +121,8 @@ const percentPaid = computed(() => {
 })
 
 const openInvoiceDialog = (type, edit = false) => {
+  console.log("type", type);
+  
   dialogType.value = type
   isEditMode.value = edit
 
@@ -175,6 +192,7 @@ const updateInvoicing = async (newAmount) => {
     }, 1500)
   }
 }
+watch(()=> props.addInvoicing, (newVal)=> openInvoiceDialog(newVal))
 </script>
 
 <style scoped>

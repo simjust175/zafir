@@ -41,6 +41,7 @@
   import { ref, watch } from "vue"
   const props = defineProps({
     modelValue: Boolean,
+    // eslint-disable-next-line vue/require-default-prop
     message: Object,
   })
   const model = ref(props.modelValue)
