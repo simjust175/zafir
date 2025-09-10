@@ -20,9 +20,19 @@ route.post("/post-general/:db", GeneralControllers.postGeneral);
 
 //POST new email/project
 //route.post("/newproject", AmountControllers.postNewEmail);
-route.post("/newproject", (req, res) => {
+route.post("/newproject", async (req, res) => {
     console.log("✅ /newproject called", req.body);
-    res.json({ message: "Test received" });
+  
+    try {
+      if (AmountServices) {
+        // Wrap in try/catch to prevent blocking
+        await AmountServices.postService(req.body);
+      }
+      res.json({ message: "Project added successfully" });
+    } catch (err) {
+      console.error("❌ Error posting to DB:", err);
+      res.status(500).json({ error: "Failed to add project", details: err.message });
+    }
   });
 
 //POST new email/project
