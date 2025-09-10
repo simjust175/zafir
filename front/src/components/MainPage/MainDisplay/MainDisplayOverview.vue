@@ -1,10 +1,9 @@
 <template>
   <v-toolbar
-    class="pl-4"
+    class="pl-4 bg-transparent"
     elevation="2"
     rounded="lg"
     width="98%"
-    flat
   >
     <div class="text-h6 text-capitalize">
       {{ project?.name }}
@@ -13,9 +12,9 @@
 
     <div class="d-flex align-center">
       <invoice-dash
-        :current-project-id="project.id"
+        :current-project-id="project?.id"
         :expanded="false"
-        :addInvoicing="adding"
+        :add-invoicing="adding"
       />
     
       <download-file
@@ -23,24 +22,24 @@
         :grouped-invoices="groupedInvoices"
         :project-name="projectName"
         :total="overallTotalWithMargin"
-        :payments="invoiceArray.payments.filter(p => p.project === project.id)"
-        :double-checked="invoiceArray.dbResponse.filter(i => i.project === project.id).every(p => p.double_checked !== null)"
+        :payments="invoiceArray.payments.filter(p => p.project === project?.id)"
+        :double-checked="invoiceArray.dbResponse.filter(i => i.project === project?.id).every(p => p.double_checked !== null)"
         :print="false"
       />
       <download-file
         :grouped-invoices="groupedInvoices"
         :project-name="projectName"
-        :payments="invoiceArray.payments.filter(p => p.project === project.id)"
-        :double-checked="invoiceArray.dbResponse.filter(i => i.project === project.id).every(p => p.double_checked !== null)"
+        :payments="invoiceArray.payments.filter(p => p.project === project?.id)"
+        :double-checked="invoiceArray.dbResponse.filter(i => i.project === project?.id).every(p => p.double_checked !== null)"
         :total="overallTotalWithMargin"
         :print="true"
       />
       <SendInvoice
         :grouped-invoices="groupedInvoices"
         :project-name="projectName"
-        :current-project-id="project.id"
-        :payments="invoiceArray.payments.filter(p => p.project === project.id)"
-        :double-checked="invoiceArray.dbResponse.filter(i => i.project === project.id).every(p => p.double_checked !== null)"
+        :current-project-id="project?.id"
+        :payments="invoiceArray.payments.filter(p => p.project === project?.id)"
+        :double-checked="invoiceArray.dbResponse.filter(i => i.project === project?.id).every(p => p.double_checked !== null)"
         :total="overallTotalWithMargin"
       />
       <v-divider
