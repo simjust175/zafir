@@ -13,8 +13,28 @@ class GeneralService {
 
   static async getFilteredService({ params, query }) {
     const columns = query.what || "*";
-    const whereClause = query.where || "";
-    return await General.getWithFilter(params.db, columns, whereClause);
+    let whereClause = "";
+    let values = [];
+  
+    // Safety check: require filterField and filterValue for filtering
+    if (query.filterField && query.filterValue !== undefined) {
+      // Validate column name: only letters, numbers, underscores allowed
+      const isValidColumn = /^[a-zA-Z0-9_]+$/.test(query.filterField);
+      if (!isValidColumn) {
+        throw new Error(`Invalid filterField: ${query.filterField}`);
+      }
+  
+      whereClause = `\`${query.filterField}\` = ?`;
+      values = [query.filterValue];
+    }
+  
+    try {
+      return await General.getWithFilter(params.db, columns, whereClause, values);
+    } catch (err) {
+      throw new Error(
+        `Failed to fetch filtered records from table '${params.db}' with filter '${query.filterField}': ${err.message}`
+      );
+    }
   }
 
   static async getMultipleFilteredService({ params, query }) {

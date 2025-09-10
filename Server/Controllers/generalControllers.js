@@ -34,7 +34,6 @@ class GeneralControllers {
             res.status(500).json({ message: `Error in GeneralServices/getGeneral: ${error.message}` });
         }
     };
-
     static async geMultipleFiltered(res) {
         //if (!body) return res.status(400).json({ message: 'Error in GeneralServices/getGeneralService' });
         try {
