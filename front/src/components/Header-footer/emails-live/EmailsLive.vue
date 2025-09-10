@@ -48,32 +48,36 @@
           <v-list-item
             v-for="email in activeEmailAddresses"
             :key="email"
-            class="px-4 py-2 d-flex justify-space-between align-center rounded-xl"
+            class="px-4 py-2 rounded-xl"
           >
-            <div class="d-flex align-center">
+            <!-- Left side: Icon + Email -->
+            <template #prepend>
               <v-icon
                 icon="mdi-email-outline"
                 class="mr-2"
               />
-              <v-list-item-title class="font-weight-medium">
-                {{ email }}
-              </v-list-item-title>
-            </div>
+            </template>
 
-            <div class="d-flex align-center">
+            <v-list-item-title class="font-weight-medium">
+              {{ email }}
+            </v-list-item-title>
+
+            <!-- Right side: Live chip -->
+            <template #append>
               <v-chip
                 color="green"
                 size="small"
-                class="mr-2"
                 label
+                class="ml-auto"
               >
                 Live
               </v-chip>
-            </div>
+            </template>
           </v-list-item>
         </v-list>
 
-        <v-divider />
+
+        <v-divider size="2" />
 
         <v-card-text class="text-caption text-grey-darken-1 px-4 pb-4">
           Monitoring {{ activeEmailAddresses.length }} streams in real time.
