@@ -60,27 +60,42 @@ const themeColor = computed(() =>
 
 onMounted(async () => {
   const { validateToken, getPayments } = useAuth();
+
+  // 🔹 Step 1: check if token exists at all
+  const token = localStorage.getItem("token");
+  const currentPath = router.currentRoute.value.fullPath;
+
+  if (!token) {
+    if (currentPath !== "/register") {
+      return router.push("/register");
+    }
+    return; // already on register page, do nothing
+  }
+
+  // 🔹 Step 2: validate token with backend
   const isValid = await validateToken();
   console.log("Is token valid?", isValid);
- const currentPath = router.currentRoute.value.fullPath;
+
   if (currentPath === "/register") {
-    if(isValid) return router.push('/')
+    if (isValid) return router.push("/");
     return;
-  };
-  
+  }
+
   if (!isValid) {
     router.push("/register");
     return;
   }
 
+  // 🔹 Step 3: mark logged in + set state
   loggedIn.value = true;
-  loginState.token = localStorage.getItem("token");
+  loginState.token = token;
 
   if (loginState.theme) {
     localTheme.value = loginState.theme;
     theme.global.name.value = loginState.theme;
   }
 
+  // 🔹 Step 4: fetch data
   loading.value = true;
   await getPayments(invoiceStore);
   loading.value = false;
@@ -94,6 +109,11 @@ function handleThemeChange(newTheme) {
 </script>
 
 <style>
+.bg-construct {
+  background: url('../../public/construct_bg2.jpeg');
+  background-repeat: no-repeat;
+  background-size: cover;
+}
 #app {
   background-color: var(--v-theme-background);
   color: var(--v-theme-on-background);

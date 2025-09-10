@@ -2,6 +2,8 @@
   <v-card
     class="pa-4"
     elevation="2"
+    rounded="lg"
+    width="98%"
   >
     <v-row>
       <v-col cols="6">
