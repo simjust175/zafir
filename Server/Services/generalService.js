@@ -12,7 +12,7 @@ class GeneralService {
   }
 
   static async getFilteredService({ params, query }) {
-    console.log("i am being called");
+    console.log("getFilteredService is being called");
     
     const columns = query.what || "*";
     let whereClause = "";

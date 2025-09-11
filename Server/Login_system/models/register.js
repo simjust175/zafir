@@ -8,7 +8,7 @@ class Register {
 
     //Common Function
     static async getByEmail(body) {
-        console.log("body in register/getByEmail");
+        console.log("body in register/getByEmail", body);
         
         const sql = `SELECT * FROM users where user_email = ? AND deleted_at IS NULL`;
         const [userNameAvailable] = await db.query(sql, [body.user_email]);
