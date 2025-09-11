@@ -26,12 +26,22 @@ app.use(express.urlencoded({ extended: false }));
 // ----------- Health Check -----------
 app.get("/", (req, res) => res.send("✅ invoice-management backend is alive"));
 app.get("/health/email-listeners", (req, res) => {
-  try {
-    const status = getEmailListenerStatus?.() || {};
-    res.json(status);
-  } catch (err) {
-    res.status(500).json({ error: "Email listener status failed", details: err.message });
-  }
+  // try {
+  //   const status = getEmailListenerStatus?.() || {};
+  //   res.json(status);
+  // } catch (err) {
+  //   res.status(500).json({ error: "Email listener status failed", details: err.message });
+  // }
+  let getEmailListenerStatus;
+try {
+  const emailModule = await import("./email-service/imap/useEmailListners.js");
+  startEmailListeners = emailModule.startEmailListeners;
+  getEmailListenerStatus = emailModule.getEmailListenerStatus;
+  console.log("✅ Email listeners module loaded");
+} catch (err) {
+  console.error("❌ Failed to load email listener module:", err);
+}
+
 });
 
 // ----------- Safe Imports -----------
