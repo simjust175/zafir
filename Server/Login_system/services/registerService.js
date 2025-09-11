@@ -46,6 +46,8 @@ class RegisterService {
     };
 
     static async logoutUser(params) {
+        console.log("params in logout🪵🪵", params);
+        
         if (!params.user_email) throw new Error("email must be provided")
         try {
             const [user] = await Register.getByEmail(params);
