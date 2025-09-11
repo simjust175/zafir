@@ -16,7 +16,7 @@ const io = new SocketIOServer(server, { cors: { origin: "*" } });
 app.set("io", io);
 
 //const PORT = process.env.PORT || 8080;
-const PORT = 3445;
+const PORT = 3446;
 
 // ----------- Middleware -----------
 app.use(cors());
