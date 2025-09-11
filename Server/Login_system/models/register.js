@@ -7,7 +7,6 @@ config()
 class Register {
 
     //Common Function
-
     static async getByEmail(body) {
         const sql = `SELECT * FROM users where user_email = ? AND deleted_at IS NULL`;
         const [userNameAvailable] = await db.query(sql, [body.user_email]);
@@ -16,6 +15,8 @@ class Register {
     };
 
     static async patchUser(id, body) {
+        console.log("body in PatchUser>>>>", id, body);
+        
         const fields = Object.keys(body);
         const values = Object.values(body);
     
