@@ -16,7 +16,7 @@ class RegisterControllers{
 
         //log-in 
         static async userLogin({ body }, res) {
-            
+            console.log("UserLogin is being called");
             try {
                const newToken = await RegisterService.loginUser(body);
                 if (!newToken) return res.status(401).json({ Error : "Auth failed." });
