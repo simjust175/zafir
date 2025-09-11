@@ -94,7 +94,7 @@ import { ref, computed } from "vue";
 import { invoices } from "@/stores/invoiceState";
 const invoiceArray = invoices()
 const activeEmailAddresses = computed(() => {
-  const emails = invoiceArray.activeEmails.activeEmails
+  const emails = invoiceArray.activeEmails.activeEmails || []
   return [...new Set(emails.map(ks => ks.email_address))]
 })
 
