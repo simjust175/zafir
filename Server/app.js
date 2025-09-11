@@ -103,7 +103,7 @@ io.on("connection", (socket) => {
 
 // ----------- Start Server -----------
 server.listen(PORT, () => {
-  console.log(`🚀 Invoice management running on port ${PORT}`);
+  console.log(`🔫 Invoice management running on port ${PORT}`);
   try {
     startEmailListeners?.(async (inv) => await postInvoices(inv));
   } catch (err) {
