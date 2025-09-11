@@ -12,6 +12,8 @@ class GeneralService {
   }
 
   static async getFilteredService({ params, query }) {
+    console.log("i am being called");
+    
     const columns = query.what || "*";
     let whereClause = "";
     let values = [];

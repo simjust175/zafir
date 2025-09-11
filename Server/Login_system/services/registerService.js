@@ -49,7 +49,6 @@ class RegisterService {
         if (!params.user_email) throw new Error("email must be provided")
         try {
             const [user] = await Register.getByEmail(params);
-            console.log("params in logout🪵🪵", user);
             if (!user || !user.user_id) throw new Error("User not found");
             const removeToken = await Register.patchUser(user.user_id, { token: null })
             //console.log("user status:", setStatusAsInactive);
