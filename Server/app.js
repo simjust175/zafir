@@ -73,13 +73,13 @@ try {
   console.error("❌ Failed to load amountService:", err);
 }
 
-let startEmailListeners;
-try {
-  startEmailListeners = (await import("./email-service/imap/useEmailListners.js")).startEmailListeners;
-  console.log("✅ Email listeners module loaded");
-} catch (err) {
-  console.error("❌ Failed to load email listener module:", err);
-}
+// let startEmailListeners;
+// try {
+//   startEmailListeners = (await import("./email-service/imap/useEmailListners.js")).startEmailListeners;
+//   console.log("✅ Email listeners module loaded");
+// } catch (err) {
+//   console.error("❌ Failed to load email listener module:", err);
+// }
 
 
 // ----------- Invoice Posting with Socket Emission -----------
@@ -104,9 +104,9 @@ io.on("connection", (socket) => {
 // ----------- Start Server -----------
 server.listen(PORT, () => {
   console.log(`🚀 Invoice management running on port ${PORT}`);
-  try {
-    startEmailListeners?.(async (inv) => await postInvoices(inv));
-  } catch (err) {
-    console.error("❌ Failed to start email listeners:", err);
-  }
+  // try {
+  //   startEmailListeners?.(async (inv) => await postInvoices(inv));
+  // } catch (err) {
+  //   console.error("❌ Failed to start email listeners:", err);
+  // }
 });
