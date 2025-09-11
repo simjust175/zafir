@@ -135,6 +135,7 @@ watch(
 //   }
 // );
 const logout = async () => {
+  console.log("userName", loginState.userName);
   const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userName}`, {
       method: "POST",
       headers: {
