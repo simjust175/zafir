@@ -18,13 +18,7 @@ app.set("io", io);
 const PORT = process.env.PORT || 8080;
 
 // ----------- Middleware -----------
-// ----------- Middleware -----------
-app.use(cors({
-  origin: ["https://billio.me"],  // allow only your frontend
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true, // if you're using cookies or Authorization headers
-}));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
