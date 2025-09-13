@@ -1,32 +1,23 @@
 <template>
   <v-container fluid>
-    <v-container
-      class="fill-height fill-width pa-1"
-      fluid
-    >
-      <!-- <v-banner
-        class="mb-6 px-6 py-4 rounded-xl text-h6 font-weight-medium"
-        color="primary"
-        elevation="2"
-      >
-        👋 Welcome back, Simcha! Ready to build something brilliant?
-      </v-banner> -->
-
-      <v-responsive
-        class="fill-height fill-width"
-        width="100%"
-      >
-        <!-- <v-banner
-          class="mb-6 px-6 py-4 rounded-xl text-h6 font-weight-medium"
-          color="primary"
-          elevation="2"
-        >
-          👋 {{ greeting }}! Ready to take stock of your finances?
-        </v-banner> -->
-
-        <!-- 🎨 Elevated Empty State Card -->
+    <v-container class="fill-height fill-width pa-1" fluid>
+      <v-responsive class="fill-height fill-width" width="100%">
+        
+        <!-- 🔄 Loading State -->
         <v-row
-          v-if="!invoices.length"
+          v-if="loading"
+          class="d-flex justify-center align-center"
+        >
+          <v-progress-circular
+            indeterminate
+            size="64"
+            color="primary"
+          />
+        </v-row>
+
+        <!-- 🗂 Empty State -->
+        <v-row
+          v-else-if="!projects.length"
           class="d-flex justify-center align-center"
         >
           <v-card
@@ -40,15 +31,12 @@
               color="primary"
               class="mb-4 animate__animated animate__fadeInDown"
             />
-
             <h2 class="text-h5 font-weight-medium text-grey-darken-3 mb-2">
               No projects yet
             </h2>
-
             <p class="text-body-2 text-grey-darken-1 mb-6 text-center">
               You haven’t added any projects. When you do, they’ll show up here with all their invoices, payments, and drama-level UX.
             </p>
-
             <v-btn
               prepend-icon="mdi-rocket-launch"
               color="primary"
@@ -61,15 +49,10 @@
           </v-card>
         </v-row>
 
-        <v-row
-          v-else
-          no-gutters
-        >
+        <!-- ✅ Main Content -->
+        <v-row v-else no-gutters>
           <!-- Sidebar -->
-          <v-col
-            cols="3"
-            class="pa-0 bg-blue"
-          >
+          <v-col cols="3" class="pa-0 bg-blue">
             <project-sidebar
               :selected-project="selectedProject"
               :projects="projects"
@@ -77,11 +60,8 @@
             />
           </v-col>
 
-          <!-- Main Content -->
-          <v-col
-            cols="12"
-            class="pa-6"
-          >
+          <!-- Main Area -->
+          <v-col cols="12" class="pa-6">
             <project-filter-bar
               v-model:search-text="search"
               v-model:status-filter="statusFilter"
@@ -101,14 +81,9 @@
               :adding="addingInvoicing"
               class="mb-6"
             />
-            <v-fade-transition
-              mode="out-in"
-            >
-              <v-card
-                width="99%"
-                rounded="xl"
-                class="pa-4"
-              >
+
+            <v-fade-transition mode="out-in">
+              <v-card width="99%" rounded="xl" class="pa-4">
                 <table-parent
                   :key="selectedProjectData?.id"
                   :search-val="search"
@@ -126,6 +101,8 @@
             </v-fade-transition>
           </v-col>
         </v-row>
+
+        <!-- ➕ Floating Button -->
         <v-fab
           extended
           color="primary"
@@ -138,10 +115,9 @@
           app
           @click="addProjectDialog = !addProjectDialog"
         />
-        <v-dialog
-          v-model="addProjectDialog"
-          :in-tabs="false"
-        >
+
+        <!-- Add Project Dialog -->
+        <v-dialog v-model="addProjectDialog" :in-tabs="false">
           <add-new-project
             @close="addProjectDialog = false"
             @new-project-added="handleProjectRemoved"
@@ -155,34 +131,25 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue"
 
-// Props coming from parent
+// Props from parent
 const props = defineProps({
+  invoices: { type: Array, default: () => [] },
+  emails: Array,
   currencyInUse: String,
   monthly: Object,
   daysLeft: Number,
-  invoices: { type: Array, default: () => [] },
-  emails: Array,
   language: String
 })
 
 // Local state
-const triggerOverlay = ref(false)
-const activateDialog = ref(false) // <-- should be fetched/prop-passed in real use
+const loading = ref(true)
 const selectedProject = ref(null)
 const search = ref("")
 const statusFilter = ref("All")
 const addingInvoicing = ref([])
 const addProjectDialog = ref(false)
 
-//greeting
-const greeting = computed(() => {
-  const hour = new Date().getHours()
-  if (hour < 12) return "Good morning"
-  if (hour < 18) return "Good afternoon"
-  return "Good evening"
-})
-
-// Projects derived from invoices
+// Derived projects
 const projects = computed(() => {
   const set = []
   for (const inv of props.invoices) {
@@ -193,39 +160,25 @@ const projects = computed(() => {
   return set
 })
 
-const addInvoicing = (adding)=> {
-  addingInvoicing.value = adding
-}
-
-// Search (expanded sticky bar)
-const filteredProjects = computed(() => {
-  const q = search.value.trim().toLowerCase();
-  if (!q) return projects.value;
-  return projects.value.filter((p) => p.toLowerCase().includes(q));
-});
-
-// Map: project -> { invoices, projectId }
+// Map project → invoices
 const invoicesByProject = computed(() => {
-  const map = {};
+  const map = {}
   for (const inv of props.invoices) {
-    console.log("inv:", inv, "<<<<");
-    
-    if (!inv.project_name) continue;
+    if (!inv.project_name) continue
     if (!map[inv.project_name]) {
-      map[inv.project_name] = { invoices: [], projectId: inv.project_id };
+      map[inv.project_name] = { invoices: [], projectId: inv.project_id }
     }
-    if (inv.invoice_id) map[inv.project_name].invoices.push(inv);
+    if (inv.invoice_id) map[inv.project_name].invoices.push(inv)
   }
-  return map;
-});
-
+  return map
+})
 
 // Currently selected project data
 const selectedProjectData = computed(() =>
   projects.value.find(p => p.id === selectedProject.value) || null
 )
 
-// Ensure default project is first one
+// Select first project by default
 watch(
   () => projects.value,
   (newProjects) => {
@@ -236,58 +189,21 @@ watch(
   { immediate: true }
 )
 
-// Example overlay trigger
-const triggerOverlayFunction = () => {
-  triggerOverlay.value = true
-  setTimeout(() => {
-    triggerOverlay.value = false
-  }, 500)
-}
-
-const handleProjectRemoved = (projectName) => {
-  invoiceStore.dbResponse = invoiceStore.dbResponse.filter(
-    (inv) => inv.project_name !== projectName
-  );
-};
-
-// Placeholder
-const fetchFromSessionStorage = () => {};
-
+// Simulate data load
 onMounted(() => {
-  triggerOverlayFunction()
+  // ✅ mark loading false once invoices are passed down
+  if (props.invoices) {
+    loading.value = false
+  }
 })
 
+// Helpers
+const addInvoicing = (adding) => {
+  addingInvoicing.value = adding
+}
+
+const fetchFromSessionStorage = () => {}
+const handleProjectRemoved = (projectName) => {
+  // adjust this if you use Pinia or Vuex
+}
 </script>
-
-<style>
-.scrollbar-style::-webkit-scrollbar-track {
-  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
-  background-color: #f5f5f5;
-}
-.scrollbar-style::-webkit-scrollbar {
-  width: 3px;
-  background-color: #f5f5f5;
-}
-.scrollbar-style::-webkit-scrollbar-thumb {
-  border-radius: 10px;
-  background-color: #e5e5e5ff;
-}
-
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: all 0.35s ease;
-  position: relative;
-  display: block;
-}
-
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-</style>
