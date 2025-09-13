@@ -74,16 +74,18 @@ export async function createInvoicePdf({ projectName, groupedInvoices, groupedPa
       doc.font("Helvetica-Bold").fontSize(14).fillColor("#000").text("Invoices Overview", 40, currentY);
       currentY += 25;
 
-      const invoiceColWidths = [160, 100, 80, 100];
-      drawTableRow(currentY, ["Supplier", "Total", "Margin", "GrandTotal"], true, false, invoiceColWidths);
+      //const invoiceColWidths = [160, 100, 80, 100];
+      const invoiceColWidths = [250, 190];
+      //drawTableRow(currentY, ["Supplier", "Total", "Margin", "Total"], true, false, invoiceColWidths);
+      drawTableRow(currentY, ["Supplier", "Total"], true, false, invoiceColWidths);
       currentY += rowHeight;
 
       groupedInvoices.forEach((inv, idx) => {
         ensureSpace(1);
         drawTableRow(currentY, [
           inv.issuer,
-          `€${parseFloat(inv.totalAmount).toFixed(2)}`,
-          `${parseFloat(inv.totalMargin).toFixed(1)}%`,
+          // `€${parseFloat(inv.totalAmount).toFixed(2)}`,
+          // `${parseFloat(inv.totalMargin).toFixed(1)}%`,
           `€${parseFloat(inv.totalWithMargin).toFixed(2)}`
         ], false, idx % 2 === 1, invoiceColWidths);
         currentY += rowHeight;
@@ -102,7 +104,7 @@ export async function createInvoicePdf({ projectName, groupedInvoices, groupedPa
       currentY += 25;
 
       const paymentColWidths = [250, 190];
-      drawTableRow(currentY, ["Date of payment", "Amount"], true, false, paymentColWidths);
+      drawTableRow(currentY, ["Date of invoice", "Amount"], true, false, paymentColWidths);
       currentY += rowHeight;
 
       let totalPayments = 0;
