@@ -22,7 +22,7 @@
 
         <!-- 🗂 Empty State -->
         <v-row
-          v-else-if="!projects.length"
+          v-else-if="1==1"
           class="d-flex justify-center align-center"
         >
           <v-card
@@ -30,6 +30,7 @@
             width="100%"
             style="backdrop-filter: blur(12px); background: linear-gradient(135deg, #f5f7fa, #e2e6ea); box-shadow: 0 8px 24px rgba(0,0,0,0.1);"
           >
+          {{ projects }}
             <v-icon
               icon="mdi-folder-open-outline"
               size="120"
@@ -174,7 +175,7 @@ const projects = computed(() => {
   const set = []
   for (const inv of props.invoices) {
     if (inv.project_name && !set.some(p => p.name === inv.project_name)) {
-      set.push({ name: inv.project_name, id: inv.project })
+      set.push({ name: inv.project_name, id: inv.project_id  })
     }
   }
   return set
