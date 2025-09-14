@@ -1,12 +1,10 @@
 import { defineStore } from "pinia";
 import { useTheme } from "vuetify"
-import { computed } from "vue";
+import { ref, computed } from "vue";
 
 export const globalFunctions = defineStore(
     "globalFunctions",
     () => {
-        //State
-        //Actions
         const split = (txt) => txt.split(" ")
 
         const enhanceText = (txt) => {
@@ -20,10 +18,12 @@ export const globalFunctions = defineStore(
         const themeColor = computed(() =>
             theme.global.name.value === "dark" ? "bg-grey-darken-3" : "bg-grey-lighten-4"
         )
+        const add = ref(null)
         //Returns
         return {
             enhanceText,
-            themeColor
+            themeColor,
+            add
         };
     }
 );
