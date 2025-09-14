@@ -123,8 +123,6 @@ const percentPaid = computed(() => {
 })
 
 const openInvoiceDialog = (type, edit = false) => {
-  console.log("typeeeeeeeeeeeeeeeeeeeeeeeee", type);
-  
   dialogType.value = type
   isEditMode.value = edit
 
