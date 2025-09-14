@@ -5,10 +5,7 @@
     :class="summaryBackground"
     elevation="2"
   >
-    <v-container
-      fluid
-      class="pa-0"
-    >
+    <v-container fluid class="pa-0">
       <v-row dense>
         <!-- Conflict Mode: Unknown Supplier -->
         <v-col
@@ -16,46 +13,24 @@
           cols="12"
         >
           <unknown-supplier-summary
-            :issuer="editableFields.issuer"
+            :issuer="fileDetails.issuer"
             @save-supplier="$emit('save-supplier', $event)"
             @keep-unknown="$emit('keep-unknown')"
           />
         </v-col>
 
         <!-- Supplier Section -->
-        <v-col
-          v-if="conflictType !== 'unknown-supplier'"
-          cols="6"
-        >
+        <v-col v-if="conflictType !== 'unknown-supplier'" cols="6">
           <div class="summary-item">
             <span class="label">Supplier:</span>
+            <span class="value">{{ fileDetails.issuer }}</span>
 
-            <!-- Inline Editable Field -->
-            <template v-if="currentlyEditing === 'issuer'">
-              <v-text-field
-                v-model="editableFields.issuer"
-                variant="outlined"
-                density="compact"
-                hide-details
-                class="max-width-200"
-              />
-              <v-btn
-                size="small"
-                color="primary"
-                variant="tonal"
-                icon="mdi-check"
-                @click="finishEditing('issuer')"
-              />
-            </template>
-            <template v-else>
-              <span class="value">{{ fileDetails.issuer }}</span>
-              <DoubleCheckChip
-                v-if="mode === 'double-check'"
-                :confirmed="confirmed.issuer"
-                @edit="startEditing('issuer')"
-                @toggle="$emit('toggle-confirm', 'issuer')"
-              />
-            </template>
+            <DoubleCheckChip
+              v-if="mode === 'double-check'"
+              :confirmed="confirmed.issuer"
+              @edit="editItem(fileDetails, 'issuer')"
+              @toggle="$emit('toggle-confirm', 'issuer')"
+            />
           </div>
 
           <div class="summary-item">
@@ -65,82 +40,46 @@
         </v-col>
 
         <!-- Amounts Section -->
-        <v-col
-          v-if="conflictType !== 'unknown-supplier'"
-          cols="6"
-        >
+        <v-col v-if="conflictType !== 'unknown-supplier'" cols="6">
           <div class="summary-item">
             <span class="label">BTW Percent:</span>
+            <span class="value">{{ fileDetails.btwPercent || 0 }}%</span>
 
-            <!-- Inline Editable Field -->
-            <template v-if="currentlyEditing === 'btw'">
-              <v-text-field
-                v-model="editableFields.btwPercent"
-                variant="outlined"
-                density="compact"
-                hide-details
-                class="max-width-100"
-                type="number"
-              />
-              <v-btn
-                size="small"
-                color="primary"
-                variant="tonal"
-                icon="mdi-check"
-                @click="finishEditing('btw')"
-              />
-            </template>
-            <template v-else>
-              <span class="value">{{ fileDetails.btwPercent || 0 }}%</span>
-              <DoubleCheckChip
-                v-if="mode === 'double-check'"
-                :confirmed="confirmed.btw"
-                @edit="startEditing('btw')"
-                @toggle="$emit('toggle-confirm', 'btw')"
-              />
-            </template>
+            <DoubleCheckChip
+              v-if="mode === 'double-check'"
+              :confirmed="confirmed.btw"
+              @edit="editItem(fileDetails, 'btwPercent')"
+              @toggle="$emit('toggle-confirm', 'btw')"
+            />
           </div>
 
           <div class="summary-item">
             <span class="label">Total (Invoice):</span>
+            <span class="value">€{{ formattedAmount }}</span>
 
-            <!-- Inline Editable Field -->
-            <template v-if="currentlyEditing === 'amount'">
-              <v-text-field
-                v-model="editableFields.amount"
-                variant="outlined"
-                density="compact"
-                hide-details
-                class="max-width-150"
-                type="number"
-              />
-              <v-btn
-                size="small"
-                color="primary"
-                variant="tonal"
-                icon="mdi-check"
-                @click="finishEditing('amount')"
-              />
-            </template>
-            <template v-else>
-              <span class="value">€{{ formattedAmount }}</span>
-              <DoubleCheckChip
-                v-if="mode === 'double-check'"
-                :confirmed="confirmed.amount"
-                @edit="startEditing('amount')"
-                @toggle="$emit('toggle-confirm', 'amount')"
-              />
-            </template>
+            <DoubleCheckChip
+              v-if="mode === 'double-check'"
+              :confirmed="confirmed.amount"
+              @edit="editItem(fileDetails, 'amount')"
+              @toggle="$emit('toggle-confirm', 'amount')"
+            />
           </div>
         </v-col>
       </v-row>
     </v-container>
 
+    <!-- Edit Dialog -->
+    <dialog-component
+      :dialog-prop="triggerDialog"
+      :edited-item="editedItem"
+      :original-item="{ ...editedItem }"
+      :form-title="formTitle"
+      @close="close"
+      @save="prepareEditChanges"
+    />
+
     <!-- Double-check Confirm Button -->
-    <div
-      v-if="mode === 'double-check'"
-      class="text-right mt-6"
-    >
+    <div v-if="mode === 'double-check'" class="text-right mt-6">
       <v-btn
         color="primary"
         variant="flat"
@@ -148,9 +87,7 @@
         class="px-5"
         @click="$emit('confirm')"
       >
-        <v-icon left>
-          mdi-check-bold
-        </v-icon>
+        <v-icon left>mdi-check-bold</v-icon>
         Confirm & Continue
       </v-btn>
       <div
@@ -164,8 +101,9 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import DoubleCheckChip from './DoubleCheckChip.vue'
+// import DialogComponent from './DialogComponent.vue'
 
 const props = defineProps({
   mode: String,
@@ -173,31 +111,17 @@ const props = defineProps({
   fileDetails: Object,
   summaryBackground: String,
   allConfirmed: Boolean,
-  confirmed: Object,
-  editableFields: Object,
-  editing: Object
+  confirmed: Object
 })
 
 defineEmits([
   'save-supplier',
   'keep-unknown',
   'toggle-confirm',
-  'finish-edit',
   'confirm'
 ])
 
-const currentlyEditing = ref(null)
-
-function startEditing(field) {
-  currentlyEditing.value = field
-}
-
-function finishEditing(field) {
-  currentlyEditing.value = null
-  // Emit to parent if needed
-  // Example: $emit('finish-edit', field)
-}
-
+// ======= Formatting =======
 const formatDate = (dateStr) => {
   const d = new Date(dateStr)
   return isNaN(d) ? 'Invalid date' : d.toLocaleDateString()
@@ -206,8 +130,70 @@ const formatDate = (dateStr) => {
 const formattedAmount = computed(() =>
   typeof props.fileDetails?.amount === 'number'
     ? props.fileDetails.amount.toFixed(2)
-    : "0.00"
+    : '0.00'
 )
+
+// ======= Dialog State =======
+const triggerDialog = ref(false)
+const editedItem = ref({})
+const editedIndex = ref(-1)
+
+const defaultItem = {
+  issuer: '',
+  amount: 0,
+  created_at: '',
+  includesBtw: false,
+  btwPercent: null,
+  margin: 0
+}
+
+const formTitle = computed(() =>
+  editedIndex.value === -1 ? 'New Item' : 'Edit Item'
+)
+
+function editItem(item, field) {
+  editedIndex.value = 0 // we only edit the single fileDetails
+  editedItem.value = { ...item, field }
+  triggerDialog.value = true
+}
+
+function close() {
+  triggerDialog.value = false
+  nextTick(() => {
+    editedItem.value = { ...defaultItem }
+    editedIndex.value = -1
+  })
+}
+
+// ======= Save Changes =======
+function prepareEditChanges({ body, id }) {
+  console.log('prepareEditChanges', body, id)
+
+  // Apply field change locally to fileDetails
+  Object.assign(props.fileDetails, body)
+
+  // Optionally: call API to persist
+  patchChanges({ id, body })
+  
+  close()
+}
+
+async function patchChanges({ id, body }) {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_BASE_URL}/invoice/patch/invoices?id=${id}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      }
+    )
+    if (!response.ok) throw new Error('Failed to patch invoice')
+    console.log('✅ Patched successfully')
+  } catch (e) {
+    console.error('❌ Patch error', e.message)
+  }
+}
 </script>
 
 <style scoped>
@@ -225,17 +211,5 @@ const formattedAmount = computed(() =>
 
 .value {
   flex: 1;
-}
-
-.max-width-100 {
-  max-width: 100px;
-}
-
-.max-width-150 {
-  max-width: 150px;
-}
-
-.max-width-200 {
-  max-width: 200px;
 }
 </style>
