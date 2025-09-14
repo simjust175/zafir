@@ -9,6 +9,7 @@
         class="rounded-xl pa-6 pt-2"
         elevation="8"
         width="500"
+        min-height="550"
       >
         <!-- HEADER -->
         <v-card-title>
