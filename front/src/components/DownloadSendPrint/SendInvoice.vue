@@ -27,7 +27,6 @@
         rounded="xl"
         class="pa-4"
       >
-      {{ total }}
         <v-card-title class="text-h6 font-weight-medium d-flex align-start justify-space-between">
           Send Invoice
           <set-sender-email />
@@ -169,10 +168,11 @@
   </div>
 </template>
 
-
+<!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { ref } from "vue";
-
+import { invoices } from "@/stores/invoiceState";
+const invoiceStore = invoices()
 const emit = defineEmits(["email-sent"]);
 const props = defineProps({
   includesBtw: Boolean,
@@ -206,6 +206,10 @@ const checkBeforeSend = async () => {
   }
 };
 
+// const refreshInfo = ()=> {
+//   invoiceStore.getAmounts()
+//   invoiceStore.
+// }
 const forceSend = () => {
   warningDialog.value = false;
   handleSend();
@@ -213,6 +217,8 @@ const forceSend = () => {
 
 const handleSend = async () => {
   loading.value = true;
+  invoiceStore.setPaymentsData()
+  invoiceStore.getAmounts()
   try {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/email/send-invoice`, {
       method: "POST",
