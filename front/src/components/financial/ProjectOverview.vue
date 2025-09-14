@@ -38,7 +38,7 @@
   
   <script setup>
   import { computed } from "vue"
-  const props =defineProps({
+  const props = defineProps({
     project: Object,
     invoices: Array
   })

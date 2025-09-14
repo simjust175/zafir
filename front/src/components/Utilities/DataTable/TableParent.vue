@@ -11,8 +11,14 @@
         class="rounded-xl pa-1 pb-3"
         fluid
       >
-        <v-row dense v-if="expanded">
-          <invoice-dash :current-project-id="project_id" :expanded="expanded"/>
+        <v-row
+          v-if="expanded"
+          dense
+        >
+          <invoice-dash
+            :current-project-id="project_id"
+            :expanded="expanded"
+          />
         </v-row>
       </v-container>
       <v-data-table
@@ -33,7 +39,10 @@
           <v-skeleton-loader :type="`table-row@${skeletonRows}`" />
         </template>
 
-        <template #top v-if="expanded">
+        <template
+          v-if="expanded"
+          #top
+        >
           <v-toolbar
             :class="themeColor"
             rounded="xl"
@@ -239,7 +248,7 @@ const groupedInvoices = computed(() => {
   });
 });
 
-const overallTotalWithMargin = computed(() => {
+const overallTotalWithMargin = computed(() => {  
   let total = 0;
   groupedInvoices.value.forEach(group => {
     console.log(group.issuer, group.totalWithMargin, group);

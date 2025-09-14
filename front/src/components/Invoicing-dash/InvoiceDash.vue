@@ -53,7 +53,7 @@
       :dialog-type="dialogType"
       :initial-amount="originalAmount"
       :is-edit="isEditMode"
-      @close="showInvoiceDialog = false"
+      @close="closeInvoiceDash"
       @update="updateInvoicing"
     />
 
@@ -82,10 +82,12 @@
 import { computed, watch, ref } from 'vue'
 import InvoiceSummary from './InvoiceSummary.vue'
 import { invoices } from '@/stores/invoiceState'
+import { globalFunctions } from '@/stores/globalFunctions'
 
 const props = defineProps({ currentProjectId: Number, expanded: Boolean, addInvoicing: String })
 
 const invoiceStore = invoices()
+const functions = globalFunctions()
 const payments = computed(() => invoiceStore.payments)
 const invoicing = computed(() => invoiceStore.invoicing)
 const localInvoices = ref([])
@@ -121,7 +123,7 @@ const percentPaid = computed(() => {
 })
 
 const openInvoiceDialog = (type, edit = false) => {
-  console.log("type", type);
+  console.log("typeeeeeeeeeeeeeeeeeeeeeeeee", type);
   
   dialogType.value = type
   isEditMode.value = edit
@@ -192,7 +194,12 @@ const updateInvoicing = async (newAmount) => {
     }, 1500)
   }
 }
-watch(()=> props.addInvoicing, (newVal)=> openInvoiceDialog(newVal))
+
+const closeInvoiceDash = ()=>{
+  showInvoiceDialog.value = false;
+  functions.add = null;
+}
+watch(()=> functions.add, (newVal)=> {if(newVal) openInvoiceDialog(newVal)})
 </script>
 
 <style scoped>
