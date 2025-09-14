@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { invoices } from "@/stores/invoiceState";
 const invoiceStore = invoices();
 
@@ -21,14 +21,14 @@ const emails = invoiceStore.freeEmails
 
 // Helper to process data: find unknown issuers and duplicate
 
-// watch(()=> invoiceStore.dbResponse, (newVal)=> {
-//   console.log("watch in main page triggered🔫");
-  
-//   if(Object.values(newVal.length < 1)) {
-//     getAmounts();
-//     getActiveEmails()
-//   }
-// })
+watch(()=> invoiceStore.dbResponse, (newVal)=> {
+  console.log("watch in main page triggered🔫");
+  amountArray.value = [...newVal]
+  // if(Object.values(newVal.length < 1)) {
+  //   getAmounts();
+  //   getActiveEmails()
+  // }
+})
 onMounted(() => {
   invoiceStore.getAmounts();
   invoiceStore.getActiveEmails()

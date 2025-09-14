@@ -1,8 +1,13 @@
 <template>
   <v-container fluid>
-    <v-container class="fill-height fill-width pa-1" fluid>
-      <v-responsive class="fill-height fill-width" width="100%">
-        
+    <v-container
+      class="fill-height fill-width pa-1"
+      fluid
+    >
+      <v-responsive
+        class="fill-height fill-width"
+        width="100%"
+      >
         <!-- 🔄 Loading State -->
         <v-row
           v-if="loading"
@@ -50,9 +55,15 @@
         </v-row>
 
         <!-- ✅ Main Content -->
-        <v-row v-else no-gutters>
+        <v-row
+          v-else
+          no-gutters
+        >
           <!-- Sidebar -->
-          <v-col cols="3" class="pa-0 bg-blue">
+          <v-col
+            cols="3"
+            class="pa-0 bg-blue"
+          >
             <project-sidebar
               :selected-project="selectedProject"
               :projects="projects"
@@ -61,7 +72,10 @@
           </v-col>
 
           <!-- Main Area -->
-          <v-col cols="12" class="pa-6">
+          <v-col
+            cols="12"
+            class="pa-6"
+          >
             <project-filter-bar
               v-model:search-text="search"
               v-model:status-filter="statusFilter"
@@ -78,12 +92,15 @@
               :project-name="selectedProjectData?.name"
               :email="emails"
               :db-response="invoices"
-              :adding="addingInvoicing"
               class="mb-6"
             />
 
             <v-fade-transition mode="out-in">
-              <v-card width="99%" rounded="xl" class="pa-4">
+              <v-card
+                width="99%"
+                rounded="xl"
+                class="pa-4"
+              >
                 <table-parent
                   :key="selectedProjectData?.id"
                   :search-val="search"
@@ -117,7 +134,10 @@
         />
 
         <!-- Add Project Dialog -->
-        <v-dialog v-model="addProjectDialog" :in-tabs="false">
+        <v-dialog
+          v-model="addProjectDialog"
+          :in-tabs="false"
+        >
           <add-new-project
             @close="addProjectDialog = false"
             @new-project-added="handleProjectRemoved"
@@ -197,8 +217,11 @@ onMounted(() => {
   }
 })
 
+import { globalFunctions } from "@/stores/globalFunctions";
+const functions = globalFunctions();
 // Helpers
 const addInvoicing = (adding) => {
+  functions.add = adding;
   addingInvoicing.value = adding
 }
 
