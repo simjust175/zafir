@@ -16,7 +16,6 @@
         :expanded="false"
         :add-invoicing="adding"
       />
-    
       <download-file
         class="ms-5"
         :grouped-invoices="groupedInvoices"
@@ -34,7 +33,7 @@
         :total="overallTotalWithMargin"
         :print="true"
       />
-      <SendInvoice
+      <send-invoice
         :grouped-invoices="groupedInvoices"
         :project-name="projectName"
         :current-project-id="project?.id"
@@ -64,16 +63,16 @@ const props = defineProps({
   projectName: String,
   project: Object,
   email: Array,
-  dbResponse: Array,
   adding: String
 })
 
 const invoiceArray = invoices()
+const invoicesByProject = computed(()=> invoiceArray.dbResponse.filter(i => i.project === props.project.id))
 
 // Group invoices by issuer and calculate totals per invoice margin
 const groupedInvoices = computed(() => {
-  const groups = {}
-  ;(props.dbResponse || []).forEach(inv => {
+  const groups = {};
+  (invoicesByProject.value || []).forEach(inv => {
     const issuer = inv.issuer || 'Unknown'
     if (!groups[issuer]) groups[issuer] = []
     groups[issuer].push(inv)
@@ -104,10 +103,12 @@ const groupedInvoices = computed(() => {
   })
 })
 
-// Keep as a number, not string
-const overallTotalWithMargin = computed(() =>
-  Number(
-    groupedInvoices.value.reduce((sum, group) => sum + group.totalWithMargin, 0).toFixed(2)
-  )
-)
+const overallTotalWithMargin = computed(() => {
+  let total = 0;
+  groupedInvoices.value.forEach(group => {
+    console.log(group.issuer, group.totalWithMargin, group);
+    total += group.totalWithMargin;
+  });
+  return Number(total.toFixed(2));
+});
 </script>

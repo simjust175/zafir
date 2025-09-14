@@ -98,13 +98,6 @@ const activeEmailAddresses = computed(() => {
   return [...new Set(emails.map(ks => ks.email_address))]
 })
 
-import { useTheme } from "vuetify"
-
-const theme = useTheme()
-const themeColor = computed(() =>
-  theme.global.name.value === "dark" ? "bg-grey-darken-3" : "bg-grey-lighten-4"
-)
-
 const menu = ref(false)
 //CHECK IF ONLInE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 const online = computed(() => activeEmailAddresses.value.length)
