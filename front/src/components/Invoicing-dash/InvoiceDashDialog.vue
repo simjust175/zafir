@@ -7,7 +7,6 @@
       <v-card-title>
         {{ isEdit ? 'Edit' : 'Add' }} {{ dialogType === 'invoiced' ? 'Invoice' : 'Payment' }}
       </v-card-title>
-  
       <v-card-text>
         <v-number-input
           v-model="localAmount"
@@ -53,6 +52,7 @@
   const localAmount = ref(props.initialAmount ?? 0)
   
   watch(() => props.initialAmount, (val) => {
+    if(props.dialogType === 'add') return null
     localAmount.value = val ?? 0
   })
   

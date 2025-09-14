@@ -56,7 +56,7 @@
 
 <!-- eslint-disable vue/require-default-prop -->
 <script setup>
-import { computed } from "vue"
+import { computed, watch } from "vue"
 import { invoices } from "@/stores/invoiceState"
 
 const props = defineProps({
@@ -111,4 +111,6 @@ const overallTotalWithMargin = computed(() => {
   });
   return Number(total.toFixed(2));
 });
+let counter = 0
+watch(()=> props.adding,  (newVal)=> console.log("adding", counter++, "{{}}", newVal))
 </script>
