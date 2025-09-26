@@ -16,6 +16,8 @@ function createConnectionLogger(email) {
 }
 
 function processResult(result, project_id, postToDb) {
+  console.log("whats the res in useEmailListeners,js/processResults", result, project_id, postToDb);
+  
   if (!result) return;
 
   // 🟢 If multiple invoices in one email
@@ -94,6 +96,7 @@ function setupImapConnection(config, postToDb) {
 export async function startEmailListeners(postToDb) {
   try {
     const list = await AmountService.getActiveEmailsService();
+    console.log("list from active emails", list)
     if (!list?.length) {
       console.warn("⚠️ No active email accounts found.");
       return;
