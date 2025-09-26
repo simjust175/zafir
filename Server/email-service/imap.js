@@ -92,6 +92,7 @@ function openInbox(imap, cb) {
 }
 
 function handleNewEmails(imap) {
+  console.log("entered imap.js/handleNewEmails")
   return new Promise((resolve, reject) => {
     const searchCriteria = ["UNSEEN"];
     const fetchOptions = { bodies: "", struct: true, markSeen: false }; // Don't auto-mark as read
@@ -127,7 +128,8 @@ function handleNewEmails(imap) {
                     const pdfData = await pdf(att.content);
                     const senderEmail = parsed.from?.value?.[0]?.address;
                     const extracted = await analyze(pdfData.text, senderEmail);
-                
+                    console.log("extracted", pdfData, "senderEmail", senderEmail, "extracted", extracted);
+                    
                     if (extracted) {
                       results = { ...extracted, pdf_file: uniqueName}; // for now ❌ , pdf_data: pdfData
                       hasProcessed = true;
