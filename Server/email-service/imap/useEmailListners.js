@@ -16,19 +16,31 @@ function createConnectionLogger(email) {
 }
 
 function processResult(result, project_id, postToDb) {
-  console.log("whats the res in useEmailListeners,js/processResults", result, project_id, postToDb);
-  
-  if (!result) return;
+  console.log("🔎 processResult() called with:", { result, project_id });
+
+  if (!result) {
+    console.warn("⚠️ No result returned from handleNewEmails()");
+    return;
+  }
 
   // 🟢 If multiple invoices in one email
   if (Array.isArray(result)) {
-    result.forEach((r) => {
-      console.log("📦 Processed invoice (array item):", JSON.stringify(r, null, 2));
-      postToDb({ ...r, project: project_id });
+    console.log(`📦 Processing ${result.length} invoices for project ${project_id}`);
+    result.forEach((r, idx) => {
+      console.log(`📦 Invoice [${idx}] →`, JSON.stringify(r, null, 2));
+      try {
+        postToDb({ ...r, project: project_id });
+      } catch (err) {
+        console.error("❌ Error posting array invoice:", err);
+      }
     });
   } else {
     console.log("📦 Processed invoice (single):", JSON.stringify(result, null, 2));
-    postToDb({ ...result, project: project_id });
+    try {
+      postToDb({ ...result, project: project_id });
+    } catch (err) {
+      console.error("❌ Error posting single invoice:", err);
+    }
   }
 }
 
@@ -46,7 +58,9 @@ function setupImapConnection(config, postToDb) {
 
         // Initial fetch
         try {
+          console.log(`🔍 Running initial fetch for ${email_address}`);
           const result = await handleNewEmails(imap);
+          console.log(`📥 handleNewEmails() returned for ${email_address}:`, result);
           processResult(result, project_id, postToDb);
         } catch (err) {
           console.error(`⚠️ Initial check failed [${email_address}]:`, err.message);
@@ -57,6 +71,7 @@ function setupImapConnection(config, postToDb) {
           logger.mail();
           try {
             const result = await handleNewEmails(imap);
+            console.log(`📥 handleNewEmails() returned for ${email_address}:`, result);
             processResult(result, project_id, postToDb);
           } catch (err) {
             console.error(`⚠️ Failed to process mail [${email_address}]:`, err.message);
@@ -96,7 +111,7 @@ function setupImapConnection(config, postToDb) {
 export async function startEmailListeners(postToDb) {
   try {
     const list = await AmountService.getActiveEmailsService();
-    console.log("list from active emails", list)
+    console.log("📋 Active email accounts from DB:", list);
     if (!list?.length) {
       console.warn("⚠️ No active email accounts found.");
       return;
