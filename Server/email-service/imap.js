@@ -71,7 +71,7 @@ function extractPrice(text) {
       result.includesBTW = true;
     }
   }
-  console.log("res", result);
+  // console.log("res", result);
 
   return result.amount ? result : null;
 }
