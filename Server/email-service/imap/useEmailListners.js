@@ -15,6 +15,21 @@ function createConnectionLogger(email) {
   };
 }
 
+function processResult(result, project_id, postToDb) {
+  if (!result) return;
+
+  // 🟢 If multiple invoices in one email
+  if (Array.isArray(result)) {
+    result.forEach((r) => {
+      console.log("📦 Processed invoice (array item):", JSON.stringify(r, null, 2));
+      postToDb({ ...r, project: project_id });
+    });
+  } else {
+    console.log("📦 Processed invoice (single):", JSON.stringify(result, null, 2));
+    postToDb({ ...result, project: project_id });
+  }
+}
+
 function setupImapConnection(config, postToDb) {
   const { email_address, password, project_id } = config;
   const logger = createConnectionLogger(email_address);
@@ -30,7 +45,7 @@ function setupImapConnection(config, postToDb) {
         // Initial fetch
         try {
           const result = await handleNewEmails(imap);
-          if (result) postToDb({ ...result, project: project_id });
+          processResult(result, project_id, postToDb);
         } catch (err) {
           console.error(`⚠️ Initial check failed [${email_address}]:`, err.message);
         }
@@ -40,7 +55,7 @@ function setupImapConnection(config, postToDb) {
           logger.mail();
           try {
             const result = await handleNewEmails(imap);
-            if (result) postToDb({ ...result, project: project_id });
+            processResult(result, project_id, postToDb);
           } catch (err) {
             console.error(`⚠️ Failed to process mail [${email_address}]:`, err.message);
           }
@@ -50,7 +65,7 @@ function setupImapConnection(config, postToDb) {
 
     imap.once("error", (err) => {
       logger.error(err);
-      activeConnections.set(email_address, { imap, status: 'error' });
+      activeConnections.set(email_address, { imap, status: "error" });
       setTimeout(() => {
         logger.reconnect();
         setupImapConnection(config, postToDb); // Reconnect
@@ -59,7 +74,7 @@ function setupImapConnection(config, postToDb) {
 
     imap.once("end", () => {
       logger.end();
-      activeConnections.set(email_address, { imap, status: 'ended' });
+      activeConnections.set(email_address, { imap, status: "ended" });
       setTimeout(() => {
         logger.reconnect();
         setupImapConnection(config, postToDb); // Reconnect
@@ -67,7 +82,7 @@ function setupImapConnection(config, postToDb) {
     });
 
     imap.connect();
-    activeConnections.set(email_address, { imap, status: 'connected' });
+    activeConnections.set(email_address, { imap, status: "connected" });
   };
 
   startListener();
