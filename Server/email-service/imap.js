@@ -131,7 +131,7 @@ function handleNewEmails(imap) {
                     console.log("extracted", pdfData, "senderEmail", senderEmail, "extracted", extracted);
                     
                     if (extracted) {
-                      results = { ...extracted, pdf_file: uniqueName, pdf_data: pdfData}; // for now ❌ , pdf_data: pdfData
+                      results = { ...extracted, pdf_file: uniqueName}; // for now ❌ , pdf_data: pdfData
                       hasProcessed = true;
                     }
                   } catch (err) {
