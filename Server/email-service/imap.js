@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import analyze from "./gpt.js";
 import emailAccounts from "./imap/accounts.js";
-import { v4 as uuidv4 } from "uuid"; 
+import { v4 as uuidv4 } from "uuid";
 
 dotenv.config();
 
@@ -102,55 +102,55 @@ function handleNewEmails(imap) {
       if (!uids.length) return resolve(null);
 
       const f = imap.fetch(uids, fetchOptions);
-  f.on("message", (msg, seqno) => {
-  let uid;
-  let result = null; // ✅ declare result here
+      f.on("message", (msg, seqno) => {
+        let uid;
+        let result = null; // ✅ declare result here
 
-  msg.on("attributes", (attrs) => {
-    uid = attrs.uid;
-  });
+        msg.on("attributes", (attrs) => {
+          uid = attrs.uid;
+        });
 
-  msg.on("body", (stream) => {
-    simpleParser(stream)
-     .then(async (parsed) => {
-  let result = null; // ✅ declare once, outside the loop
+        msg.on("body", (stream) => {
+          simpleParser(stream)
+            .then(async (parsed) => {
+              let result = null; // ✅ declare once, outside the loop
 
-  for (const att of parsed.attachments || []) {
-    console.log("📎 Attachment found:", att.filename, att.contentType);
+              for (const att of parsed.attachments || []) {
+                console.log("📎 Attachment found:", att.filename, att.contentType);
 
-    if (att.contentType === "application/pdf") {
-      console.log("📄 PDF detected, starting parse…");
+                if (att.contentType === "application/pdf") {
+                  console.log("📄 PDF detected, starting parse…");
 
-      try {
-        const pdfData = await pdf(att.content);
-        const senderEmail = parsed.from?.value?.[0]?.address;
-        const extracted = await analyze(pdfData.text, senderEmail);
-        console.log("🧠 analyze() returned:", extracted);
+                  try {
+                    const pdfData = await pdf(att.content);
+                    const senderEmail = parsed.from?.value?.[0]?.address;
+                    const extracted = await analyze(pdfData.text, senderEmail);
+                    console.log("🧠 analyze() returned:", extracted);
 
-        if (extracted) {
-          result = { ...extracted, pdf_file: att.filename }; // ✅ assign here
-        }
-      } catch (err) {
-        console.error("❌ Error parsing PDF:", err);
-      }
-    }
-  }
+                    if (extracted) {
+                      result = { ...extracted, pdf_file: att.filename }; // ✅ assign here
+                    }
+                  } catch (err) {
+                    console.error("❌ Error parsing PDF:", err);
+                  }
+                }
+              }
 
-  if (result && uid) {
-    imap.addFlags(uid, "\\Seen", (err) => {
-      if (err) console.warn("⚠️ Could not mark email as read:", err);
-    });
-  }
+              if (result && uid) {
+                imap.addFlags(uid, "\\Seen", (err) => {
+                  if (err) console.warn("⚠️ Could not mark email as read:", err);
+                });
+              }
 
-  console.log("📦 handleNewEmails() resolving with:", result);
-  resolve(result || null); // ✅ resolve after loop
-})
-      .catch((err) => {
-        console.error("❌ Error in simpleParser:", err);
-        reject(err);
+              console.log("📦 handleNewEmails() resolving with:", result);
+              resolve(result || null); // ✅ resolve after loop
+            })
+            .catch((err) => {
+              console.error("❌ Error in simpleParser:", err);
+              reject(err);
+            });
+        });
       });
-  });
-});
 
       f.once("error", (err) => {
         console.error("❌ Fetch error:", err);
@@ -198,4 +198,4 @@ function handleNewEmails(imap) {
 
 // //startListening()
 // //export default startListening;
-export {openInbox, handleNewEmails}
+export { openInbox, handleNewEmails }
