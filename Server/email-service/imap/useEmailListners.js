@@ -19,7 +19,7 @@ function processResult(result, project_id, postToDb) {
   console.log("🔎 processResult() called with:", { result, project_id });
 
   if (!result) {
-    console.warn("⚠️ No result returned from handleNewEmails()");
+    console.warn("⚠️[live] No result returned from handleNewEmails()");
     return;
   }
 
@@ -71,7 +71,7 @@ function setupImapConnection(config, postToDb) {
           logger.mail();
           try {
             const result = await handleNewEmails(imap);
-            console.log(`📥 handleNewEmails() returned for ${email_address}:`, result);
+            console.log(`📥[initial] handleNewEmails() returned for ${email_address}:`, result);
             processResult(result, project_id, postToDb);
           } catch (err) {
             console.error(`⚠️ Failed to process mail [${email_address}]:`, err.message);
