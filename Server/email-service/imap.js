@@ -114,6 +114,8 @@ function handleNewEmails(imap) {
           simpleParser(stream)
             .then(async (parsed) => {
               let results = []; //it is a LET !!!
+              console.log("📨 Parsed email:", parsed.subject, parsed.from?.value?.[0]?.address);
+              console.log("📎 Attachments:", parsed.attachments?.map(a => a.filename));
 
               for (const att of parsed.attachments || []) {
                 if (att.contentType === "application/pdf") {
