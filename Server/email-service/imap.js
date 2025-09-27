@@ -92,9 +92,10 @@ function openInbox(imap, cb) {
 }
 
 function handleNewEmails(imap) {
+  console.log("entered imap.js/handleNewEmails")
   return new Promise((resolve, reject) => {
     const searchCriteria = ["UNSEEN"];
-    const fetchOptions = { bodies: "", struct: true, markSeen: false };
+    const fetchOptions = { bodies: "", struct: true, markSeen: false }; // Don't auto-mark as read
 
     imap.search(searchCriteria, (err, uids) => {
       if (err) return reject(err);
@@ -102,8 +103,8 @@ function handleNewEmails(imap) {
 
       const f = imap.fetch(uids, fetchOptions);
       f.on("message", (msg, seqno) => {
+        let hasProcessed = false;
         let uid;
-        let result = null;
 
         msg.on("attributes", (attrs) => {
           uid = attrs.uid;
@@ -112,22 +113,26 @@ function handleNewEmails(imap) {
         msg.on("body", (stream) => {
           simpleParser(stream)
             .then(async (parsed) => {
+              let results = []; //it is a LET !!!
+
               for (const att of parsed.attachments || []) {
                 if (att.contentType === "application/pdf") {
                   const downloadsDir = path.join(__dirname, "downloads");
                   if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir);
-
+                
                   const uniqueName = `${uuidv4()}_${att.filename}`;
                   const filePath = path.join(downloadsDir, uniqueName);
                   fs.writeFileSync(filePath, att.content);
-
+                
                   try {
                     const pdfData = await pdf(att.content);
                     const senderEmail = parsed.from?.value?.[0]?.address;
                     const extracted = await analyze(pdfData.text, senderEmail);
-
+                    console.log("extracted", pdfData, "senderEmail", senderEmail, "extracted", extracted);
+                    
                     if (extracted) {
-                      result = { ...extracted, pdf_file: uniqueName };
+                      results = { ...extracted, pdf_file: uniqueName}; // for now ❌ , pdf_data: pdfData
+                      hasProcessed = true;
                     }
                   } catch (err) {
                     console.error("❌ Error parsing PDF:", err);
@@ -135,13 +140,16 @@ function handleNewEmails(imap) {
                 }
               }
 
-              if (result && uid) {
+              // If processed, manually mark the email as read
+              if (hasProcessed && uid) {
                 imap.addFlags(uid, "\\Seen", (err) => {
-                  if (err) console.warn("⚠️ Could not mark email as read:", err);
+                  if (err)
+                    console.warn("⚠️ Could not mark email as read:", err);
                 });
+                resolve(results.length === 1 ? results[0] : results); // support single or multiple invoices
+              } else {
+                resolve(null); // no PDFs, don't mark read
               }
-
-              resolve(result || null); // ✅ resolve only once, after parsing
             })
             .catch((err) => {
               console.error("❌ Error parsing email:", err);
@@ -161,6 +169,7 @@ function handleNewEmails(imap) {
     });
   });
 }
+
 // // --------- Start Listening Loop ---------
 // function startListening(postToDb) {
 //   const imap = new Imap(imapConfig);
