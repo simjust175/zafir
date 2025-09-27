@@ -112,36 +112,39 @@ function handleNewEmails(imap) {
 
   msg.on("body", (stream) => {
     simpleParser(stream)
-      .then(async (parsed) => {
-        for (const att of parsed.attachments || []) {
-          console.log("📎 Attachment found:", att.filename, att.contentType);
+     .then(async (parsed) => {
+  let result = null; // ✅ declare once, outside the loop
 
-          if (att.contentType === "application/pdf") {
-            console.log("📄 PDF detected, starting parse…");
+  for (const att of parsed.attachments || []) {
+    console.log("📎 Attachment found:", att.filename, att.contentType);
 
-            try {
-              const pdfData = await pdf(att.content);
-              const senderEmail = parsed.from?.value?.[0]?.address;
-              const extracted = await analyze(pdfData.text, senderEmail);
-              console.log("🧠 analyze() returned:", extracted);
+    if (att.contentType === "application/pdf") {
+      console.log("📄 PDF detected, starting parse…");
 
-              if (extracted) {
-                result = { ...extracted, pdf_file: att.filename }; // ✅ now safe
-              }
-            } catch (err) {
-              console.error("❌ Error parsing PDF:", err);
-            }
-          }
+      try {
+        const pdfData = await pdf(att.content);
+        const senderEmail = parsed.from?.value?.[0]?.address;
+        const extracted = await analyze(pdfData.text, senderEmail);
+        console.log("🧠 analyze() returned:", extracted);
+
+        if (extracted) {
+          result = { ...extracted, pdf_file: att.filename }; // ✅ assign here
         }
+      } catch (err) {
+        console.error("❌ Error parsing PDF:", err);
+      }
+    }
+  }
 
-        if (result && uid) {
-          imap.addFlags(uid, "\\Seen", (err) => {
-            if (err) console.warn("⚠️ Could not mark email as read:", err);
-          });
-        }
+  if (result && uid) {
+    imap.addFlags(uid, "\\Seen", (err) => {
+      if (err) console.warn("⚠️ Could not mark email as read:", err);
+    });
+  }
 
-        resolve(result || null); // ✅ resolve after parsing
-      })
+  console.log("📦 handleNewEmails() resolving with:", result);
+  resolve(result || null); // ✅ resolve after loop
+})
       .catch((err) => {
         console.error("❌ Error in simpleParser:", err);
         reject(err);
