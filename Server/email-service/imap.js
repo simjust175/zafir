@@ -114,33 +114,32 @@ function handleNewEmails(imap) {
           simpleParser(stream)
             .then(async (parsed) => {
               let results = []; //it is a LET !!!
-              console.log("📨 Parsed email:", parsed.subject, parsed.from?.value?.[0]?.address);
-              console.log("📎 Attachments:", parsed.attachments?.map(a => a.filename));
+              
+        for (const att of parsed.attachments || []) {
+  console.log("📎 Attachment found:", att.filename, att.contentType);
 
-              for (const att of parsed.attachments || []) {
-                if (att.contentType === "application/pdf") {
-                  const downloadsDir = path.join(__dirname, "downloads");
-                  if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir);
-                
-                  const uniqueName = `${uuidv4()}_${att.filename}`;
-                  const filePath = path.join(downloadsDir, uniqueName);
-                  fs.writeFileSync(filePath, att.content);
-                
-                  try {
-                    const pdfData = await pdf(att.content);
-                    const senderEmail = parsed.from?.value?.[0]?.address;
-                    const extracted = await analyze(pdfData.text, senderEmail);
-                    console.log("extracted", pdfData, "senderEmail", senderEmail, "extracted", extracted);
-                    
-                    if (extracted) {
-                      results = { ...extracted, pdf_file: uniqueName}; // for now ❌ , pdf_data: pdfData
-                      hasProcessed = true;
-                    }
-                  } catch (err) {
-                    console.error("❌ Error parsing PDF:", err);
-                  }
-                }
-              }
+  if (att.contentType === "application/pdf") {
+    console.log("📄 PDF detected, starting parse…");
+
+    try {
+      const pdfData = await pdf(att.content);
+      console.log("📄 PDF parsed:", pdfData.text.slice(0, 200)); // preview
+
+      const senderEmail = parsed.from?.value?.[0]?.address;
+      const extracted = await analyze(pdfData.text, senderEmail);
+      console.log("🧠 analyze() returned:", extracted);
+
+      if (extracted) {
+        result = { ...extracted, pdf_file: att.filename };
+      }
+    } catch (err) {
+      console.error("❌ Error parsing PDF:", err);
+    }
+  } else {
+    console.warn("⚠️ Skipping non-PDF attachment:", att.filename);
+  }
+}
+
 
               // If processed, manually mark the email as read
               if (hasProcessed && uid) {
