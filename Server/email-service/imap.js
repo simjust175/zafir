@@ -102,62 +102,52 @@ function handleNewEmails(imap) {
       if (!uids.length) return resolve(null);
 
       const f = imap.fetch(uids, fetchOptions);
-      f.on("message", (msg, seqno) => {
-        let hasProcessed = false;
-        let uid;
+  f.on("message", (msg, seqno) => {
+  let uid;
+  let result = null; // ✅ declare result here
 
-        msg.on("attributes", (attrs) => {
-          uid = attrs.uid;
-        });
+  msg.on("attributes", (attrs) => {
+    uid = attrs.uid;
+  });
 
-        msg.on("body", (stream) => {
-          simpleParser(stream)
-            .then(async (parsed) => {
-              let results = []; //it is a LET !!!
-              
+  msg.on("body", (stream) => {
+    simpleParser(stream)
+      .then(async (parsed) => {
         for (const att of parsed.attachments || []) {
-  console.log("📎 Attachment found:", att.filename, att.contentType);
+          console.log("📎 Attachment found:", att.filename, att.contentType);
 
-  if (att.contentType === "application/pdf") {
-    console.log("📄 PDF detected, starting parse…");
+          if (att.contentType === "application/pdf") {
+            console.log("📄 PDF detected, starting parse…");
 
-    try {
-      const pdfData = await pdf(att.content);
-      console.log("📄 PDF parsed:", pdfData.text.slice(0, 200)); // preview
+            try {
+              const pdfData = await pdf(att.content);
+              const senderEmail = parsed.from?.value?.[0]?.address;
+              const extracted = await analyze(pdfData.text, senderEmail);
+              console.log("🧠 analyze() returned:", extracted);
 
-      const senderEmail = parsed.from?.value?.[0]?.address;
-      const extracted = await analyze(pdfData.text, senderEmail);
-      console.log("🧠 analyze() returned:", extracted);
-
-      if (extracted) {
-        result = { ...extracted, pdf_file: att.filename };
-      }
-    } catch (err) {
-      console.error("❌ Error parsing PDF:", err);
-    }
-  } else {
-    console.warn("⚠️ Skipping non-PDF attachment:", att.filename);
-  }
-}
-
-
-              // If processed, manually mark the email as read
-              if (hasProcessed && uid) {
-                imap.addFlags(uid, "\\Seen", (err) => {
-                  if (err)
-                    console.warn("⚠️ Could not mark email as read:", err);
-                });
-                resolve(results.length === 1 ? results[0] : results); // support single or multiple invoices
-              } else {
-                resolve(null); // no PDFs, don't mark read
+              if (extracted) {
+                result = { ...extracted, pdf_file: att.filename }; // ✅ now safe
               }
-            })
-            .catch((err) => {
-              console.error("❌ Error parsing email:", err);
-              reject(err);
-            });
-        });
+            } catch (err) {
+              console.error("❌ Error parsing PDF:", err);
+            }
+          }
+        }
+
+        if (result && uid) {
+          imap.addFlags(uid, "\\Seen", (err) => {
+            if (err) console.warn("⚠️ Could not mark email as read:", err);
+          });
+        }
+
+        resolve(result || null); // ✅ resolve after parsing
+      })
+      .catch((err) => {
+        console.error("❌ Error in simpleParser:", err);
+        reject(err);
       });
+  });
+});
 
       f.once("error", (err) => {
         console.error("❌ Fetch error:", err);
