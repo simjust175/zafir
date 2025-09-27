@@ -19,7 +19,7 @@ function processResult(result, project_id, postToDb) {
   console.log("🔎 processResult() called with:", { result, project_id });
 
   if (!result) {
-    console.warn("⚠️[live] No result returned from handleNewEmails()");
+    console.warn("⚠️ No result returned from handleNewEmails()");
     return;
   }
 
@@ -60,7 +60,7 @@ function setupImapConnection(config, postToDb) {
         try {
           console.log(`🔍 Running initial fetch for ${email_address}`);
           const result = await handleNewEmails(imap);
-          console.log(`📥 handleNewEmails() returned for ${email_address}:`, result);
+          console.log(`📥 [live] handleNewEmails() returned for ${email_address}:`, result);
           processResult(result, project_id, postToDb);
         } catch (err) {
           console.error(`⚠️ Initial check failed [${email_address}]:`, err.message);
