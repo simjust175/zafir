@@ -69,6 +69,7 @@ function setupImapConnection(config, postToDb) {
         // Live mail listener
         imap.on("mail", async () => {
           logger.mail();
+          console.log(`📥 [live] triggered for ${email_address}`);
           try {
             const result = await handleNewEmails(imap);
             console.log(`📥[initial] handleNewEmails() returned for ${email_address}:`, result);
