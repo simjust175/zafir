@@ -91,7 +91,7 @@ function openInbox(imap, cb) {
   imap.openBox("INBOX", false, cb);
 }
 
-export function handleNewEmails(imap) {
+function handleNewEmails(imap) {
   return new Promise((resolve, reject) => {
     imap.search(["UNSEEN"], (err, uids) => {
       if (err || !uids.length) return resolve(null);
