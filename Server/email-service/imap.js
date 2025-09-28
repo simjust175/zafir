@@ -92,19 +92,17 @@ function openInbox(imap, cb) {
 }
 
 function handleNewEmails(imap) {
-  console.log("entered imap.js/handleNewEmails")
   return new Promise((resolve, reject) => {
     const searchCriteria = ["UNSEEN"];
-    const fetchOptions = { bodies: "", struct: true, markSeen: false }; // Don't auto-mark as read
+    const fetchOptions = { bodies: "", struct: true };
 
     imap.search(searchCriteria, (err, uids) => {
-      if (err) return reject(err);
-      if (!uids.length) return resolve(null);
+      if (err || !uids.length) return resolve(null);
 
       const f = imap.fetch(uids, fetchOptions);
       f.on("message", (msg, seqno) => {
         let uid;
-        let result = null; // ✅ declare result here
+        let result = null;
 
         msg.on("attributes", (attrs) => {
           uid = attrs.uid;
@@ -113,37 +111,23 @@ function handleNewEmails(imap) {
         msg.on("body", (stream) => {
           simpleParser(stream)
             .then(async (parsed) => {
-              let result = null; // ✅ declare once, outside the loop
-
               for (const att of parsed.attachments || []) {
-                console.log("📎 Attachment found:", att.filename, att.contentType);
-
                 if (att.contentType === "application/pdf") {
-                  console.log("📄 PDF detected, starting parse…");
+                  const pdfData = await pdf(att.content);
+                  const senderEmail = parsed.from?.value?.[0]?.address;
+                  const extracted = await analyze(pdfData.text, senderEmail);
 
-                  try {
-                    const pdfData = await pdf(att.content);
-                    const senderEmail = parsed.from?.value?.[0]?.address;
-                    const extracted = await analyze(pdfData.text, senderEmail);
-                    console.log("🧠 analyze() returned:", extracted);
-
-                    if (extracted) {
-                      result = { ...extracted, pdf_file: att.filename }; // ✅ assign here
-                    }
-                  } catch (err) {
-                    console.error("❌ Error parsing PDF:", err);
+                  if (extracted) {
+                    result = { ...extracted, pdf_file: att.filename };
                   }
                 }
               }
 
               if (result && uid) {
-                imap.addFlags(uid, "\\Seen", (err) => {
-                  if (err) console.warn("⚠️ Could not mark email as read:", err);
-                });
+                imap.addFlags(uid, "\\Seen", () => {});
               }
 
-              console.log("📦 handleNewEmails() resolving with:", result);
-              resolve(result || null); // ✅ resolve after loop
+              resolve(result || null); // ✅ resolve only after parsing
             })
             .catch((err) => {
               console.error("❌ Error in simpleParser:", err);
