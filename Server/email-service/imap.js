@@ -91,18 +91,16 @@ function openInbox(imap, cb) {
   imap.openBox("INBOX", false, cb);
 }
 
-function handleNewEmails(imap) {
+export function handleNewEmails(imap) {
   return new Promise((resolve, reject) => {
-    const searchCriteria = ["UNSEEN"];
-    const fetchOptions = { bodies: "", struct: true };
-
-    imap.search(searchCriteria, (err, uids) => {
+    imap.search(["UNSEEN"], (err, uids) => {
       if (err || !uids.length) return resolve(null);
 
-      const f = imap.fetch(uids, fetchOptions);
+      const f = imap.fetch(uids, { bodies: "", struct: true });
+      let result = null;
+
       f.on("message", (msg, seqno) => {
         let uid;
-        let result = null;
 
         msg.on("attributes", (attrs) => {
           uid = attrs.uid;
@@ -113,12 +111,16 @@ function handleNewEmails(imap) {
             .then(async (parsed) => {
               for (const att of parsed.attachments || []) {
                 if (att.contentType === "application/pdf") {
-                  const pdfData = await pdf(att.content);
-                  const senderEmail = parsed.from?.value?.[0]?.address;
-                  const extracted = await analyze(pdfData.text, senderEmail);
+                  try {
+                    const pdfData = await pdf(att.content);
+                    const senderEmail = parsed.from?.value?.[0]?.address;
+                    const extracted = await analyze(pdfData.text, senderEmail);
 
-                  if (extracted) {
-                    result = { ...extracted, pdf_file: att.filename };
+                    if (extracted) {
+                      result = { ...extracted, pdf_file: att.filename };
+                    }
+                  } catch (err) {
+                    console.error("❌ PDF parse error:", err);
                   }
                 }
               }
@@ -127,10 +129,10 @@ function handleNewEmails(imap) {
                 imap.addFlags(uid, "\\Seen", () => {});
               }
 
-              resolve(result || null); // ✅ resolve only after parsing
+              resolve(result || null); // ✅ resolve after parsing
             })
             .catch((err) => {
-              console.error("❌ Error in simpleParser:", err);
+              console.error("❌ simpleParser error:", err);
               reject(err);
             });
         });
@@ -180,6 +182,4 @@ function handleNewEmails(imap) {
 //   imap.connect();
 // }
 
-// //startListening()
-// //export default startListening;
 export { openInbox, handleNewEmails }
