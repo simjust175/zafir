@@ -263,7 +263,7 @@ const submitForm = async () => {
         )
       }
 
-      await snackbarRef.value.showSnack('✔️ Email verified!', 'info')
+      await snackbarRef.value.showSnack(' Email verified!', 'info')
     }
 
     await snackbarRef.value.showSnack('Checking availability...', 'info')
@@ -319,7 +319,7 @@ const submitForm = async () => {
       throw new Error(result?.message || 'Failed to add project')
     }
 
-    await snackbarRef.value.showSnack('✔️ Project successfully added!', 'success')
+    await snackbarRef.value.showSnack('Project successfully added!', 'success')
     emit('close')
     emit('newProjectAdded')
 
