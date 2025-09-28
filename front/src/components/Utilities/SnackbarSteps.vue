@@ -139,16 +139,15 @@
                   stroke-dashoffset="283"
                   class="success-circle-path"
                 />
-                <!-- Animated Checkmark -->
                 <path
-                  d="M25 50 L40 65 L75 30"
+                  d="M30 55 L45 70 L70 35"
                   fill="none"
                   stroke="#4CAF50"
-                  stroke-width="4"
+                  stroke-width="6"
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  stroke-dasharray="50"
-                  stroke-dashoffset="50"
+                  stroke-dasharray="120"
+                  stroke-dashoffset="120"
                   class="success-checkmark"
                 />
 
@@ -182,50 +181,6 @@
           <p class="text-h6 text-grey-darken-1 mb-6">
             Your project has been created and is ready to go!
           </p>
-          
-          <!-- Celebration Icons -->
-          <div class="celebration-icons mb-4">
-            <v-icon
-              color="warning"
-              size="20"
-              class="mx-1 celebration-icon"
-              style="animation-delay: 0.1s"
-            >
-              mdi-star
-            </v-icon>
-            <v-icon
-              color="info"
-              size="24"
-              class="mx-1 celebration-icon"
-              style="animation-delay: 0.2s"
-            >
-              mdi-party-popper
-            </v-icon>
-            <v-icon
-              color="success"
-              size="20"
-              class="mx-1 celebration-icon"
-              style="animation-delay: 0.3s"
-            >
-              mdi-star
-            </v-icon>
-            <v-icon
-              color="error"
-              size="22"
-              class="mx-1 celebration-icon"
-              style="animation-delay: 0.4s"
-            >
-              mdi-confetti
-            </v-icon>
-            <v-icon
-              color="warning"
-              size="20"
-              class="mx-1 celebration-icon"
-              style="animation-delay: 0.5s"
-            >
-              mdi-star
-            </v-icon>
-          </div>
         </v-card-text>
         
         <v-card-actions class="justify-center pb-8">
@@ -337,17 +292,18 @@ defineExpose({ showSnack })
 }
 
 .success-checkmark {
-  animation: drawCheckmark 0.5s ease-in-out 1s forwards;
+  animation: drawCheckmark 0.5s ease-in-out 0.5s forwards;
 }
 
-@keyframes drawCircle {
+@keyframes drawCheckmark {
   0% {
-    stroke-dashoffset: 283;
+    stroke-dashoffset: 60;
   }
   100% {
     stroke-dashoffset: 0;
   }
 }
+
 
 @keyframes drawCheckmark {
   0% {
