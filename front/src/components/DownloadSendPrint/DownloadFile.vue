@@ -75,6 +75,7 @@ const props = defineProps({
 
 const warningDialog = ref(false);
 let pendingAction = null;
+let chartInstance = null;
 
 // ===== CHECK BEFORE ACTION =====
 const checkBeforeAction = () => {
@@ -86,44 +87,45 @@ const checkBeforeAction = () => {
   }
 };
 
-// ===== Force continue after warning =====
 const forceContinue = () => {
   warningDialog.value = false;
-  if (pendingAction === "print") {
-    handlePrint();
-  } else {
-    handleDownload();
-  }
+  if (pendingAction === "print") handlePrint();
+  else handleDownload();
   pendingAction = null;
 };
 
 // ===== CHART =====
 const renderChart = () => {
   const ctx = document.getElementById("invoice-chart");
-  if (!ctx) return;
-  const chartData = {
-    labels: props.groupedInvoices.map((group) => group.issuer),
-    datasets: [
-      {
-        label: "Total (€)",
-        data: props.groupedInvoices.map((group) =>
-          group.totalWithMargin.toFixed(2)
-        ),
-        backgroundColor: "rgba(63, 81, 181, 0.7)", // Indigo
-      },
-    ],
-  };
-  if (Chart.getChart(ctx)) Chart.getChart(ctx).destroy();
-  new Chart(ctx, {
+  if (!ctx || !Array.isArray(props.groupedInvoices)) return;
+
+  const labels = props.groupedInvoices.map((group) => group.issuer || "Unknown");
+  const data = props.groupedInvoices.map((group) =>
+    typeof group.totalWithMargin === "number"
+      ? parseFloat(group.totalWithMargin.toFixed(2))
+      : 0
+  );
+
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
     type: "bar",
-    data: chartData,
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Total (€)",
+          data,
+          backgroundColor: "rgba(63, 81, 181, 0.7)",
+        },
+      ],
+    },
     options: {
       responsive: false,
       plugins: {
         legend: { display: false },
         title: {
           display: true,
-          text: `Totals with Margin by Supplier`,
+          text: "Totals with Margin by Supplier",
           font: { size: 16 },
           color: "#3f51b5",
         },
@@ -135,36 +137,137 @@ const renderChart = () => {
     },
   });
 };
-onMounted(()=> renderChart());
+
+onMounted(() => renderChart());
 watch(() => props.groupedInvoices, renderChart, { deep: true });
 
-// ===== FOOTER =====
+// ===== HELPERS =====
+const formatCurrency = (amount) => {
+  const num = typeof amount === "number" ? amount : parseFloat(amount);
+  return isNaN(num)
+    ? "€0.00"
+    : `€${num.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+};
+
+// ===== PDF GENERATOR =====
+const buildPdf = async () => {
+  const doc = new jsPDF();
+
+  doc.setFontSize(16);
+  doc.setTextColor(33, 33, 33);
+  doc.text(`Invoice Summary for ${props.projectName || "Unnamed Project"}`, 14, 20);
+
+  const invoiceData = Array.isArray(props.groupedInvoices)
+    ? props.groupedInvoices.map((group) => [
+        group.issuer || "Unknown",
+        formatCurrency(group.totalAmount),
+        `${typeof group.totalMargin === "number" ? group.totalMargin.toFixed(1) : "0.0"}%`,
+        formatCurrency(group.totalWithMargin),
+      ])
+    : [];
+
+  const totalRow = [
+    {
+      content: "TOTAL (All Suppliers)",
+      colSpan: 3,
+      styles: { halign: "right", fontStyle: "bold" },
+    },
+    formatCurrency(props.total),
+  ];
+
+  autoTable(doc, {
+    theme: "grid",
+    headStyles: {
+      fillColor: [63, 81, 181],
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+      halign: "center",
+    },
+    bodyStyles: {
+      fontSize: 10,
+      textColor: [33, 33, 33],
+    },
+    alternateRowStyles: {
+      fillColor: [245, 247, 250],
+    },
+    styles: {
+      cellPadding: 4,
+    },
+    head: [["Supplier", "Total", "Margin %", "Total + Margin"]],
+    body: [...invoiceData, totalRow],
+    startY: 30,
+    didDrawPage: () => drawFooter(doc, doc.internal.pageSize.getHeight()),
+  });
+
+  let bottomY = doc.lastAutoTable.finalY + 15;
+
+  if (Array.isArray(props.payments) && props.payments.length) {
+    doc.setFontSize(14);
+    doc.setTextColor(33, 33, 33);
+    doc.text("Payments", 14, bottomY);
+
+    const paymentsData = props.payments.map((p) => [
+      new Date(p.created_on).toLocaleDateString(),
+      formatCurrency(p.amount),
+    ]);
+
+    const totalPayments = props.payments.reduce(
+      (sum, p) => sum + (typeof p.amount === "number" ? p.amount : parseFloat(p.amount || 0)),
+      0
+    );
+
+    const totalPaymentsRow = [
+      { content: "TOTAL Payments", styles: { halign: "right", fontStyle: "bold" } },
+      formatCurrency(totalPayments),
+    ];
+
+    autoTable(doc, {
+      head: [["Date", "Amount"]],
+      body: [...paymentsData, totalPaymentsRow],
+      startY: bottomY + 5,
+    });
+
+    bottomY = doc.lastAutoTable.finalY + 15;
+  }
+
+  drawCompanyInfo(doc, bottomY);
+
+  await new Promise((res) => setTimeout(res, 300));
+  const canvas = document.getElementById("invoice-chart");
+  if (canvas) {
+    canvas.style.display = "block"; // temporarily show canvas
+    const chartImage = canvas.toDataURL("image/png", 1.0);
+    canvas.style.display = "none"; // hide again
+
+    doc.addPage();
+    doc.setFontSize(16);
+    doc.text("Visual Summary of Totals", 14, 20);
+    doc.addImage(chartImage, "PNG", 10, 30, 190, 80);
+    drawCompanyInfo(doc, 120);
+    drawFooter(doc, doc.internal.pageSize.getHeight());
+  }
+
+  return doc;
+};
+
+// ===== FOOTER & INFO =====
 const drawFooter = (doc, pageHeight) => {
-  const footerHeight = 12;
-  const y = pageHeight - footerHeight;
-
-  // Indigo footer bar
+  const y = pageHeight - 12;
   doc.setFillColor(63, 81, 181);
-  doc.rect(0, y, doc.internal.pageSize.getWidth(), footerHeight, "F");
-
-  // White footer text
+  doc.rect(0, y, doc.internal.pageSize.getWidth(), 12, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(9);
   doc.setFont(undefined, "normal");
   doc.text("Thank you for choosing Zafir Total Projects", 14, y + 8);
-
-  // Very small Powered by Dreamware bottom-right
   doc.setTextColor(180, 180, 180);
   doc.setFontSize(6);
   doc.setFont(undefined, "italic");
-  doc.text(
-    "Powered by Dreamware",
-    doc.internal.pageSize.getWidth() - 50,
-    pageHeight - 2
-  );
+  doc.text("Powered by Dreamware", doc.internal.pageSize.getWidth() - 50, pageHeight - 2);
 };
 
-// ===== COMPANY INFO =====
 const drawCompanyInfo = (doc, yStart) => {
   doc.setFontSize(10);
   doc.setTextColor(80, 80, 80);
@@ -177,123 +280,12 @@ const drawCompanyInfo = (doc, yStart) => {
   ].forEach((line, i) => doc.text(line, 14, yStart + i * 5));
 };
 
-// ===== HELPERS =====
-const formatCurrency = (amount) =>
-  `€${parseFloat(amount).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-
-const tableStyles = {
-  theme: "grid",
-  headStyles: {
-    fillColor: [63, 81, 181],
-    textColor: [255, 255, 255],
-    fontStyle: "bold",
-    halign: "center",
-  },
-  bodyStyles: {
-    fontSize: 10,
-    textColor: [33, 33, 33],
-  },
-  alternateRowStyles: {
-    fillColor: [245, 247, 250],
-  },
-  styles: {
-    cellPadding: 4,
-  },
-};
-
-// ===== PDF GENERATOR =====
-const buildPdf = async () => {
-  const doc = new jsPDF();
-
-  // Header
-  doc.setFontSize(16);
-  doc.setTextColor(33, 33, 33);
-  doc.text(`Invoice Summary for ${props.projectName}`, 14, 20);
-
-  // Invoice Table
-  const invoiceData = props.groupedInvoices.map((group) => [
-    group.issuer,
-    formatCurrency(group.totalAmount),
-    `${typeof group.totalMargin === 'number' ? group.totalMargin.toFixed(1) : group.totalMargin}%`,
-    formatCurrency(group.totalWithMargin),
-  ]);
-  const totalRow = [
-    {
-      content: "TOTAL (All Suppliers)",
-      colSpan: 3,
-      styles: { halign: "right", fontStyle: "bold" },
-    },
-    formatCurrency(props.total),
-  ];
-  autoTable(doc, {
-    ...tableStyles,
-    head: [["Supplier", "Total", "Margin %", "Total + Margin"]],
-    body: [...invoiceData, totalRow],
-    startY: 30,
-    didDrawPage: () => drawFooter(doc, doc.internal.pageSize.getHeight()),
-  });
-
-  let bottomY = doc.lastAutoTable.finalY + 15;
-
-  // Payments Table
-  if (props.payments.length) {
-    doc.setFontSize(14);
-    doc.setTextColor(33, 33, 33);
-    doc.text("Payments", 14, bottomY);
-
-    const paymentsData = props.payments.map((p) => [
-      new Date(p.created_on).toLocaleDateString(),
-      formatCurrency(p.amount),
-    ]);
-    const totalPayments = props.payments.reduce(
-      (sum, p) => sum + parseFloat(p.amount || 0),
-      0
-    );
-    const totalPaymentsRow = [
-      {
-        content: "TOTAL Payments",
-        styles: { halign: "right", fontStyle: "bold" },
-      },
-      formatCurrency(totalPayments),
-    ];
-
-    autoTable(doc, {
-      ...tableStyles,
-      head: [["Date", "Amount"]],
-      body: [...paymentsData, totalPaymentsRow],
-      startY: bottomY + 5,
-    });
-
-    bottomY = doc.lastAutoTable.finalY + 15;
-  }
-
-  // Company Info
-  drawCompanyInfo(doc, bottomY);
-
-  // Chart Page
-  await new Promise((res) => setTimeout(res, 300));
-  const canvas = document.getElementById("invoice-chart");
-  if (canvas) {
-    const chartImage = canvas.toDataURL("image/png", 1.0);
-    doc.addPage();
-    doc.setFontSize(16);
-    doc.text("Visual Summary of Totals", 14, 20);
-    doc.addImage(chartImage, "PNG", 10, 30, 190, 80);
-    drawCompanyInfo(doc, 120);
-    drawFooter(doc, doc.internal.pageSize.getHeight());
-  }
-
-  return doc;
-};
-
 // ===== ACTIONS =====
 const handleDownload = async () => {
   const doc = await buildPdf();
-  doc.save(`invoice-summary-${props.projectName}.pdf`);
+  doc.save(`invoice-summary-${props.projectName || "project"}.pdf`);
 };
+
 const handlePrint = async () => {
   const doc = await buildPdf();
   const blob = doc.output("blob");
@@ -304,9 +296,12 @@ const handlePrint = async () => {
       win.focus();
       win.print();
     };
+  } else {
+    console.warn("Popup blocked. Please allow popups to print.");
   }
 };
 </script>
+
 
 <style scoped>
 #invoice-chart {
