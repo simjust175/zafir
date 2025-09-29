@@ -92,6 +92,7 @@
               :payments="invoiceArray.payments.filter(p => p.project === project_id)"
               :double-checked="invoiceArray.dbResponse.filter(i=> i.project === project_id).every(p => p.double_checked !== null )"
               :total="overallTotalWithMargin"
+              @refresh-data="refreshComputedData"
             />
 
             <v-divider
@@ -297,6 +298,12 @@ const activateSnackBar = (label, color, icon = '') => {
   snackBarIcon.value = icon;
   SnackBarTrigger.value = true;
   setTimeout(() => (SnackBarTrigger.value = false), 2000);
+};
+
+// Refresh computed data after store updates
+const refreshComputedData = () => {
+  // Trigger reactivity by updating dbContents from store
+  dbContents.value = [...invoiceArray.dbResponse.filter(inv => inv.project === props.project_id)];
 };
 
 // Lifecycle: Mount + Socket Listener

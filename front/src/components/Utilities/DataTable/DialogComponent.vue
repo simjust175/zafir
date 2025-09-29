@@ -149,7 +149,7 @@ const save = () => {
     return;
   }
 
-  emit('save', { body: changes, id: toEdit.invoice_id });
+  emit('save', { body: changes, id: toEdit.id });
   close();
 };
 </script>
