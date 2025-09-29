@@ -46,9 +46,18 @@ waitForPort = 3000
 outputType = "console"
 
 [[ports]]
+localPort = 3000
+externalPort = 3000
+
+[[ports]]
 localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 3000
-externalPort = 3000
+localPort = 45429
+externalPort = 3001
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["bash", "-c", "cd Server && npm start & cd front && npm run build && npx serve -s dist -l 5000"]
+build = ["npm", "run", "build"]
