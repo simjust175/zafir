@@ -228,7 +228,6 @@ import { invoices } from '@/stores/invoiceState'
 const invoiceArray = invoices()
 const props = defineProps({ active: Boolean })
 defineEmits(['close'])
-
 const showForm = ref(true)
 const valid = ref(false)
 const loading = ref(false)
@@ -282,8 +281,6 @@ function undoFile() {
 }
 
 const postInvoice = async (inv) => {
-  console.log("in post invoice", inv);
-  
   try {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/post`, {
       method: "POST",
@@ -298,10 +295,16 @@ const postInvoice = async (inv) => {
   }
 }
 
+const  getLastInvoiceId = () => {
+  let lastId = Math.max(...invoiceArray.dbResponse.map(i => i.invoice_id))
+  return lastId + 1;
+};
+
 function submit() {
   if (!valid.value) return
 
   const invoicePayload = {
+    invoice_id: getLastInvoiceId(),
     issuer: supplier.value,
     amount: parseFloat(amount.value),
     btw: btwIncluded.value,
@@ -314,7 +317,7 @@ function submit() {
   postInvoice(invoicePayload)
     .then(() => {
       console.log("payload", invoicePayload);
-      
+      invoiceArray.dbResponse
       // alert("Invoice submitted! 🚀")
       dialog.value = false
     })
