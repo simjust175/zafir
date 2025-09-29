@@ -1,12 +1,13 @@
 import GeneralService from "../Services/generalService.js";
 
 class GeneralControllers {
-    static async postGeneral({ body, params }, res) {
+    static async postGeneral({ body, params, app }, res) {
         console.log(body, params.db);
         
         if (!body) return res.status(400).json({ message: 'Error in GeneralServices/postGeneralService' });
         try {
-            const newGeneral = await GeneralService.postService(params.db, body);
+            const eventSystem = app.get('eventSystem');
+            const newGeneral = await GeneralService.postService(params.db, body, eventSystem);
             if (!newGeneral) return res.status(404).json({ message: 'Error in GeneralServices/postGeneralService()' });
             res.status(200).json({ message: `New General added successfully`, newGeneral });
         } catch (error) {
@@ -44,10 +45,11 @@ class GeneralControllers {
             res.status(500).json({ message: `Error in GeneralServices/getGeneral: ${error.message}` });
         }
     }
-    static async patch({ body, params, query }, res) {
+    static async patch({ body, params, query, app }, res) {
         //if (!body) return res.status(400).json({ message: 'Error in GeneralServices/postGeneralService' });
         try {
-            const newGeneral = await GeneralService.patchService(params.db, query, body);
+            const eventSystem = app.get('eventSystem');
+            const newGeneral = await GeneralService.patchService(params.db, query, body, eventSystem);
             if (!newGeneral) return res.status(404).json({ message: 'Error in GeneralServices/postGeneralService()' });
             res.status(200).json({ message: `New General added successfully`, newGeneral });
         } catch (error) {

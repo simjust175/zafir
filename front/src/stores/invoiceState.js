@@ -1,9 +1,13 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
+import { useRealtimeStore } from './realtimeStore.js';
 
 export const invoices = defineStore(
   "invoiceState",
   () => {
+    // Initialize realtime store
+    const realtimeStore = useRealtimeStore()
+    
     // state
     const dbResponse = ref([]);
     const activeEmails = ref([]);
@@ -71,6 +75,11 @@ export const invoices = defineStore(
         const filtered = processIncomingData(data.amounts)
         dbResponse.value = filtered
         console.log("db response", dbResponse.value)
+        
+        // Sync with realtime store
+        filtered.forEach(invoice => {
+          realtimeStore.entities.invoices.set(invoice.invoice_id || invoice.id, invoice)
+        })
       }
     }
 
@@ -85,6 +94,25 @@ export const invoices = defineStore(
       invoicing.value = inv;
     };
 
+    // Real-time CRUD operations using optimistic updates
+    const createInvoice = async (invoiceData) => {
+      return await realtimeStore.createEntity('invoices', invoiceData)
+    }
+
+    const updateInvoice = async (invoiceId, updates) => {
+      const result = await realtimeStore.updateEntity('invoices', invoiceId, updates)
+      // Refresh local state
+      await getAmounts()
+      return result
+    }
+
+    const deleteInvoice = async (invoiceId) => {
+      const result = await realtimeStore.deleteEntity('invoices', invoiceId)
+      // Refresh local state
+      await getAmounts()
+      return result
+    }
+
     // Returns
     return {
       dbResponse,
@@ -95,7 +123,16 @@ export const invoices = defineStore(
       setPaymentsData,
       getAmounts,
       getActiveEmails,
-
+      
+      // Real-time operations
+      createInvoice,
+      updateInvoice,
+      deleteInvoice,
+      
+      // Real-time state
+      realtimeStore,
+      isConnected: realtimeStore.isConnected,
+      hasPendingOperations: realtimeStore.hasPendingOperations
     };
   },
   {

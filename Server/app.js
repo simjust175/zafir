@@ -5,6 +5,7 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { Server as SocketIOServer } from "socket.io";
+import EventSystem from "./realtime/eventSystem.js";
 
 dotenv.config();
 
@@ -14,6 +15,11 @@ const __dirname = path.dirname(__filename);
 const server = http.createServer(app);
 const io = new SocketIOServer(server, { cors: { origin: "*" } });
 app.set("io", io);
+
+// Initialize real-time event system
+const eventSystem = new EventSystem(io);
+eventSystem.setupSocketHandlers();
+app.set("eventSystem", eventSystem);
 
 const PORT = process.env.PORT || 3000;
 
