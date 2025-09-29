@@ -135,7 +135,7 @@ const renderChart = () => {
     },
   });
 };
-onMounted(renderChart);
+onMounted(()=> renderChart());
 watch(() => props.groupedInvoices, renderChart, { deep: true });
 
 // ===== FOOTER =====
@@ -217,7 +217,7 @@ const buildPdf = async () => {
   const invoiceData = props.groupedInvoices.map((group) => [
     group.issuer,
     formatCurrency(group.totalAmount),
-    `${group.totalMargin.toFixed(1)}%`,
+    `${typeof group.totalMargin === 'number' ? group.totalMargin.toFixed(1) : group.totalMargin}%`,
     formatCurrency(group.totalWithMargin),
   ]);
   const totalRow = [
