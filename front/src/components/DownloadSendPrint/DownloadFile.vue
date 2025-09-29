@@ -99,8 +99,8 @@ const renderChart = () => {
   const ctx = document.getElementById("invoice-chart");
   if (!ctx || !Array.isArray(props.groupedInvoices)) return;
 
-  const labels = props.groupedInvoices.map((group) => group.issuer || "Unknown");
-  const data = props.groupedInvoices.map((group) =>
+  const labels = props.groupedInvoices.map(group => group.issuer || "Unknown");
+  const data = props.groupedInvoices.map(group =>
     typeof group.totalWithMargin === "number"
       ? parseFloat(group.totalWithMargin.toFixed(2))
       : 0
@@ -131,18 +131,23 @@ const renderChart = () => {
         },
       },
       scales: {
-        y: { beginAtZero: true, ticks: { callback: (v) => `€${v}` } },
-        x: { ticks: { color: "#3f51b5" } },
+        y: {
+          beginAtZero: true,
+          ticks: { callback: v => `€${v}` },
+        },
+        x: {
+          ticks: { color: "#3f51b5" },
+        },
       },
     },
   });
 };
 
-onMounted(() => renderChart());
+onMounted(renderChart);
 watch(() => props.groupedInvoices, renderChart, { deep: true });
 
 // ===== HELPERS =====
-const formatCurrency = (amount) => {
+const formatCurrency = amount => {
   const num = typeof amount === "number" ? amount : parseFloat(amount);
   return isNaN(num)
     ? "€0.00"
@@ -161,7 +166,7 @@ const buildPdf = async () => {
   doc.text(`Invoice Summary for ${props.projectName || "Unnamed Project"}`, 14, 20);
 
   const invoiceData = Array.isArray(props.groupedInvoices)
-    ? props.groupedInvoices.map((group) => [
+    ? props.groupedInvoices.map(group => [
         group.issuer || "Unknown",
         formatCurrency(group.totalAmount),
         `${typeof group.totalMargin === "number" ? group.totalMargin.toFixed(1) : "0.0"}%`,
@@ -209,13 +214,14 @@ const buildPdf = async () => {
     doc.setTextColor(33, 33, 33);
     doc.text("Payments", 14, bottomY);
 
-    const paymentsData = props.payments.map((p) => [
+    const paymentsData = props.payments.map(p => [
       new Date(p.created_on).toLocaleDateString(),
       formatCurrency(p.amount),
     ]);
 
     const totalPayments = props.payments.reduce(
-      (sum, p) => sum + (typeof p.amount === "number" ? p.amount : parseFloat(p.amount || 0)),
+      (sum, p) =>
+        sum + (typeof p.amount === "number" ? p.amount : parseFloat(p.amount || 0)),
       0
     );
 
@@ -235,12 +241,12 @@ const buildPdf = async () => {
 
   drawCompanyInfo(doc, bottomY);
 
-  await new Promise((res) => setTimeout(res, 300));
+  await new Promise(res => setTimeout(res, 300));
   const canvas = document.getElementById("invoice-chart");
   if (canvas) {
-    canvas.style.display = "block"; // temporarily show canvas
+    canvas.style.display = "block";
     const chartImage = canvas.toDataURL("image/png", 1.0);
-    canvas.style.display = "none"; // hide again
+    canvas.style.display = "none";
 
     doc.addPage();
     doc.setFontSize(16);
