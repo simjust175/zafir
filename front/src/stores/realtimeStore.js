@@ -7,22 +7,53 @@ import { defineStore } from 'pinia'
 import socket from '@/socket.js'
 
 export const useRealtimeStore = defineStore('realtime', () => {
-  // Central state
-  const entities = ref({
-    projects: new Map(),
-    invoices: new Map(), 
-    payments: new Map()
-  })
+  // Central state - Use reactive Maps directly (not wrapped in ref)
+  const projectsMap = new Map()
+  const invoicesMap = new Map()
+  const paymentsMap = new Map()
+  
+  // Counter to trigger reactivity when Maps change
+  const updateCounter = ref(0)
   
   const pendingOperations = ref(new Map()) // Track optimistic updates
   const lastEventVersion = ref(0)
   const connectionState = ref('connected')
   const conflictQueue = ref([])
 
+  // Helper to access entity maps (handles both singular and plural forms)
+  const getEntityMap = (entityType) => {
+    const normalizedType = {
+      // Plural forms
+      'projects': projectsMap,
+      'invoices': invoicesMap,
+      'payments': paymentsMap,
+      // Singular forms (server sends these)
+      'project': projectsMap,
+      'invoice': invoicesMap,
+      'payment': paymentsMap
+    }[entityType]
+    
+    if (!normalizedType) {
+      console.warn(`⚠️ Unknown entity type: ${entityType}`)
+      return new Map() // Return empty map to prevent crashes
+    }
+    
+    return normalizedType
+  }
+
   // Computed getters for reactive data
-  const projects = computed(() => Array.from(entities.value.projects.values()))
-  const invoices = computed(() => Array.from(entities.value.invoices.values()))
-  const payments = computed(() => Array.from(entities.value.payments.values()))
+  const projects = computed(() => {
+    updateCounter.value // Trigger reactivity
+    return Array.from(projectsMap.values())
+  })
+  const invoices = computed(() => {
+    updateCounter.value // Trigger reactivity
+    return Array.from(invoicesMap.values())
+  })
+  const payments = computed(() => {
+    updateCounter.value // Trigger reactivity
+    return Array.from(paymentsMap.values())
+  })
 
   /**
    * Generate unique operation ID for optimistic updates
@@ -33,7 +64,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
    * Apply optimistic update to local state
    */
   const applyOptimisticUpdate = (entityType, operation, data, opId) => {
-    const entityMap = entities.value[entityType]
+    const entityMap = getEntityMap(entityType)
     const entityId = data.id || data.invoice_id || data.project_id || data.payment_id
 
     console.log(`🔮 Optimistic ${operation}: ${entityType}#${entityId}`)
@@ -58,6 +89,9 @@ export const useRealtimeStore = defineStore('realtime', () => {
         }
         break
     }
+    
+    // Trigger reactivity
+    updateCounter.value++
 
     // Store pending operation for rollback capability
     pendingOperations.value.set(opId, {
@@ -79,7 +113,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
     if (!pending) return
 
     const { entityType, entityId, tempId, operation } = pending
-    const entityMap = entities.value[entityType]
+    const entityMap = getEntityMap(entityType)
     
     // Handle creation confirmation: swap temp ID for real server ID
     if (operation === 'create' && tempId) {
@@ -98,6 +132,8 @@ export const useRealtimeStore = defineStore('realtime', () => {
       }
     }
 
+    // Trigger reactivity
+    updateCounter.value++
     pendingOperations.value.delete(opId)
     console.log(`✅ Confirmed ${pending.operation}: ${entityType}#${entityId}`)
   }
@@ -110,7 +146,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
     if (!pending) return
 
     const { entityType, entityId, originalData, operation, tempId } = pending
-    const entityMap = entities.value[entityType]
+    const entityMap = getEntityMap(entityType)
 
     console.log(`❌ Rolling back ${operation}: ${entityType}#${entityId}`, error)
 
@@ -125,6 +161,8 @@ export const useRealtimeStore = defineStore('realtime', () => {
       entityMap.delete(entityId)
     }
 
+    // Trigger reactivity
+    updateCounter.value++
     pendingOperations.value.delete(opId)
     
     // Show user-friendly error notification
@@ -141,14 +179,8 @@ export const useRealtimeStore = defineStore('realtime', () => {
     
     console.log(`📡 Real-time event: ${operation} ${entityType}#${entityId}`)
     
-    // CRITICAL: Map singular server types to plural client keys
-    const entityTypeMap = {
-      'invoice': 'invoices',
-      'project': 'projects', 
-      'payment': 'payments'
-    }
-    const clientEntityType = entityTypeMap[entityType] || entityType
-    const entityMap = entities.value[clientEntityType]
+    // CRITICAL: Use the entity type directly (server sends singular forms)
+    const entityMap = getEntityMap(entityType)
     
     // Check if this contradicts a pending optimistic update  
     const pendingOp = Array.from(pendingOperations.value.values())
@@ -175,6 +207,9 @@ export const useRealtimeStore = defineStore('realtime', () => {
         entityMap.delete(entityId)
         break
     }
+    
+    // Trigger reactivity
+    updateCounter.value++
   }
 
   /**
@@ -313,8 +348,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
     // Populate entity maps
     if (data.amounts) {
       data.amounts.forEach(invoice => {
-        entities.value.invoices.set(invoice.invoice_id || invoice.id, invoice)
+        invoicesMap.set(invoice.invoice_id || invoice.id, invoice)
       })
+      // Trigger reactivity
+      updateCounter.value++
     }
   }
 
@@ -347,7 +384,6 @@ export const useRealtimeStore = defineStore('realtime', () => {
 
   return {
     // State
-    entities,
     projects,
     invoices,
     payments,

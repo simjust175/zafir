@@ -92,11 +92,16 @@ const groupedInvoices = computed(() => {
       return sum + Number(inv.amount || 0) * (1 + margin / 100)
     }, 0)
 
+    // Calculate average margin for display
+    const avgMargin = invoices.length > 0 
+      ? invoices.reduce((sum, inv) => sum + Number(inv.margin || 0), 0) / invoices.length
+      : 0
+
     return {
       issuer,
       invoices,
       totalAmount,
-      totalMargin: null, // could be avg if you want to display it
+      totalMargin: avgMargin,
       totalWithMargin,
       marginChanged: false
     }
