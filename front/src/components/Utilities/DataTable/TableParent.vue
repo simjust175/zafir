@@ -112,11 +112,11 @@
         </template>
 
         <template #item.totalAmount="{ item }">
-          €{{ item.totalAmount.toFixed(2) }}
+          €{{ (item.totalAmount ?? 0).toFixed(2) }}
         </template>
 
         <template #item.totalWithMargin="{ item }">
-          €{{ item.totalWithMargin.toFixed(2) }}
+          €{{ (item.totalWithMargin ?? 0).toFixed(2) }}
         </template>
 
         <template #item.totalMargin="{ item }">
@@ -236,14 +236,24 @@ const groupedInvoices = computed(() => {
   return Object.keys(groups).map(issuer => {
     const invoices = groups[issuer];
     const totalAmount = invoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
-    const groupMargin = Number(invoices[0]?.margin || 0); // only use first invoice’s margin
+    
+    // Calculate total with margin per invoice (same logic as MainDisplayOverview)
+    const totalWithMargin = invoices.reduce((sum, inv) => {
+      const margin = Number(inv.margin || 0)
+      return sum + Number(inv.amount || 0) * (1 + margin / 100)
+    }, 0)
+    
+    // Calculate average margin for display
+    const avgMargin = invoices.length > 0 
+      ? invoices.reduce((sum, inv) => sum + Number(inv.margin || 0), 0) / invoices.length
+      : 0; // only use first invoice’s margin
 
     return {
       issuer,
       invoices,
       totalAmount,
-      totalMargin: groupMargin,
-      totalWithMargin: totalAmount + (totalAmount * groupMargin / 100),
+      totalMargin: avgMargin,
+      totalWithMargin: totalWithMargin,
       marginChanged: false
     };
   });
