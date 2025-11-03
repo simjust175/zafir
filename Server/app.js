@@ -16,7 +16,6 @@ const io = new SocketIOServer(server, { cors: { origin: "*" } });
 app.set("io", io);
 
 const PORT = process.env.PORT || 8080;
-// const PORT = 3446;
 
 // ----------- Middleware -----------
 app.use(cors());
@@ -24,55 +23,46 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // ----------- Health Check -----------
-app.get("/", (req, res) => res.send("✅ invoice-management backend is alive"));
-const getEmailListenerStatus = () => ({
-  status: "mocked",
-  listenersActive: true,
-  timestamp: new Date().toISOString()
-});
+app.get("/", (_, res) => res.send("✅ invoice-management backend is alive"));
 
-app.get("/health/email-listeners", (req, res) => {
+app.get("/health/email-listeners", (_, res) => {
   try {
-    const status = getEmailListenerStatus?.() || {};
-    res.json(status);
+    res.json({
+      status: "mocked",
+      listenersActive: true,
+      timestamp: new Date().toISOString()
+    });
   } catch (err) {
     res.status(500).json({ error: "Email listener status failed", details: err.message });
   }
 });
 
-// ----------- Safe Imports -----------
-try {
-  const invoiceRoutes = (await import("./Routers/invoiceRoutes.js")).default;
-  app.use("/invoice", invoiceRoutes);
-  console.log("✅ invoiceRoutes loaded");
-} catch (err) {
-  console.error("❌ Failed to load invoiceRoutes:", err);
-}
+// ----------- Dynamic Route Loader -----------
+const loadRoute = async (path, mount) => {
+  try {
+    const route = (await import(path)).default;
+    app.use(mount, route);
+    console.log(`✅ ${mount} route loaded`);
+  } catch (err) {
+    console.error(`❌ Failed to load ${mount} route:`, err);
+  }
+};
 
-try {
-  const RegisterRoutes = (await import("./Login_system/Router/registerRoutes.js")).default;
-  app.use("/register", RegisterRoutes);
-  console.log("✅ registerRoutes loaded");
-} catch (err) {
-  console.error("❌ Failed to load registerRoutes:", err);
-}
+await loadRoute("./Routers/invoiceRoutes.js", "/invoice");
+await loadRoute("./Login_system/Router/registerRoutes.js", "/register");
+await loadRoute("./Routers/emailRoutes.js", "/email");
 
+// ----------- Static Files -----------
 try {
-  const emailRoutes = (await import("./Routers/emailRoutes.js")).default;
-  app.use("/email", emailRoutes);
-  console.log("✅ emailRoutes loaded");
-} catch (err) {
-  console.error("❌ Failed to load emailRoutes:", err);
-}
-
-try {
-  app.use("/file/", express.static(path.join(__dirname, "email-service/downloads")));
+  app.use("/file", express.static(path.join(__dirname, "email-service/downloads")));
   console.log("✅ Static file route set");
 } catch (err) {
   console.error("❌ Failed to set static file route:", err);
 }
 
-let AmountServices;
+// ----------- Services & Listeners -----------
+let AmountServices, startEmailListeners;
+
 try {
   AmountServices = (await import("./Services/amountService.js")).default;
   console.log("✅ amountService loaded");
@@ -80,14 +70,12 @@ try {
   console.error("❌ Failed to load amountService:", err);
 }
 
-let startEmailListeners;
 try {
   startEmailListeners = (await import("./email-service/imap/useEmailListners.js")).startEmailListeners;
   console.log("✅ Email listeners module loaded");
 } catch (err) {
   console.error("❌ Failed to load email listener module:", err);
 }
-
 
 // ----------- Invoice Posting with Socket Emission -----------
 const postInvoices = async (inv) => {
@@ -108,12 +96,13 @@ io.on("connection", (socket) => {
   });
 });
 
-// ----------- Start Server -----------
+// ----------- Server Start -----------
 server.listen(PORT, () => {
-  console.log(`🚀 Invoice management running on port ${PORT}`);
-  try {
-    startEmailListeners?.(async (inv) => await postInvoices(inv));
-  } catch (err) {
-    console.error("❌ Failed to start email listeners:", err);
-  }
+  (async () => {
+    try {
+      await startEmailListeners?.(postInvoices);
+    } catch (err) {
+      console.error("❌ Failed to start email listeners:", err);
+    }
+  })();
 });
