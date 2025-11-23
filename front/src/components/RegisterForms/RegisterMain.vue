@@ -38,7 +38,6 @@
         <v-card
           class="py-4 px-7"
           width="450"
-          image="../../../public/construct_bg2.jpeg"
         >
           <LoginForm
             v-bind="$attrs"
