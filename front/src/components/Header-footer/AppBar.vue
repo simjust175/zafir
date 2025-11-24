@@ -7,7 +7,7 @@
       density="compact"
       class="py-1"
       scroll-behavior="hide"
-      scroll-threshold="340"
+      scroll-threshold="341"
     >
       <v-icon
         v-if="router.currentRoute.value.fullPath == '/table'"
