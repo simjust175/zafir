@@ -173,7 +173,7 @@
 import { ref } from "vue";
 import { invoices } from "@/stores/invoiceState";
 const invoiceStore = invoices()
-const emit = defineEmits(["email-sent"]);
+const emit = defineEmits(["email-sent", "refresh-data"]);
 const props = defineProps({
   includesBtw: Boolean,
   groupedInvoices: Array,
@@ -217,8 +217,14 @@ const forceSend = () => {
 
 const handleSend = async () => {
   loading.value = true;
-  invoiceStore.setPaymentsData()
-  invoiceStore.getAmounts()
+  
+  // Wait for store to refresh with latest data
+  invoiceStore.setPaymentsData() // Not async, just sets values
+  await invoiceStore.getAmounts() // This is async and fetches fresh data
+  
+  // Emit event to parent to refresh computed data
+  emit("refresh-data");
+  
   try {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/email/send-invoice`, {
       method: "POST",

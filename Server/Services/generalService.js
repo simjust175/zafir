@@ -1,9 +1,22 @@
 import General from "../Database/Models/general.js";
 
 class GeneralService {
-  static async postService(table, body) {
+  static async postService(table, body, eventSystem = null) {
     if (!table || !body) throw new Error("Database and body must be provided");
-    return await General.post(table, body);
+    const result = await General.post(table, body);
+    
+    // Emit real-time event for successful creation
+    if (eventSystem && result) {
+      if (table === 'invoices') {
+        eventSystem.emitInvoice('create', result);
+      } else if (table === 'projects') {
+        eventSystem.emitProject('create', result);
+      } else if (table === 'payments') {
+        eventSystem.emitPayment('create', result);
+      }
+    }
+    
+    return result;
   }
 
   static async getService({ params }) {
@@ -46,7 +59,7 @@ class GeneralService {
     return await General.getMultipleFilteredGroups(params.db, columns, filterField, filterValues);
   }
 
-  static async patchService(table, query, body) {
+  static async patchService(table, query, body, eventSystem = null) {
     if (!table || !body) throw new Error("Database and body must be provided");
     console.log("table", table, "query", query);
 
@@ -68,6 +81,12 @@ class GeneralService {
         "invoice_id = ?",
         [duplicate_id]
       );
+
+      // Emit real-time events for both deletions
+      if (eventSystem && table === 'invoices') {
+        eventSystem.emitInvoice('delete', { invoice_id: query.id, deleted_at });
+        eventSystem.emitInvoice('delete', { invoice_id: duplicate_id, deleted_at });
+      }
 
       return { success: true, deleted: [query.id, duplicate_id] };
     }
@@ -94,7 +113,23 @@ class GeneralService {
       throw new Error("Valid query must be provided for patch");
     }
 
-    return await General.patch(table, body, whereClause, params);
+    const result = await General.patch(table, body, whereClause, params);
+    
+    // Emit real-time event for successful update
+    if (eventSystem && result) {
+      const operation = body.deleted_at ? 'delete' : 'update';
+      const entityData = { ...body, ...query };
+      
+      if (table === 'invoices') {
+        eventSystem.emitInvoice(operation, entityData);
+      } else if (table === 'projects') {
+        eventSystem.emitProject(operation, entityData);
+      } else if (table === 'payments') {
+        eventSystem.emitPayment(operation, entityData);
+      }
+    }
+    
+    return result;
   }
 }
 

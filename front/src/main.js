@@ -12,6 +12,7 @@ import App from './App.vue'
 import VueApexCharts from "vue3-apexcharts";
 import { createPinia } from "pinia";
 import piniaPluginPersistedState from "pinia-plugin-persistedstate"
+import realtimePlugin from './plugins/realtime.js'
 // main.js
 
 
@@ -37,6 +38,7 @@ pinia.use(piniaPluginPersistedState)
 app.use(pinia)
 app.use(VueApexCharts);
 app.use(vuetify)
+app.use(realtimePlugin)
 app.component("apexchart", VueApexCharts);
 app.mount('#app')
 
