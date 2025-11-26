@@ -13,7 +13,8 @@
   </div>
 </template>
   
-  <script setup>
+<!-- eslint-disable vue/require-default-prop -->
+<script setup>
   import { onMounted, watch } from "vue";
   import jsPDF from "jspdf";
   import autoTable from "jspdf-autotable";

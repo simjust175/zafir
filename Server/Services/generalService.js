@@ -43,7 +43,7 @@ class GeneralService {
       if (!getAmounts) return null;
       return getAmounts;
     } catch (error) {
-      throw new Error(`error in generalService/getService: ${error.message}`);
+      throw new Error(`error in generalService/getFilteredService: ${error.message}`);
     }
   }
   static async getMultipleFilteredService({ params, query }) {
