@@ -1,6 +1,6 @@
 <template>
   <main class="pa-12 my-0 py-0 main-menu main-container">
-    <main-menu />
+    <!-- <main-menu /> -->
   </main>
 </template>
 
