@@ -70,7 +70,7 @@ const htmlContent = `
 
     <!-- Footer -->
     <div style="background-color: #f8f9fa; padding: 15px; font-size: 12px; text-align: center; color: #888;">
-      © ${new Date().getFullYear()} Zafir Total Projects — All rights reserved.
+      © ${new Date().getFullYear()} ZAFIR TOTAAL PROJECTEN BVBA — All rights reserved.
     </div>
   </div>
 `;
