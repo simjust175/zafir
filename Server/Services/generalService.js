@@ -1,104 +1,135 @@
 import General from "../Database/Models/general.js";
 
 class GeneralService {
-  static async postService(db, body) {
-    console.log("in controllers: ---", db, body);
+  static async postService(table, body, eventSystem = null) {
+    if (!table || !body) throw new Error("Database and body must be provided");
+    const result = await General.post(table, body);
     
-    if (!db || !body)
-      throw new Error("⚠️ Service/postService.js - Need to define database");
-    try {
-      const postAmount = await General.post(db, body);
-      if (!postAmount) return null;
-      return postAmount;
-    } catch (error) {
-      throw new Error(`in Services/postService: ${error.message}`);
+    // Emit real-time event for successful creation
+    if (eventSystem && result) {
+      if (table === 'invoices') {
+        eventSystem.emitInvoice('create', result);
+      } else if (table === 'projects') {
+        eventSystem.emitProject('create', result);
+      } else if (table === 'payments') {
+        eventSystem.emitPayment('create', result);
+      }
     }
+    
+    return result;
   }
 
   static async getService({ params }) {
-    // const [{user_id}] = await general.ValidateByToken(token);
-    // if (!user_id) throw new Error("not the correct user");
-    if (!params.db)
-      throw new Error("⚠️ Service/getService.js - Need to define database");
-    try {
-      const getAmounts = await General.get(params.db); //user_id
-      if (!getAmounts) return null;
-      return getAmounts;
-    } catch (error) {
-      throw new Error(`error in generalService/getService: ${error.message}`);
-    }
+    if (!params.db) throw new Error("Database name is required");
+    return await General.get(params.db);
   }
+
   static async getFilteredService({ params, query }) {
-    const what = query.what || "*";
-    const where = `${query.where}` || "";
-    if (!params.db)
-      throw new Error("⚠️ Service/getService.js - Need to define database");
-    try {
-      const getAmounts = await General.getWithFilter(
-        params.db,
-        what,
-        where,
-        values
-      ); //user_id
-      if (!getAmounts) return null;
-      return getAmounts;
-    } catch (error) {
-      throw new Error(`error in generalService/getFilteredService: ${error.message}`);
+    console.log("getFilteredService is being called");
+    
+    const columns = query.what || "*";
+    let whereClause = "";
+    let values = [];
+  
+    // Safety check: require filterField and filterValue for filtering
+    if (query.filterField && query.filterValue !== undefined) {
+      // Validate column name: only letters, numbers, underscores allowed
+      const isValidColumn = /^[a-zA-Z0-9_]+$/.test(query.filterField);
+      if (!isValidColumn) {
+        throw new Error(`Invalid filterField: ${query.filterField}`);
+      }
+  
+      whereClause = `\`${query.filterField}\` = ?`;
+      values = [query.filterValue];
     }
-  }
-  static async getMultipleFilteredService({ params, query }) {
-    const what = query.what || "*";
-    const where = `${query.where}` || "";
-    if (!params.db)
-      throw new Error("⚠️ Service/getService.js - Need to define database");
+  
     try {
-      const getAmounts = await General.getMultipleFilteredGroups(
-        params.db,
-        what,
-        where,
-        query.filterValues
-      ); //user_id
-      if (!getAmounts) return null;
-      return getAmounts;
-    } catch (error) {
-      throw new Error(`error in generalService/getService: ${error.message}`);
+      return await General.getWithFilter(params.db, columns, whereClause, values);
+    } catch (err) {
+      throw new Error(
+        `Failed to fetch filtered records from table '${params.db}' with filter '${query.filterField}': ${err.message}`
+      );
     }
   }
 
-  static async patchService(db, query, body) {
-    console.log(query, body);
-    
-    if (!body || !db) {
-      throw new Error("⚠️ patchService - body, and db must be provided.");
+  static async getMultipleFilteredService({ params, query }) {
+    const columns = query.what || "*";
+    const filterField = query.filterField || "id";
+    const filterValues = query.filterValues || [];
+    return await General.getMultipleFilteredGroups(params.db, columns, filterField, filterValues);
+  }
+
+  static async patchService(table, query, body, eventSystem = null) {
+    if (!table || !body) throw new Error("Database and body must be provided");
+    console.log("table", table, "query", query);
+
+    // If delete_both is requested, update both invoices
+    if (body.delete_both) {
+      const { duplicate_id, deleted_at } = body;
+      if (!duplicate_id) throw new Error("duplicate_id is required for delete_both");
+
+      // Soft delete the selected invoice
+      await General.patch(table,
+        { deleted_at },
+        "invoice_id = ?",
+        [query.id]
+      );
+
+      // Soft delete the duplicate invoice
+      await General.patch(table,
+        { deleted_at },
+        "invoice_id = ?",
+        [duplicate_id]
+      );
+
+      // Emit real-time events for both deletions
+      if (eventSystem && table === 'invoices') {
+        eventSystem.emitInvoice('delete', { invoice_id: query.id, deleted_at });
+        eventSystem.emitInvoice('delete', { invoice_id: duplicate_id, deleted_at });
+      }
+
+      return { success: true, deleted: [query.id, duplicate_id] };
     }
     let whereClause = "";
-    if (Object.keys(body).includes('btwPercent')) {
-      console.log("includes");
-      
-    } else{
-      console.log("excluded!");
-    }
+    let params = [];
+
     if (query.id) {
       whereClause = "invoice_id = ?";
-      // whereParams.push(query.id);
+      params = [query.id];
+    } else if (query.user) {
+      whereClause = "user_id = ?";
+      params = [query.user];
     } else if (query.margin) {
-      const q = JSON.parse(query.margin)
-      console.log("is it iterable?", q);
-      whereClause = `project = ${q[0].project} AND issuer = "${q[1].issuer}"`;
-    }  else if (query.project) {
-      const q = JSON.parse(query.project)
-      console.log("is it iterable?", q);
-      whereClause = `project_id = ${query.project}`;
+      const [proj, issuer] = JSON.parse(query.margin);
+      whereClause = "project = ? AND issuer = ?";
+      params = [proj.project, issuer.issuer];
+    } else if (query.project) {
+      whereClause = "project_id = ?";
+      params = [query.project];
+    } else if (query.allWarnings) {
+      console.log("in allWarnings");
+      whereClause = "conflict_resolved IS NULL";
     } else {
-      throw new Error("⚠️ patchService - valid query must be provided.");
+      throw new Error("Valid query must be provided for patch");
     }
 
-    try {
-      const result = await General.patch(db, body, whereClause, query.id);
-      return result;
-    } catch (err) {
-      throw new Error("🔴 patchService Error: " + err.message);
+    const result = await General.patch(table, body, whereClause, params);
+    
+    // Emit real-time event for successful update
+    if (eventSystem && result) {
+      const operation = body.deleted_at ? 'delete' : 'update';
+      const entityData = { ...body, ...query };
+      
+      if (table === 'invoices') {
+        eventSystem.emitInvoice(operation, entityData);
+      } else if (table === 'projects') {
+        eventSystem.emitProject(operation, entityData);
+      } else if (table === 'payments') {
+        eventSystem.emitPayment(operation, entityData);
+      }
     }
+    
+    return result;
   }
 }
 
