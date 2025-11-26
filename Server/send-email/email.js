@@ -90,15 +90,6 @@ const htmlContent = `
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    //console.log("are we mailing??"); 
-    // await transporter.sendMail({
-    //   from: "test2@zafir-test.co.uk",
-    //   to: "bunim175@gmail.com",
-    //   subject: "Test",
-    //   text: "Hello world"
-    // });
-    // console.log("HURRA");
-    
     console.log("✅ Email sent:", info.response);
 
     // Optional cleanup
