@@ -16,7 +16,7 @@ export async function createInvoicePdf({ projectName, groupedInvoices, groupedPa
       const dir = path.dirname(outputPath);
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-      const doc = new PDFDocument({ margin: 40, bufferPages: true });
+      const doc = new PDFDocument({ margin: 40, bufferPages: true, size: 'a4' });
       const stream = fs.createWriteStream(outputPath);
       doc.pipe(stream);
 

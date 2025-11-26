@@ -62,8 +62,9 @@ const htmlContent = `
 
       <p style="margin-top: 40px;">
         ${isDutch ? "Met vriendelijke groeten" : "Kind regards"},<br>
-        <strong>Simcha Justman</strong><br>
-        ${isDutch ? "Voor Zafir Totaal Projecten" : "For Zafir Total Projects"}
+        <strong>Reuven Zafir</strong><br>
+        <strong>Manager</strong><br>
+        ${isDutch ? "Voor Zafir Totaal Projecten BVBA" : "For Zafir Total Projects BVBA"}
       </p>
     </div>
 
