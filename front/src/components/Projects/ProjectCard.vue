@@ -1,10 +1,12 @@
 <template>
   <div>
+    <!--  image="../../../public/construct_bg.jpeg" -->
     <v-card
       v-motion-fade
       class="project-card hover:shadow-xl transition-all"
       elevation="2"
       border
+      hover
       rounded="xl"
       max-width="420"
     >
@@ -25,6 +27,9 @@
         <template #title>
           <div class="text-base font-weight-bold text-truncate text-capitalize">
             {{ projectName }}
+          </div>
+          <div class="text-grey-lighten-1 text-subtitle-2">
+            {{ projectEmail[0].email_address }}
           </div>
         </template>
 
@@ -48,19 +53,19 @@
           Payments
         </div>
         <div class="d-flex justify-space-between align-center mb-2">
-          <div class="text-h5 font-weight-bold text-primary">
+          <div class="text-h5 font-weight-bold text-grey-darken-1">
             {{ percentPaid }}%
           </div>
         </div>
         <v-progress-linear
           :model-value="percentPaid"
-          color="primary"
+          :color="progressColor"
           height="8"
           rounded
           bg-color="grey-lighten-3"
         />
         <div class="text-caption text-medium-emphasis mt-1">
-          €{{ payments }} / €{{ invoicing }} paid
+          {{ formatCurrency(payments) }} / {{ formatCurrency(invoicing) }} paid
         </div>
       </v-card-text>
 
@@ -68,7 +73,7 @@
       <v-card-actions class="px-5 pb-4 pt-3 d-flex flex-column flex-sm-row gap-2 align-stretch">
         <v-btn
           block
-          variant="flat"
+          variant="outlined"
           color="primary"
           prepend-icon="mdi-check-outline"
           class="text-white font-weight-medium"
@@ -89,9 +94,10 @@
     />
 
     <edit-project-name-dialog
-      v-model:open="editDialog"
+      :open="editDialog"
       :initial-name="projectName"
       :project-id="projectId"
+      @close="editDialog = false"
       @saved="handleProjectNameSaved"
     />
   </div>
@@ -116,12 +122,15 @@ const dialogTrigger = ref(false)
 const editDialog = ref(false)
 const projectId = computed(() => props.project[0].project_id )
 const projectName = computed(() => props.project[0]?.project_name || "Unnamed")
+const projectEmail = computed(()=> invoiceStore.activeEmails.activeEmails.filter(e => e.email_id === props.project[0].email))
 
 const reduceTotal = (array) => {
   return array.filter(inv => inv.project === projectId.value).reduce((sum, inv) => sum + Number(inv.amount || 0), 0)
 }
 const payments = computed(() => reduceTotal(invoiceStore.payments))
 const invoicing = computed(() => reduceTotal(invoiceStore.invoicing))
+
+const formatCurrency = (val) => `€${Number(val).toLocaleString('nl-BE')}`
 
 const percentPaid = computed(() => {
   
@@ -136,6 +145,10 @@ const handleProjectNameSaved = (newName) => {
   props.project.forEach(p => p.project_name = newName)
   //toast.success("Project name updated successfully!")
 }
+
+const progressColor = computed(()=> percentPaid.value < 50 ? 'warning' : 
+percentPaid.value < 75 ? 'amber' :
+'success')
 </script>
 
 <style scoped>

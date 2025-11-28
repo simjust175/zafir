@@ -17,13 +17,14 @@
         <v-spacer />
         <v-btn
           variant="text"
-          @click="dialogModel = false"
+          @click="$emit('close')"
         >
           Cancel
         </v-btn>
         <v-btn
           color="primary"
           :loading="isSaving"
+          :disabled="!editedName"
           @click="saveProjectName"
         >
           Save
@@ -45,7 +46,7 @@
     projectId: [String, Number]
   })
   
-  const emit = defineEmits(['update:open', 'saved'])
+  const emit = defineEmits(['update:open', 'saved', 'close'])
   
   const dialogModel = ref(props.open)
   watch(() => props.open, val => dialogModel.value = val)

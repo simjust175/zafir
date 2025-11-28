@@ -3,13 +3,6 @@
     :class="{ 'pt-0': expanded }"
     fluid
   >
-    <!-- <v-btn
-        :disabled="loading"
-        icon="mdi-refresh"
-        text="Refresh"
-        variant="outlined"
-        @click="initialize"
-      /> -->
     <v-card
       class="pa-6 pt-1"
       flat
@@ -18,11 +11,19 @@
         class="rounded-xl pa-1 pb-3"
         fluid
       >
-        <v-row dense>
-          <InvoiceDash :current-project-id="project_id" />
+        <v-row
+          v-if="expanded"
+          dense
+        >
+          <invoice-dash
+            :current-project-id="project_id"
+            :expanded="expanded"
+          />
         </v-row>
       </v-container>
       <v-data-table
+        hover
+        scrollable="y"
         :headers="headers"
         :items="groupedInvoices"
         item-value="issuer"
@@ -37,9 +38,14 @@
         <template #loading>
           <v-skeleton-loader :type="`table-row@${skeletonRows}`" />
         </template>
-        <template #top>
+
+        <template
+          v-if="expanded"
+          #top
+        >
           <v-toolbar
             :class="themeColor"
+            rounded="xl"
             flat
           >
             <v-toolbar-title
@@ -48,30 +54,34 @@
             >
               {{ projectName }}
             </v-toolbar-title>
+
             <v-spacer v-if="expanded" />
-
-
             <v-text-field
               v-model="search"
               density="compact"
               class="pr-4 rounded-b-pill"
-              :class="{'ml-3': !expanded}"
+              :class="{ 'ml-3': !expanded }"
               label="Search"
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
               hide-details
               single-line
             />
+
             <download-file
               class="ms-5"
               :grouped-invoices="groupedInvoices"
               :project-name="projectName"
               :total="overallTotalWithMargin"
+              :payments="invoiceArray.payments.filter(p => p.project === project_id)"
+              :double-checked="invoiceArray.dbResponse.filter(i=> i.project === project_id).every(p => p.double_checked !== null )"
               :print="false"
             />
             <download-file
               :grouped-invoices="groupedInvoices"
               :project-name="projectName"
+              :payments="invoiceArray.payments.filter(p => p.project === project_id)"
+              :double-checked="invoiceArray.dbResponse.filter(i=> i.project === project_id).every(p => p.double_checked !== null )"
               :total="overallTotalWithMargin"
               :print="true"
             />
@@ -79,8 +89,12 @@
               :grouped-invoices="groupedInvoices"
               :project-name="projectName"
               :current-project-id="project_id"
+              :payments="invoiceArray.payments.filter(p => p.project === project_id)"
+              :double-checked="invoiceArray.dbResponse.filter(i=> i.project === project_id).every(p => p.double_checked !== null )"
               :total="overallTotalWithMargin"
+              @refresh-data="refreshComputedData"
             />
+
             <v-divider
               class="mx-2"
               inset
@@ -96,21 +110,23 @@
         <template #item.created_at="{ item }">
           {{ new Date(item.created_at).toLocaleDateString() }}
         </template>
+
         <template #item.totalAmount="{ item }">
-          €{{ item.totalAmount.toFixed(2) }}
+          €{{ (item.totalAmount ?? 0).toFixed(2) }}
         </template>
+
         <template #item.totalWithMargin="{ item }">
-          €{{ item.totalWithMargin.toFixed(2) }}
+          €{{ (item.totalWithMargin ?? 0).toFixed(2) }}
         </template>
+
         <template #item.totalMargin="{ item }">
           <margin-setter
             :item="item"
-            @margin-update="(newMargin)=>updateMargin(item, newMargin)"
+            @margin-update="(newMargin) => updateMargin(item, newMargin)"
           />
         </template>
 
         <template #item.actions>
-          <!-- tool-tip -->
           <v-icon
             size="22"
             color="primary"
@@ -127,20 +143,9 @@
           />
         </template>
       </v-data-table>
-
-    <!-- Dialog to show InvoiceDetails -->
-    
-    <!-- <v-card>
-        <v-toolbar color="primary" dark flat>
-          <v-toolbar-title>Invoice Details for {{ selectedIssuer }}</v-toolbar-title>
-          <v-spacer />
-          <v-btn icon @click="detailsDialog = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-toolbar>
-
-        <v-card-text> -->
     </v-card>
+
+    <!-- Total Banner -->
     <v-banner
       class="text-subtitle-1 d-flex justify-end align-center px-7 text-one-line"
       :class="themeColor"
@@ -152,21 +157,11 @@
         <strong class="mx-4 text-capitalize d-flex align-center">
           Total for {{ projectName }}:
         </strong>
-        <!-- <v-progress-linear
-          :model-value="percentPaid"
-          height="15"
-          color="green"
-          class="rounded-pill my-0"
-          style="width: 150px;"
-        >
-          <template #default>
-            {{ percentPaid }}% Paid
-          </template>
-        </v-progress-linear> -->
       </div>
       €{{ overallTotalWithMargin }}
     </v-banner>
 
+    <!-- Dialogs & Notifications -->
     <InvoiceDetails
       :invoices="selectedInvoices"
       :active="activateInvoiceDetailDialog"
@@ -175,6 +170,7 @@
       @edit="editItem"
       @delete="deleteItem"
     />
+
     <snack-bar
       :banner="SnackBarTrigger"
       :label="snackBarLabel"
@@ -184,15 +180,12 @@
   </v-container>
 </template>
 
-<!-- eslint-disable vue/require-default-prop -->
 <script setup>
-import { ref, computed, watch, onMounted, defineProps, defineEmits } from 'vue';
-import EmptyState from '../EmptyState.vue';
-import InvoiceDash from './InvoiceDash.vue';
-import SendInvoice from '@/components/DownloadSendPrint/SendInvoice.vue';
-//import FAB from './FAB.vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { invoices as invoiceStore } from '@/stores/invoiceState';
 import socket from '@/socket.js';
+
+import InvoiceDash from "@/components/Invoicing-dash/InvoiceDash.vue"
 
 const emit = defineEmits(['amountUpdate']);
 const props = defineProps({
@@ -201,27 +194,37 @@ const props = defineProps({
   expanded: Boolean,
   projectName: String,
   project_id: Number,
-  refreshing: Boolean
+  refreshing: Boolean,
+  searchVal: String
 });
 
+// Refs & State
 const invoiceArray = invoiceStore();
 const search = ref('');
-const activateInvoiceDetailDialog = ref(false)
 const expanded = ref(props.expanded);
 const heightPerWindow = computed(() => (expanded.value ? '' : 405));
+const dbContents = ref([]);
+const loading = ref(true);
+const sendingId = ref(null);
+const SnackBarTrigger = ref(false);
+const snackBarLabel = ref('');
+const snackBarColor = ref('');
+const snackBarIcon = ref('');
+const activateInvoiceDetailDialog = ref(false);
+const selectedInvoices = ref([]);
+const selectedIssuer = ref('');
+const updatedIssuer = ref(null);
 
+watch(()=> props.searchVal, (newVal)=> search.value = newVal)
+// Headers
 const headers = computed(() => [
   { title: 'Supplier', key: 'issuer' },
-  // { title: 'Total', key: 'totalAmount' },
   { title: 'Margin', key: 'totalMargin' },
   { title: 'Total + Margin', key: 'totalWithMargin' },
   { title: '', key: 'actions', sortable: false },
 ]);
 
-const dbContents = ref([]);
-const loading = ref(true);
-const sendingId = ref(null);
-
+// ✅ Fixed: Grouped Invoices (margin taken once per group, not summed)
 const groupedInvoices = computed(() => {
   const groups = {};
   dbContents.value.forEach(inv => {
@@ -233,52 +236,45 @@ const groupedInvoices = computed(() => {
   return Object.keys(groups).map(issuer => {
     const invoices = groups[issuer];
     const totalAmount = invoices.reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
-    const totalMargin = invoices.reduce((sum, inv) => sum + Number(inv.margin || 0), 0);
+    
+    // Calculate total with margin per invoice (same logic as MainDisplayOverview)
+    const totalWithMargin = invoices.reduce((sum, inv) => {
+      const margin = Number(inv.margin || 0)
+      return sum + Number(inv.amount || 0) * (1 + margin / 100)
+    }, 0)
+    
+    // Calculate average margin for display
+    const avgMargin = invoices.length > 0 
+      ? invoices.reduce((sum, inv) => sum + Number(inv.margin || 0), 0) / invoices.length
+      : 0; // only use first invoice’s margin
+
     return {
       issuer,
       invoices,
       totalAmount,
-      totalMargin,
-      totalWithMargin: totalAmount + (totalAmount * (totalMargin/100)),
+      totalMargin: avgMargin,
+      totalWithMargin: totalWithMargin,
       marginChanged: false
     };
   });
 });
 
-// Dialog state and selected data
-const detailsDialog = ref(false);
-const selectedInvoices = ref([]);
-const selectedIssuer = ref('');
-
-const openInvoiceDialog = (event, group) => {
-  activateInvoiceDetailDialog.value = !activateInvoiceDetailDialog.value  
-  if (!group || !group.item) return;
-  selectedInvoices.value = group.item.invoices;
-  selectedIssuer.value = group.item.issuer;
-  detailsDialog.value = true;
-};
-
-// 🍫snackBar 🍫
-const SnackBarTrigger = ref(false)
-const snackBarLabel = ref("")
-const snackBarColor = ref("")
-const snackBarIcon = ref("")
-const activateSnackBar = (label, color, icon="")=> {
-  snackBarLabel.value = label
-  snackBarColor.value = color
-  snackBarIcon.value = icon
-  SnackBarTrigger.value = true
-  setTimeout(()=> SnackBarTrigger.value = false, 2000)
-}
-onMounted(() => {
-  initialize();
-  socket.on('new-invoice', (invoice) => {
-    dbContents.value = [invoice, ...dbContents.value];
-    invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
-    activateSnackBar('New email detected', 'success', 'mdi-email-newsletter');
+const overallTotalWithMargin = computed(() => {  
+  let total = 0;
+  groupedInvoices.value.forEach(group => {
+    console.log(group.issuer, group.totalWithMargin, group);
+    total += group.totalWithMargin;
   });
+  return Number(total.toFixed(2));
 });
 
+// Skeleton Loading Row Count
+const skeletonRows = computed(() => {
+  const count = props.invoices?.length || 10;
+  return Math.min(Math.max(count, 3), 20);
+});
+
+// Initialize
 const initialize = () => {
   loading.value = true;
   setTimeout(() => {
@@ -288,43 +284,15 @@ const initialize = () => {
   }, 500);
 };
 
-
-watch(
-  () => props.invoices,
-  () => initialize(),
-  { immediate: true }
-);
-
-watch(()=> props.refreshing, ()=> initialize())
-
-
-const sendInvoice = async (item) => {
-  sendingId.value = item.id;
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  sendingId.value = null;
+// Handle Row Click
+const openInvoiceDialog = (event, group) => {
+  if (!group?.item) return;
+  selectedInvoices.value = group.item.invoices;
+  selectedIssuer.value = group.item.issuer;
+  activateInvoiceDetailDialog.value = true;
 };
 
-//animation !!
-const updatedIssuer = ref(null);
-
-socket.on('new-invoice', (invoice) => {
-  updatedIssuer.value = invoice.issuer;
-  dbContents.value = [invoice, ...dbContents.value];
-  invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
-
-  setTimeout(() => {
-    updatedIssuer.value = null;
-  }, 1500); // Remove highlight after 1.5s
-});
-
-//Grand total per project 
-const overallTotalWithMargin = computed(() => {
-  return groupedInvoices.value.reduce((sum, group) => {
-    return sum + group.totalWithMargin;
-  }, 0).toFixed(2);
-});
-
-// 🔃 Update the margin total (before reload)
+// Update Margins
 const updateMargin = (item, newMargin) => {
   dbContents.value.forEach(inv => {
     if (inv.issuer === item.issuer) {
@@ -333,24 +301,72 @@ const updateMargin = (item, newMargin) => {
   });
 };
 
-//THEME 
-import { useTheme } from "vuetify"
-const theme = useTheme();
-const themeColor = computed(() =>
-  theme.global.name.value === 'dark' ? 'bg-grey-darken-3' : 'bg-grey-lighten-4'
-);
+// Snackbar Trigger
+const activateSnackBar = (label, color, icon = '') => {
+  snackBarLabel.value = label;
+  snackBarColor.value = color;
+  snackBarIcon.value = icon;
+  SnackBarTrigger.value = true;
+  setTimeout(() => (SnackBarTrigger.value = false), 2000);
+};
 
-// 🩻 animation
-const skeletonRows = computed(() => {
-  const count = props.invoices?.length || 10;
-  return Math.min(Math.max(count, 3), 20); // Load between 3 and 20 skeletons
+// Refresh computed data after store updates
+const refreshComputedData = () => {
+  // Trigger reactivity by updating dbContents from store
+  dbContents.value = [...invoiceArray.dbResponse.filter(inv => inv.project === props.project_id)];
+};
+
+// Lifecycle: Mount + Socket Listener
+const handleNewInvoice = (invoice) => {
+  dbContents.value = [invoice, ...dbContents.value];
+  invoiceArray.dbResponse = [invoice, ...invoiceArray.dbResponse];
+  updatedIssuer.value = invoice.issuer;
+  activateSnackBar('New email detected', 'success', 'mdi-email-newsletter');
+
+  setTimeout(() => {
+    updatedIssuer.value = null;
+  }, 1500);
+};
+
+onMounted(() => {
+  initialize();
+  socket.off('new-invoice'); // Prevent multiple bindings
+  socket.on('new-invoice', handleNewInvoice);
 });
+
+onUnmounted(() => {
+  socket.off('new-invoice', handleNewInvoice);
+});
+
+// Watchers
+watch(() => props.invoices, () => initialize(), { immediate: true });
+watch(() => props.refreshing, () => initialize());
+
+// Theme
+import { globalFunctions } from '@/stores/globalFunctions';
+const functions = globalFunctions()
+const themeColor = computed(()=> functions.themeColor)
 </script>
 
-
 <style>
+.bg-monday {
+  background: #f0f3ff;
+}
+:deep(.v-data-table) {
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.05);
+  background-color: var(--v-theme-surface);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
 
+:deep(.v-data-table-header th) {
+  background-color: rgba(0, 0, 0, 0.02);
+  font-weight: 600;
+}
+
+:deep(.v-data-table tbody tr:hover) {
+  background-color: rgba(var(--v-theme-primary), 0.08);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
 </style>
-
-
-

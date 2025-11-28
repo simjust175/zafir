@@ -1,5 +1,8 @@
 <template>
-  <v-container fluid class="pa-0">
+  <v-container
+    fluid
+    class="pa-0"
+  >
     <!-- Expansion panel for xs/sm screens -->
     <v-expansion-panels
       multiple
@@ -23,10 +26,19 @@
         </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
-
     <!-- Regular row for md+ screens -->
     <InvoiceSummary
+      v-if="expanded"
       class="d-none d-md-flex mb-4"
+      :total-invoiced="totalInvoiced"
+      :total-paid="totalPaid"
+      :percent-paid="percentPaid"
+      :loading-invoiced="invoicedLoading"
+      :loading-paid="paidLoading"
+      @open-dialog="openInvoiceDialog"
+    />
+    <invoice-chips
+      v-else
       :total-invoiced="totalInvoiced"
       :total-paid="totalPaid"
       :percent-paid="percentPaid"
@@ -41,7 +53,7 @@
       :dialog-type="dialogType"
       :initial-amount="originalAmount"
       :is-edit="isEditMode"
-      @close="showInvoiceDialog = false"
+      @close="closeInvoiceDash"
       @update="updateInvoicing"
     />
 
@@ -55,7 +67,10 @@
     >
       {{ snack.message }}
       <template #actions>
-        <v-btn icon @click="snack.show = false">
+        <v-btn
+          icon
+          @click="snack.show = false"
+        >
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </template>
@@ -64,13 +79,15 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, watch, ref } from 'vue'
 import InvoiceSummary from './InvoiceSummary.vue'
 import { invoices } from '@/stores/invoiceState'
+import { globalFunctions } from '@/stores/globalFunctions'
 
-const props = defineProps({ currentProjectId: Number })
+const props = defineProps({ currentProjectId: Number, expanded: Boolean, addInvoicing: String })
 
 const invoiceStore = invoices()
+const functions = globalFunctions()
 const payments = computed(() => invoiceStore.payments)
 const invoicing = computed(() => invoiceStore.invoicing)
 const localInvoices = ref([])
@@ -80,7 +97,7 @@ const invoicedLoading = ref(false)
 const paidLoading = ref(false)
 const dialogType = ref(null)
 const isEditMode = ref(false)
-const originalAmount = ref(0)
+const originalAmount = ref('')
 
 const snack = ref({
   show: false,
@@ -175,6 +192,12 @@ const updateInvoicing = async (newAmount) => {
     }, 1500)
   }
 }
+
+const closeInvoiceDash = ()=>{
+  showInvoiceDialog.value = false;
+  functions.add = null;
+}
+watch(()=> functions.add, (newVal)=> {if(newVal) openInvoiceDialog(newVal)})
 </script>
 
 <style scoped>

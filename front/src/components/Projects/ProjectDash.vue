@@ -95,14 +95,16 @@
   
   const invoiceArray = invoices()
 
-const payments = computed(() => reduceTotal(invoiceStore.payments))
-const invoicing = computed(() => reduceTotal(invoiceStore.invoicing))
+// const payments = computed(() => reduceTotal(invoiceStore.payments))
+// const invoicing = computed(() => reduceTotal(invoiceStore.invoicing))
 
   const addProjectDialog = ref(false)
   
   // 🧠 Group data by project
   const groupedProjects = computed(() => {
     const map = new Map()
+    console.log("in state store in project-sdash:", invoiceArray);
+    
     invoiceArray.dbResponse?.forEach(inv => {
       if (!inv.project_name) return
       if (!map.has(inv.project_name)) map.set(inv.project_name, [])

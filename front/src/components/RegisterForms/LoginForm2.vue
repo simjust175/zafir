@@ -80,32 +80,42 @@ const validate = async () => {
 
 const login = async () => {
   const isValid = await validate();
-  console.log("cheking validity.....", isValid, credentials);
-  if (!isValid) return null;
-  const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(credentials),
-  });
+  if (!isValid) return;
+
   try {
-    const {
-      newToken: {
-        user_id,
-        newToken: { token },
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    } = await res.json();
-    if (!token) return (alertActivate.value = true);
-    localStorage.setItem("token", token);
-    localStorage.setItem("id", user_id);
+      body: JSON.stringify(credentials),
+    });
+
+    const { newToken} = await res.json();
+
+    const token = newToken?.newToken?.token;
+    const userId = newToken?.user_id;
+    const userName = newToken?.user_name;
+    
+    if (!token) {
+      alertActivate.value = true;
+      console.log("no token??", token);
+      return;
+    }
+
+    // ✅ Call centralized store login method
+    loginState.setLogin({
+  token,
+  name: credentials.user_email,
+  user: userName
+});
+
+    localStorage.setItem("id", userId); // Optional: or store in Pinia if needed
     emit("loggedIn");
-    //store.commit("updateLoggedIn", { loggedStat: true, userEmail: credentials.user_email })
-    loginState.token = true;
-    loginState.userName = credentials.user_email
     router.push("/");
+
   } catch (error) {
-    console.log(error); 
+    console.error("❌ Login failed:", error);
     alertActivate.value = true;
   }
 };
@@ -165,6 +175,7 @@ watch(credentials.pwd, (newVal) => {
   width: 100%;
   height: 48px;
   background: #7494ec;
+  text-align: center;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   border: none;

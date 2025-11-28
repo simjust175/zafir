@@ -1,7 +1,5 @@
 <template>
-  <v-dialog
-    v-model="internalDialog"
-  >
+  <v-dialog v-model="internalDialog">
     <template #activator="{ props }">
       <v-btn
         v-if="$router.name == '/'"
@@ -18,7 +16,7 @@
       <v-toolbar
         :title="formTitle"
         class="px-8"
-        color="grey-lighten-2"
+        :color="theme.global.name.value === 'dark' ? 'bg-grey-darken-3' : 'bg-grey-lighten-4'"
       >
         <v-icon class="pr-2" left>
           mdi-pencil
@@ -37,7 +35,7 @@
 
             <v-col cols="6">
               <v-text-field
-                v-model="localItem.amount"
+                v-model.number="localItem.amount"
                 prefix="€"
                 label="Amount"
               />
@@ -45,17 +43,9 @@
 
             <v-col cols="6">
               <v-text-field
-                v-model="localItem.btwPercent"
+                v-model.number="localItem.btwPercent"
                 label="Btw"
-                prefix="%"
-              />
-            </v-col>
-
-            <v-col cols="6">
-              <v-text-field
-                v-model="localItem.margin"
-                label="Margin"
-                prefix="%"
+                suffix="%"
               />
             </v-col>
           </v-row>
@@ -85,6 +75,8 @@
 
 <script setup>
 import { ref, watch } from 'vue';
+import { useTheme } from 'vuetify';
+const theme = useTheme()
 
 const props = defineProps({
   dialogProp: Boolean,
@@ -95,27 +87,40 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save']);
 
-// Local copy of dialog (so we can mutate it)
 const internalDialog = ref(props.dialogProp);
+const localItem = ref({ ...props.editedItem });
 
-// Watch dialogProp from parent and sync it locally
+// Keep a reference to original net amount for live recalculation
+const netAmount = ref(null);
+
+// Sync dialog open/close with parent
 watch(() => props.dialogProp, (val) => {
   internalDialog.value = val;
 });
-
-// Emit close when dialog is closed
 watch(internalDialog, (val) => {
   if (!val) emit('close');
 });
 
-// Local copy of edited item to avoid mutating prop
-const localItem = ref({ ...props.editedItem });
-
+// Sync localItem with prop and store netAmount
 watch(() => props.editedItem, (val) => {
   localItem.value = { ...val };
+
+  // Calculate the net amount (without BTW)
+  if (val.btwPercent) {
+    netAmount.value = val.amount / (1 + val.btwPercent / 100);
+  } else {
+    netAmount.value = val.amount;
+  }
 });
 
-// ===== Logic =====
+// Live recalculation when btwPercent changes
+watch(() => localItem.value.btwPercent, (newBtw, oldBtw) => {
+  if (newBtw !== oldBtw && netAmount.value != null) {
+    const updatedAmount = netAmount.value * (1 + (Number(newBtw) || 0) / 100);
+    localItem.value.amount = Number(updatedAmount.toFixed(2));
+  }
+});
+
 const normalize = (val) => {
   if (val === '' || val === null || val === undefined) return null;
   const number = Number(val);
@@ -144,7 +149,7 @@ const save = () => {
     return;
   }
 
-  emit('save', { body: changes, id: toEdit.invoice_id });
+  emit('save', { body: changes, id: toEdit.id });
   close();
 };
 </script>

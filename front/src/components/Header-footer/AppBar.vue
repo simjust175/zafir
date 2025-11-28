@@ -4,7 +4,8 @@
       prominent
       :collapse="collapse"
       elevate="4"
-      density="compact" 
+      density="compact"
+      class="py-1"
       scroll-behavior="hide"
       scroll-threshold="340"
     >
@@ -13,30 +14,26 @@
         icon="mdi-arrow-left"
         class="ml-2 zIndex"
         size="30"
-        @click="$router.push('/')"
+        @click="pushMainRoute"
       />
-      <h1
+      <!-- <h1
         class="ml-5 zafir-text-primary cursor-pointer"
-        @click.stop="$router.push('/')"
+        @click.stop="pushMainRoute"
       >
-        Z<span class="zafir-text-secondary">T</span>P
-      </h1>
-
+        B<span class="zafir-text-secondary">illi</span>o
+      </h1> -->
+      <img
+        class="pl-0 ml-4 cursor-pointer"
+        width="115"
+        height="35"
+        src="../../../public/logo.png"
+        @click="router.push('/')"
+      >
       <v-spacer />
 
-      <!-- Live Email Watch Icon -->
-      <v-btn
+      <emails-live 
         v-if="loginState.token"
-        id="liveBanner"
-        variant="outlined"
-        class="mr-3"
-        color="error"
-        rounded="xl"
-        density="compact"
-      >
-        Live
-        <span class="live-dot ml-2" />
-      </v-btn>
+      />
       <!-- <v-tooltip
         activator="#liveBanner"
         location="bottom"
@@ -52,7 +49,6 @@
           v-if="loginState.token" 
         />
         <v-btn
-          v-if="loginState.token"
           :icon="themeIcon"
           @click="toggleTheme"
         />
@@ -82,6 +78,7 @@
         :activate-dialog="activateDialog"
         title="Confirm Log-out"
         text="Are you sure?"
+        @close="activateDialog = false"
         @confirm="logout"
       />
     </v-app-bar>
@@ -93,11 +90,15 @@ import { ref, computed, watch } from "vue";
 import { useTheme } from "vuetify";
 import { setLogin } from "@/stores/loginState"
 const loginState = setLogin()
+import { invoices  } from "@/stores/invoiceState";
+const invoiceArray = invoices()
 //import LanguageSwitch from "./LanguageSwitch.vue"
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
+//CHECK IF ONLICE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+const online = computed(()=> true)
 const theme = useTheme();
 const emit = defineEmits(['themeUpdate'])
 
@@ -107,6 +108,7 @@ function toggleTheme() {
 }
 
 const activateDialog = ref(false)
+const pushMainRoute = ()=> loginState.token ? router.push('/') : "";
 
 const themeIcon = computed(() =>
   theme.global.current.value.dark
@@ -133,6 +135,7 @@ watch(
 //   }
 // );
 const logout = async () => {
+  console.log("userName", loginState.userName);
   const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userName}`, {
       method: "POST",
       headers: {
@@ -142,9 +145,10 @@ const logout = async () => {
   const data = await res.json();
   console.log("logout", data);
   if (data.Success) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user_email") 
-      loginState.token = false;
+      // localStorage.removeItem("token");
+      // localStorage.removeItem("user_email") 
+      // loginState.token = false;
+      loginState.logout()
       router.push("/register")
   }
 }

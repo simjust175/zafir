@@ -4,6 +4,7 @@
     v-model="drawer"
     :permanent="true"
     class="pt-3"
+    width="200"
     :rail="railStat"
     :mobile="isMobile"
     :temporary="!rail"
@@ -29,7 +30,7 @@
         @click="router.push('/')"
       />
       <NavItemWithTooltip
-        title="Chart"
+        title="Dashboard"
         prepend-icon="mdi-table-eye"
         value="table"
         :rail="railStat"
@@ -43,8 +44,15 @@
         @click="router.push('/projects')"
       />
       <NavItemWithTooltip
+        title="Manage invoices"
+        prepend-icon="mdi-currency-usd"
+        value="invoices"
+        :rail="railStat"
+        @click="router.push('/invoices')"
+      />
+      <NavItemWithTooltip
         title="Manage users"
-        prepend-icon="mdi-account-plus-outline"
+        prepend-icon="mdi-account-multiple-plus-outline"
         value="user"
         :rail="railStat"
         @click="router.push('/users')"
@@ -61,22 +69,29 @@
       />
       
       <!-- removed the: value="create" so that it should not be selected like a nav -->
-      <NavItemWithTooltip
+      <!-- <NavItemWithTooltip
         title="Create invoice"
         prepend-icon="mdi-invoice-plus-outline"
         
         :rail="railStat"
         @click="invoiceFormRef?.open()"
-      />
+      /> -->
       
       <!-- removed the: value="chat" so that it should not be selected like a nav -->
-      <NavItemWithTooltip
-        title="AI chat"
-        prepend-icon="mdi-robot-outline"
-        
-        :rail="railStat"
-        @click="showChatBot = true"
-      />
+      <div class="temp d-flex align-center">
+        <NavItemWithTooltip
+          title="AI chat"
+          prepend-icon="mdi-robot-outline"
+          :rail="railStat"
+          @click="showChatBot = true"
+        />
+        <v-chip
+          variant="tonal"
+          density="compact"
+          color="success"
+          text="soon..."
+        />
+      </div>
     </v-list>
     <template #append>
       <div
@@ -109,8 +124,9 @@
     title="Confirm Log-out"
     text="Are you sure?"
     @confirm="logout"
+    @close="activateDialog = false"
   />
-  <file-upload
+  <invoice-upload-main
     :active="activateUploadDialog"
     @close="activateUploadDialog = false"
   />
@@ -127,7 +143,7 @@
 </template>
 
 <script setup>
-import NavItemWithTooltip from "../Utilities/NavItemWithTooltip.vue";
+import NavItemWithTooltip from "./NavItemWithTooltip.vue";
 import { ref, computed, watch } from "vue";
 import { useRouter } from 'vue-router';
 import { useDisplay } from 'vuetify';
@@ -174,21 +190,29 @@ const openExpandedTable = () => {
 };
 
 const logout = async () => {
-  const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userName}`, {
+  console.log("=> =>", loginState.userName);
+  
+  try {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userName}`, {
       method: "POST",
       headers: {
-          "Content-Type": "application/json"
-      }
-  });
-  const data = await res.json();
-  console.log("logout", data);
-  if (data.Success) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user_email") 
-      loginState.token = false;
-      router.push("/register")
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await res.json();
+    console.log("logout", data);
+
+    if (data.Success) {
+      loginState.logout(); // ✅ use centralized store method
+      router.push("/register");
+    } else {
+      console.warn("Logout failed:", data?.message || "Unknown error");
+    }
+  } catch (err) {
+    console.error("❌ Logout request failed:", err);
   }
-}
+};
 </script>
 
 <style>
