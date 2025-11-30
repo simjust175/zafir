@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 /**
  * Real-time Store System with Optimistic Updates
  * Handles instant UI updates with server validation and conflict resolution
