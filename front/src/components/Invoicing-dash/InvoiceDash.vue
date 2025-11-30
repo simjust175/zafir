@@ -81,9 +81,10 @@
 <script setup>
 import { computed, watch, ref } from 'vue'
 import InvoiceSummary from './InvoiceSummary.vue'
-import { invoices } from '@/stores/invoiceState'
-import { globalFunctions } from '@/stores/globalFunctions'
+import { invoices } from '@/stores/invoiceState.js'
+import { globalFunctions } from '@/stores/globalFunctions.js'
 
+// eslint-disable-next-line vue/require-default-prop
 const props = defineProps({ currentProjectId: Number, expanded: Boolean, addInvoicing: String })
 
 const invoiceStore = invoices()
