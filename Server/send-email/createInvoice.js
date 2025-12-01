@@ -26,30 +26,24 @@ export async function createInvoicePdf({ projectName, groupedInvoices, groupedPa
 
       const addHeader = () => {
         doc.rect(0, 0, doc.page.width, 90).fill(DARK_BLUE);
-        doc
-          .fillColor("#fff")
-          .font("Helvetica-Bold")
-          .fontSize(20)
-          .text("Zafir Totaal Projecten", 40, 35)
-          .fontSize(12)
-          .text("Factuuroverzicht / Invoice Summary", 40, 60);
+        doc.fillColor("#fff")
+          .font("Helvetica-Bold").fontSize(20).text("Zafir Totaal Projecten", 40, 35)
+          .fontSize(12).text("Factuuroverzicht / Invoice Summary", 40, 60);
 
         const logoPath = path.resolve("public/logo.png");
         if (fs.existsSync(logoPath)) {
           doc.image(logoPath, doc.page.width - 100, 30, { width: 60 });
         }
 
-        doc
-          .fillColor("#000")
-          .font("Helvetica")
-          .fontSize(12)
-          .text(`Project: ${projectName}`, 40, 110);
+        doc.fillColor("#000")
+          .font("Helvetica").fontSize(12).text(`Project: ${projectName}`, 40, 110);
 
         currentY = 140;
       };
 
       const ensureSpace = (lines = 1) => {
         if (currentY + lines * rowHeight > pageBottom) {
+          console.log("page added", pageBottom);
           doc.addPage();
           addHeader();
         }
@@ -80,16 +74,18 @@ export async function createInvoicePdf({ projectName, groupedInvoices, groupedPa
       doc.font("Helvetica-Bold").fontSize(14).fillColor("#000").text("Invoices Overview", 40, currentY);
       currentY += 25;
 
-      const invoiceColWidths = [160, 100, 80, 100];
-      drawTableRow(currentY, ["Supplier", "Total", "Margin", "GrandTotal"], true, false, invoiceColWidths);
+      //const invoiceColWidths = [160, 100, 80, 100];
+      const invoiceColWidths = [250, 190];
+      //drawTableRow(currentY, ["Supplier", "Total", "Margin", "Total"], true, false, invoiceColWidths);
+      drawTableRow(currentY, ["Supplier", "Total"], true, false, invoiceColWidths);
       currentY += rowHeight;
 
       groupedInvoices.forEach((inv, idx) => {
         ensureSpace(1);
         drawTableRow(currentY, [
           inv.issuer,
-          `€${parseFloat(inv.totalAmount).toFixed(2)}`,
-          `${parseFloat(inv.totalMargin).toFixed(1)}%`,
+          // `€${parseFloat(inv.totalAmount).toFixed(2)}`,
+          // `${parseFloat(inv.totalMargin).toFixed(1)}%`,
           `€${parseFloat(inv.totalWithMargin).toFixed(2)}`
         ], false, idx % 2 === 1, invoiceColWidths);
         currentY += rowHeight;
@@ -108,12 +104,21 @@ export async function createInvoicePdf({ projectName, groupedInvoices, groupedPa
       currentY += 25;
 
       const paymentColWidths = [250, 190];
-      drawTableRow(currentY, ["Date of payment", "Amount"], true, false, paymentColWidths);
+      drawTableRow(currentY, ["Date of invoice", "Amount"], true, false, paymentColWidths);
       currentY += rowHeight;
 
       let totalPayments = 0;
+      let showHeader = false;
+
       groupedPayments.forEach((payment, idx) => {
         ensureSpace(1);
+
+        if (currentY === 140 && showHeader === false) {
+          drawTableRow(currentY, ["Date of payment", "Amount"], true, false, paymentColWidths);
+          currentY += rowHeight;
+          showHeader = true;
+        }
+
         const amount = parseFloat(payment.amount) || 0;
         totalPayments += amount;
 
@@ -122,15 +127,16 @@ export async function createInvoicePdf({ projectName, groupedInvoices, groupedPa
           `€${amount.toFixed(2)}`
         ], false, idx % 2 === 1, paymentColWidths);
         currentY += rowHeight;
+
+        showHeader = false;
       });
 
       currentY += 10;
-    //  y
       doc.font("Helvetica-Bold").fontSize(12)
         .text("Total Payments Received:", 40, currentY)
         .text(`€${totalPayments.toFixed(2)}`, 400, currentY, { width: 80, align: "right" });
 
-      // === Contact Info ===
+      // === Contact Info (only if enough space) ===
       currentY += 50;
       if (currentY + 100 < pageBottom) {
         doc.moveTo(40, currentY).lineTo(500, currentY).strokeColor("#aaaaaa").stroke();
@@ -144,7 +150,9 @@ export async function createInvoicePdf({ projectName, groupedInvoices, groupedPa
 
       // === Footer + Pagination ===
       const pageRange = doc.bufferedPageRange();
-      for (let i = 0; i < pageRange.count; i++) {
+      for (let i = 1; i < pageRange.count; i++) {
+        console.log("📃📄added page", i);
+        
         doc.switchToPage(i);
         const h = doc.page.height;
 
@@ -153,12 +161,10 @@ export async function createInvoicePdf({ projectName, groupedInvoices, groupedPa
           .fill(DARK_BLUE)
           .fillColor("#ffffff")
           .text("Thank you for choosing Zafir Total Projects", 40, h - 20);
-
-        doc.font("Helvetica").fontSize(9).fillColor("gray")
-          .text(`Page ${i + 1} of ${pageRange.count}`, doc.page.width - 100, h - 40, { align: "right" });
+        // doc.font("Helvetica").fontSize(9).fillColor("gray")
+        //   .text(`Page ${i + 1} of ${pageRange.count}`, doc.page.width - 100, h - 40, { align: "right" });
       }
 
-      // === Finalize ===
       doc.end();
 
       stream.on("finish", () => {

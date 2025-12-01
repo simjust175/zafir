@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import analyze from "./gpt.js";
 import emailAccounts from "./imap/accounts.js";
-import { v4 as uuidv4 } from "uuid"; 
+import { v4 as uuidv4 } from "uuid";
 
 dotenv.config();
 
@@ -71,7 +71,7 @@ function extractPrice(text) {
       result.includesBTW = true;
     }
   }
-  console.log("res", result);
+  // console.log("res", result);
 
   return result.amount ? result : null;
 }
@@ -93,67 +93,54 @@ function openInbox(imap, cb) {
 
 function handleNewEmails(imap) {
   return new Promise((resolve, reject) => {
-    const searchCriteria = ["UNSEEN"];
-    const fetchOptions = { bodies: "", struct: true, markSeen: false }; // Don't auto-mark as read
+    imap.search(["UNSEEN"], (err, uids) => {
+      if (err || !uids.length) return resolve(null);
 
-    imap.search(searchCriteria, (err, uids) => {
-      if (err) return reject(err);
-      if (!uids.length) return resolve(null);
+      const f = imap.fetch(uids, { bodies: "", struct: true });
+      const results = [];
+      const messagePromises = [];
 
-      const f = imap.fetch(uids, fetchOptions);
       f.on("message", (msg, seqno) => {
-        let hasProcessed = false;
-        let uid;
+        const p = new Promise((res) => {
+          let uid;
 
-        msg.on("attributes", (attrs) => {
-          uid = attrs.uid;
-        });
+          msg.on("attributes", (attrs) => {
+            uid = attrs.uid;
+          });
 
-        msg.on("body", (stream) => {
-          simpleParser(stream)
-            .then(async (parsed) => {
-              let results = []; //it is a LET !!!
+          msg.on("body", (stream) => {
+            simpleParser(stream)
+              .then(async (parsed) => {
+                for (const att of parsed.attachments || []) {
+                  if (att.contentType === "application/pdf") {
+                    try {
+                      const pdfData = await pdf(att.content);
+                      const senderEmail = parsed.from?.value?.[0]?.address;
+                      const extracted = await analyze(pdfData.text, senderEmail);
 
-              for (const att of parsed.attachments || []) {
-                if (att.contentType === "application/pdf") {
-                  const downloadsDir = path.join(__dirname, "downloads");
-                  if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir);
-                
-                  const uniqueName = `${uuidv4()}_${att.filename}`;
-                  const filePath = path.join(downloadsDir, uniqueName);
-                  fs.writeFileSync(filePath, att.content);
-                
-                  try {
-                    const pdfData = await pdf(att.content);
-                    const senderEmail = parsed.from?.value?.[0]?.address;
-                    const extracted = await analyze(pdfData.text, senderEmail);
-                
-                    if (extracted) {
-                      results = { ...extracted, pdf_file: uniqueName}; // for now ❌ , pdf_data: pdfData
-                      hasProcessed = true;
+                      if (extracted) {
+                        results.push({ ...extracted, pdf_file: att.filename });
+                      }
+                    } catch (err) {
+                      console.error("❌ PDF parse error:", err);
                     }
-                  } catch (err) {
-                    console.error("❌ Error parsing PDF:", err);
                   }
                 }
-              }
 
-              // If processed, manually mark the email as read
-              if (hasProcessed && uid) {
-                imap.addFlags(uid, "\\Seen", (err) => {
-                  if (err)
-                    console.warn("⚠️ Could not mark email as read:", err);
-                });
-                resolve(results.length === 1 ? results[0] : results); // support single or multiple invoices
-              } else {
-                resolve(null); // no PDFs, don't mark read
-              }
-            })
-            .catch((err) => {
-              console.error("❌ Error parsing email:", err);
-              reject(err);
-            });
+                if (uid) {
+                  imap.addFlags(uid, "\\Seen", () => {});
+                }
+
+                res(); // resolve this message's promise
+              })
+              .catch((err) => {
+                console.error("❌ simpleParser error:", err);
+                res(); // still resolve to avoid hanging
+              });
+          });
         });
+
+        messagePromises.push(p);
       });
 
       f.once("error", (err) => {
@@ -161,8 +148,10 @@ function handleNewEmails(imap) {
         reject(err);
       });
 
-      f.once("end", () => {
+      f.once("end", async () => {
         console.log("✅ Finished processing emails");
+        await Promise.all(messagePromises); // wait for all messages
+        resolve(results.length === 1 ? results[0] : results.length ? results : null);
       });
     });
   });
@@ -200,6 +189,4 @@ function handleNewEmails(imap) {
 //   imap.connect();
 // }
 
-// //startListening()
-// //export default startListening;
-export {openInbox, handleNewEmails}
+export { openInbox, handleNewEmails }

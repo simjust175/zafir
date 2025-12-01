@@ -3,63 +3,81 @@ import AmountService from "../Services/amountService.js";
 
 class AmountControllers {
     static async postAmount({ body }, res) {
-        if (!body) return res.status(400).json({ msg: 'Error in amountServices/postAmountService' });
+        if (!body) return res.status(400).json({ message: 'Email must be provided' });
         try {
             const newAmount = await AmountService.postService(body);
-            if (!newAmount) return res.status(404).json({ msg: 'Error in AmountServices/postAmountService()' });
-            res.status(200).json({ Success: `New Amount added successfully`, newAmount });
+            if (!newAmount) return res.status(404).json({ message: 'Error in AmountServices/postAmountService()' });
+            res.status(200).json({ message: `New Amount added successfully`, newAmount });
         } catch (error) {
-            res.status(500).json({ Error: `Error in userServices/postAmount: ${error.message}` });
+            res.status(500).json({ message: `Error in userServices/postAmount: ${error.message}` });
         }
     }
     static async postNewEmail({ body }, res) {
-        if (!body) return res.status(400).json({ msg: 'Error in amountServices/postAmountService' });
+        const doesEmailExist = await General.getWithFilter(
+            'emails',
+            'email',
+            'email = ?',
+            [body.email] // <-- pass the email as a parameter
+          );
+        console.log("does this email exists?", doesEmailExist);
+        
+        if (!body) return res.status(400).json({ message: 'Email must be provided' });
+        if (doesEmailExist.length > 0) return res.status(400).json({ message: 'Email already exists' });
         try {
             const newAmount = await AmountService.postNewEmailService(body);
-            if (!newAmount) return res.status(404).json({ msg: 'Error in AmountServices/postAmountService()' });
-            res.status(200).json({ Success: `New Amount added successfully`, newAmount });
+            if (!newAmount) return res.status(404).json({ message: 'Error in AmountServices/postAmountService()' });
+            res.status(200).json({ message: `New Amount added successfully`, newAmount });
         } catch (error) {
-            res.status(500).json({ Error: `Error in userServices/postAmount: ${error.message}` });
+            res.status(500).json({ message: `Error in userServices/postAmount: ${error.message}` });
         }
     }
+
     static async postToExitingEmail({ body }, res) {
-        if (!body) return res.status(400).json({ msg: 'Error in amountServices/postAmountService' });
+        if (!body) return res.status(400).json({ message: 'Email must be provided' });
         try {
-            const postedToExisting = await AmountService.postToExitingEmail(body);
-            if (!postedToExisting) return res.status(404).json({ msg: 'Error in AmountServices/postAmountService()' });
-            res.status(200).json({ Success: `New Amount added successfully`, postedToExisting });
+            const postedToExisting = await AmountService.postNewEmailService(body);
+            if (!postedToExisting) return res.status(404).json({ message: 'Error in AmountServices/postAmountService()' });
+            res.status(200).json({ message: `New Amount added successfully`, postedToExisting });
         } catch (error) {
-            res.status(500).json({ Error: `Error in userServices/postAmount: ${error.message}` });
+            res.status(500).json({ message: `Error in userServices/postAmount: ${error.message}` });
         }
     }
 
     static async getAmounts({ body }, res) {
-        if (!body) return res.status(400).json({ msg: 'Error in amountServices/getAmountService' });
+        if (!body) return res.status(400).json({ message: 'Error in amountServices/getAmountService' });
         try {
             const amounts = await AmountService.getService(body);
             
-            if (!amounts) return res.status(404).json({ msg: 'Error in AmountServices/getAmountService' });
-            res.status(200).json({ Success: `Amounts retrieved successfully`, amounts });
+            if (!amounts) return res.status(404).json({ message: 'Error in AmountServices/getAmountService' });
+            res.status(200).json({ message: `Amounts retrieved successfully`, amounts });
         } catch (error) {
-            res.status(500).json({ Error: `Error in amountServices/getAmount: ${error.message}` });
+            res.status(500).json({ message: `Error in amountServices/getAmount: ${error.message}` });
         }
     }
 
     static async getFreeEmails(req, res) {
         try {
             const freeEmails = await AmountService.getEmailsNotConnectedToProjects();
-            res.status(200).json({ Success: `freeEmails retrieved successfully`, freeEmails });
+            res.status(200).json({ message: `freeEmails retrieved successfully`, freeEmails });
         } catch (error) {
-            res.status(500).json({ Error: `Error in freeEmailServices/getFeeEmails: ${error.message}` });
+            res.status(500).json({ message: `Error in freeEmailServices/getFeeEmails: ${error.message}` });
+        }
+    }
+    static async getActiveEmails(req, res) {
+        try {
+            const activeEmails = await AmountService.getActiveEmailsService();
+            res.status(200).json({ message: `activeEmails retrieved successfully`, activeEmails });
+        } catch (error) {
+            res.status(500).json({ message: `Error in activeEmailServices/getFeeEmails: ${error.message}` });
         }
     }
 
     static async getPayments(req, res) { //{params}
         try {
             const payments = await AmountService.getPaymentService(); //params.db
-            res.status(200).json({ Success: `payments retrieved successfully`, payments });
+            res.status(200).json({ message: `payments retrieved successfully`, payments });
         } catch (error) {
-            res.status(500).json({ Error: `Error in freeEmailServices/getFeeEmails: ${error.message}` });
+            res.status(500).json({ message: `Error in freeEmailServices/getFeeEmails: ${error.message}` });
         }
     }
 }
