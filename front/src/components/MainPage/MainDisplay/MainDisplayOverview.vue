@@ -57,7 +57,7 @@
 <!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { computed, watch } from "vue"
-import { invoices } from "@/stores/invoiceState"
+import { invoices } from "@/stores/invoiceState.js"
 
 const props = defineProps({
   projectName: String,

@@ -182,7 +182,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { invoices as invoiceStore } from '@/stores/invoiceState';
+import { invoices as invoiceStore } from '@/stores/invoiceState.js';
 import socket from '@/socket.js';
 
 import InvoiceDash from "@/components/Invoicing-dash/InvoiceDash.vue"
@@ -343,7 +343,7 @@ watch(() => props.invoices, () => initialize(), { immediate: true });
 watch(() => props.refreshing, () => initialize());
 
 // Theme
-import { globalFunctions } from '@/stores/globalFunctions';
+import { globalFunctions } from '@/stores/globalFunctions.js';
 const functions = globalFunctions()
 const themeColor = computed(()=> functions.themeColor)
 </script>

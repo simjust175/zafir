@@ -11,7 +11,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from "vue";
-import { invoices } from "@/stores/invoiceState"
+import { invoices } from "@/stores/invoiceState.js"
 const invoiceArray = invoices()
 
 

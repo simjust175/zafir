@@ -38,9 +38,9 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useTheme } from "vuetify";
 import FooterComponent from "@/components/Header-footer/FooterComponent.vue";
-import { setLogin } from "@/stores/loginState";
+import { setLogin } from "@/stores/loginState.js";
 
-import { invoices } from "@/stores/invoiceState";
+import { invoices } from "@/stores/invoiceState.js";
 const invoiceStore = invoices()
 
 // Vuetify theme instance

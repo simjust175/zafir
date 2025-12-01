@@ -223,7 +223,7 @@
 import AddNewProject from "@/components/Projects/AddNewProject.vue";
 import { ref, computed, watch } from "vue";
 import { useTheme } from "vuetify";
-import { invoices } from "@/stores/invoiceState";
+import { invoices } from "@/stores/invoiceState.js";
 
 const invoiceStore = invoices();
 

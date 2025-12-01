@@ -91,7 +91,7 @@
   import ProjectCard from "./ProjectCard.vue"
   import AddNewProject from "./AddNewProject.vue"
   import { ref, computed } from "vue"
-  import { invoices } from "@/stores/invoiceState"
+  import { invoices } from "@/stores/invoiceState.js"
   
   const invoiceArray = invoices()
 

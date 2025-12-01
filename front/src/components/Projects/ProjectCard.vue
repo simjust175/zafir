@@ -106,7 +106,7 @@
 <script setup>
 import { ref, computed } from "vue"
 //import { useToast } from "vue-toastification"
-import { invoices } from '@/stores/invoiceState'
+import { invoices } from '@/stores/invoiceState.js'
 
 const props = defineProps({
   project: {

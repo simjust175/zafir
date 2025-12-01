@@ -91,7 +91,7 @@ const invoiceStore = invoices()
 const functions = globalFunctions()
 const payments = computed(() => invoiceStore.payments)
 const invoicing = computed(() => invoiceStore.invoicing)
-const localInvoices = ref([])
+// const localInvoices = ref([])
 
 const showInvoiceDialog = ref(false)
 const invoicedLoading = ref(false)

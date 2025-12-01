@@ -217,7 +217,7 @@ onMounted(() => {
   }
 })
 
-import { globalFunctions } from "@/stores/globalFunctions";
+import { globalFunctions } from "@/stores/globalFunctions.js";
 const functions = globalFunctions();
 // Helpers
 const addInvoicing = (adding) => {

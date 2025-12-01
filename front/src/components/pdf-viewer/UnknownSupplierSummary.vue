@@ -70,7 +70,7 @@ const props = defineProps({
     issuer: String
 })
 defineEmits(['keep-unknown', 'save-supplier'])
-import { invoices } from "@/stores/invoiceState"
+import { invoices } from "@/stores/invoiceState.js"
 const invoiceArray = invoices()
 
 const suppliersInDb = computed(() => {
