@@ -60,22 +60,25 @@
 import LoginInput2 from "./LoginInput2.vue";
 import { ref, reactive, watch } from "vue";
 import { useRouter } from "vue-router";
-import { setLogin } from "@/stores/loginState"
-const loginState = setLogin()
+import { setLogin } from "@/stores/loginState.js";
+
+const router = useRouter();
+const loginState = setLogin();
 
 const alertActivate = ref(false);
-const router = useRouter();
-const formData = ref("");
 const toggleAlert = ref(false);
+const formData = ref("");
+
 const credentials = reactive({
   user_email: "",
   pwd: "",
 });
+
 const emit = defineEmits(["forgot", "loggedIn"]);
 
 const validate = async () => {
   const { valid } = await formData.value.validate();
-  if (valid) return true;
+  return valid;
 };
 
 const login = async () => {
@@ -91,50 +94,48 @@ const login = async () => {
       body: JSON.stringify(credentials),
     });
 
-    const { newToken} = await res.json();
-
+    const { newToken } = await res.json();
     const token = newToken?.newToken?.token;
     const userId = newToken?.user_id;
     const userName = newToken?.user_name;
-    
+
     if (!token) {
       alertActivate.value = true;
-      console.log("no token??", token);
       return;
     }
 
-    // ✅ Call centralized store login method
+    // Save to store
     loginState.setLogin({
-  token,
-  name: credentials.user_email,
-  user: userName
-});
+      token,
+      email: credentials.user_email,
+      user: userName,
+    });
 
-    localStorage.setItem("id", userId); // Optional: or store in Pinia if needed
+    // Save to localStorage
+    localStorage.setItem("token", token);
+    localStorage.setItem("user_email", credentials.user_email);
+    localStorage.setItem("user_name", userName);
+    localStorage.setItem("id", userId);
+
     emit("loggedIn");
     router.push("/");
-
-  } catch (error) {
-    console.error("❌ Login failed:", error);
+  } catch (err) {
+    console.error("❌ Login failed:", err);
     alertActivate.value = true;
   }
 };
 
-//forgot
-const emitForgot = async () => {
-  console.log("creeds", credentials.user_email);
+const emitForgot = () => {
   if (!credentials.user_email) {
     toggleAlert.value = true;
-  } else {
-    toggleAlert.value = false;
-    console.log("THERE IS AN EMAIL LETS EMIT!!");
-    emit("forgot");
+    return;
   }
+  toggleAlert.value = false;
+  emit("forgot");
 };
 
-watch(credentials.pwd, (newVal) => {
-  console.log("newVal");
-  if (newVal.length > 0) {
+watch(credentials.pwd, () => {
+  if (credentials.pwd.length > 0) {
     toggleAlert.value = false;
   }
 });

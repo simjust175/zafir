@@ -111,7 +111,7 @@ const groupedInvoices = computed(() => {
 const overallTotalWithMargin = computed(() => {
   let total = 0;
   groupedInvoices.value.forEach(group => {
-    console.log(group.issuer, group.totalWithMargin, group);
+    //>>>>>>>>>>>Good test!>>> console.log(group.issuer, group.totalWithMargin, group);
     total += group.totalWithMargin;
   });
   return Number(total.toFixed(2));

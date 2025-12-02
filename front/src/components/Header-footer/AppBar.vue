@@ -26,8 +26,8 @@
         class="pl-0 ml-4 cursor-pointer"
         width="115"
         height="35"
-        src="../../../public/logo.png"
-        @click="router.push('/')"
+        src="/logo.png"
+        @click="pushLogoHome"
       >
       <v-spacer />
 
@@ -88,16 +88,17 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import { useTheme } from "vuetify";
-import { setLogin } from "@/stores/loginState"
+import { setLogin } from "@/stores/loginState.js"
 const loginState = setLogin()
-import { invoices  } from "@/stores/invoiceState";
+import { invoices  } from "@/stores/invoiceState.js";
 const invoiceArray = invoices()
 //import LanguageSwitch from "./LanguageSwitch.vue"
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
-//CHECK IF ONLICE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  
+//CHECK IF ONLINE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 const online = computed(()=> true)
 const theme = useTheme();
 const emit = defineEmits(['themeUpdate'])
@@ -108,7 +109,8 @@ function toggleTheme() {
 }
 
 const activateDialog = ref(false)
-const pushMainRoute = ()=> loginState.token ? router.push('/') : "";
+const pushMainRoute = ()=> localStorage.token ? router.push('/') : null;
+const pushLogoHome = ()=> localStorage.getItem('token')?.length > 0 ? router.push('/') : router.push('/register');
 
 const themeIcon = computed(() =>
   theme.global.current.value.dark
