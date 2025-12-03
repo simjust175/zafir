@@ -151,7 +151,12 @@ defineProps({
 })
 
 defineEmits(['open-dialog'])
-const formatCurrency = (val) => `€${Number(val).toLocaleString('en-BE')}`
+  const formatCurrency = (val) =>
+  new Intl.NumberFormat('en-BE', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(val);
+
 
 const animateLoading = ref(true)
 
