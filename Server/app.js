@@ -66,7 +66,7 @@ io.on("connection", (socket) => {
 });
 
 // ----------- Start Server -----------
-const port = process.env.PORT || 1221;
+const port = 3445 // process.env.PORT || 1221;
 server.listen(port, () => {
-  console.log("🚀 Zafir management running on port - ", port);
+  console.log("🚀 Billio management running on port - ", port);
 });
