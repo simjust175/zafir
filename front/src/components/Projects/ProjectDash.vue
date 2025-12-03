@@ -1,18 +1,22 @@
 <template>
-  <v-container fluid class="pa-8">
-
+  <v-container
+    fluid
+    class="pa-8"
+  >
     <!-- PROJECT LIST -->
     <transition-group
+      v-if="projects.length"
       tag="v-row"
       name="project-fade-slide"
-      v-if="projects.length"
       class="d-flex flex-wrap"
     >
       <v-col
         v-for="(projectGroup, index) in groupedProjects"
         :key="projectGroup[0].project_name"
         :style="{ '--index': index }"
-        cols="12" sm="6" md="4"
+        cols="12"
+        sm="6"
+        md="4"
       >
         <project-card
           :project="projectGroup"
@@ -22,21 +26,43 @@
     </transition-group>
 
     <!-- EMPTY STATE -->
-    <v-row v-else justify="center">
-      <v-col cols="12" class="text-center">
-        <v-card class="py-12 d-flex flex-column align-center" elevation="0">
-          <h1 class="text-h1">🫢</h1>
-          <h2 class="text-grey-lighten-1 mb-6">Oops... Nothing here.. Yet...</h2>
-          <v-btn prepend-icon="mdi-plus" color="primary" text="Add Project"/>
+    <v-row
+      v-else
+      justify="center"
+    >
+      <v-col
+        cols="12"
+        class="text-center"
+      >
+        <v-card
+          class="py-12 d-flex flex-column align-center"
+          elevation="0"
+        >
+          <h1 class="text-h1">
+            🫢
+          </h1>
+          <h2 class="text-grey-lighten-1 mb-6">
+            Oops... Nothing here.. Yet...
+          </h2>
+          <v-btn
+            prepend-icon="mdi-plus"
+            color="primary"
+            text="Add Project"
+          />
         </v-card>
       </v-col>
     </v-row>
 
     <!-- ADD NEW -->
     <v-fab
-      extended color="primary" text="Add project"
-      prepend-icon="mdi-plus" location="right bottom"
-      height="50" width="180" app
+      extended
+      color="primary"
+      text="Add project"
+      prepend-icon="mdi-plus"
+      location="right bottom"
+      height="50"
+      width="180"
+      app
       @click="addProjectDialog = !addProjectDialog"
     />
 
@@ -48,13 +74,22 @@
     </v-dialog>
 
     <!-- 🔥 SNACKBAR UNDO -->
-    <v-snackbar v-model="undoSnackbar" location="bottom" timeout="5000">
+    <v-snackbar
+      v-model="undoSnackbar"
+      location="bottom"
+      timeout="5000"
+    >
       Project removed
       <template #actions>
-        <v-btn variant="text" color="primary" @click="undoRemove">Undo</v-btn>
+        <v-btn
+          variant="text"
+          color="primary"
+          @click="undoRemove"
+        >
+          Undo
+        </v-btn>
       </template>
     </v-snackbar>
-
   </v-container>
 </template>
 

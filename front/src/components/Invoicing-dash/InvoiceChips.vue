@@ -37,7 +37,8 @@
         /> -->
   </div>
 </template>
-  
+
+  <!-- eslint-disable vue/require-default-prop -->
   <script setup>
   defineProps({
     totalInvoiced: Number,
