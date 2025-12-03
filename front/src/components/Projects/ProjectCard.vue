@@ -89,7 +89,7 @@
     <complete-project-dialog
       :project="project"
       :trigger="dialogTrigger"
-      v-bind="$attrs"
+      @project-removed="handleRemove"
       @close="dialogTrigger = false"
     />
 
@@ -120,9 +120,9 @@ const invoiceStore = invoices()
 
 const dialogTrigger = ref(false)
 const editDialog = ref(false)
-const projectId = computed(() => props.project[0].project_id )
+const projectId = computed(() => props.project[0].project_id)
 const projectName = computed(() => props.project[0]?.project_name || "Unnamed")
-const projectEmail = computed(()=> invoiceStore.activeEmails.activeEmails.filter(e => e.email_id === props.project[0].email))
+const projectEmail = computed(() => invoiceStore.activeEmails.activeEmails.filter(e => e.email_id === props.project[0].email))
 
 const reduceTotal = (array) => {
   return array.filter(inv => inv.project === projectId.value).reduce((sum, inv) => sum + Number(inv.amount || 0), 0)
@@ -130,10 +130,21 @@ const reduceTotal = (array) => {
 const payments = computed(() => reduceTotal(invoiceStore.payments))
 const invoicing = computed(() => reduceTotal(invoiceStore.invoicing))
 
-const formatCurrency = (val) => `€${Number(val).toLocaleString('nl-BE')}`
+const formatCurrency = (val) =>
+  new Intl.NumberFormat('en-BE', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(val);
+
+const emit = defineEmits(["project-removed"]);
+const handleRemove = () => {
+  emit("project-removed", props.project[0].project_name); // pass name upward
+};
 
 const percentPaid = computed(() => {
-  
+
   const invoiced = parseFloat(invoicing.value) || 0
   const paid = parseFloat(payments.value) || 0
   return invoiced === 0 ? 0 : Math.round((paid / invoiced) * 100)
@@ -146,22 +157,25 @@ const handleProjectNameSaved = (newName) => {
   //toast.success("Project name updated successfully!")
 }
 
-const progressColor = computed(()=> percentPaid.value < 50 ? 'warning' : 
-percentPaid.value < 75 ? 'amber' :
-'success')
+const progressColor = computed(() => percentPaid.value < 50 ? 'warning' :
+  percentPaid.value < 75 ? 'amber' :
+    'success')
 </script>
 
 <style scoped>
 .project-card {
   transition: all 0.2s ease-in-out;
 }
+
 .position-absolute {
   position: absolute;
   z-index: 10;
 }
+
 .top-0 {
   top: 0;
 }
+
 .right-0 {
   right: 0;
 }
