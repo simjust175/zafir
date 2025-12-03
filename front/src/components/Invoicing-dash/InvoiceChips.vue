@@ -51,7 +51,7 @@
   defineEmits(['open-dialog'])
   
   const formatCurrency = (val) =>
-  new Intl.NumberFormat('en-BE', {
+  new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'EUR',
   }).format(val);
