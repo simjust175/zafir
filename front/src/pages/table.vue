@@ -1,5 +1,5 @@
 <template>
-  <main>
+  <main class="pt-5 px-4">
     <main-display-tabs
       :invoice-array="amountArray"
       :expanded="true"
