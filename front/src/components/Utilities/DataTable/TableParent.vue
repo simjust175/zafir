@@ -106,7 +106,7 @@
             />
           </v-toolbar>
         </template>
-
+        <!-- eslint-disable vue/valid-v-slot -->
         <template #item.created_at="{ item }">
           {{ new Date(item.created_at).toLocaleDateString() }}
         </template>
@@ -180,6 +180,7 @@
   </v-container>
 </template>
 
+<!-- eslint-disable vue/prop-name-casing -->
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { invoices as invoiceStore } from '@/stores/invoiceState.js';
@@ -262,7 +263,7 @@ const groupedInvoices = computed(() => {
 const overallTotalWithMargin = computed(() => {  
   let total = 0;
   groupedInvoices.value.forEach(group => {
-    //>>>>>>>>>>>GOOD TEST>>>>>>>>>>>>>>>>>>>>console.log(group.issuer, group.totalWithMargin, group);
+    //>>>>>>>>>>>GOOD TEST for total>>>>>>>>>>>>>>>>>>>>console.log(group.issuer, group.totalWithMargin, group);
     total += group.totalWithMargin;
   });
   return Number(total.toFixed(2));

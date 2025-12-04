@@ -14,7 +14,7 @@ const db_config ={
     port: process.env.DB_PORT
 };
 
-console.log("🔍 DB config:", db_config);
+// console.log("🔍 DB config:", db_config);
 const pool = mysql2.createPool(db_config);
 
 //~ES5~ module.exports = pool.promise();

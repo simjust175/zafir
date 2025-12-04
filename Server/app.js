@@ -58,7 +58,7 @@ const postInvoices = async (inv) => {
   try {
     console.log("📦 Posting invoice to DB:", inv);
     await AmountServices.postService(inv);
-
+    
     // Push to clients
     io.emit("new-invoice", inv);
   } catch (error) {

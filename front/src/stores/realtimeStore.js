@@ -12,10 +12,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
   const projectsMap = new Map()
   const invoicesMap = new Map()
   const paymentsMap = new Map()
-  
+
   // Counter to trigger reactivity when Maps change
   const updateCounter = ref(0)
-  
+
   const pendingOperations = ref(new Map()) // Track optimistic updates
   const lastEventVersion = ref(0)
   const connectionState = ref('connected')
@@ -33,12 +33,12 @@ export const useRealtimeStore = defineStore('realtime', () => {
       'invoice': invoicesMap,
       'payment': paymentsMap
     }[entityType]
-    
+
     if (!normalizedType) {
       console.warn(`⚠️ Unknown entity type: ${entityType}`)
       return new Map() // Return empty map to prevent crashes
     }
-    
+
     return normalizedType
   }
 
@@ -69,10 +69,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
     const entityId = data.id || data.invoice_id || data.project_id || data.payment_id
 
     console.log(`🔮 Optimistic ${operation}: ${entityType}#${entityId}`)
-    
+
     // CRITICAL: Capture original state BEFORE mutation for proper rollback
     const originalData = operation === 'create' ? null : structuredClone(entityMap.get(entityId))
-    
+
     switch (operation) {
       case 'create':
         entityMap.set(entityId, { ...data, _optimistic: true, _opId: opId })
@@ -90,7 +90,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
         }
         break
     }
-    
+
     // Trigger reactivity
     updateCounter.value++
 
@@ -115,7 +115,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
 
     const { entityType, entityId, tempId, operation } = pending
     const entityMap = getEntityMap(entityType)
-    
+
     // Handle creation confirmation: swap temp ID for real server ID
     if (operation === 'create' && tempId) {
       entityMap.delete(tempId) // Remove temp optimistic entry
@@ -165,7 +165,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
     // Trigger reactivity
     updateCounter.value++
     pendingOperations.value.delete(opId)
-    
+
     // Show user-friendly error notification
     showErrorNotification(`Failed to ${operation} ${entityType}`, error)
   }
@@ -175,18 +175,18 @@ export const useRealtimeStore = defineStore('realtime', () => {
    */
   const handleRealtimeEvent = (event) => {
     const { entityType, operation, data, version, entityId } = event
-    
+
     lastEventVersion.value = Math.max(lastEventVersion.value, version)
-    
+
     console.log(`📡 Real-time event: ${operation} ${entityType}#${entityId}`)
-    
+
     // CRITICAL: Use the entity type directly (server sends singular forms)
     const entityMap = getEntityMap(entityType)
-    
+
     // Check if this contradicts a pending optimistic update  
     const pendingOp = Array.from(pendingOperations.value.values())
       .find(op => op.entityType === entityType && op.entityId === entityId)
-    
+
     if (pendingOp) {
       // Potential conflict - queue for resolution
       conflictQueue.value.push({ event, pendingOp })
@@ -208,7 +208,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
         entityMap.delete(entityId)
         break
     }
-    
+
     // Trigger reactivity
     updateCounter.value++
   }
@@ -220,10 +220,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
     // Simple last-write-wins strategy
     // In production, you might want more sophisticated conflict resolution
     console.log(`⚠️ Conflict detected for ${pendingOp.entityType}#${pendingOp.entityId}`)
-    
+
     // Server wins - confirm the pending operation as failed
     rollbackUpdate(pendingOp.opId, 'Overridden by server update')
-    
+
     // Apply server event
     handleRealtimeEvent(serverEvent)
   }
@@ -234,10 +234,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
   const createEntity = async (entityType, data) => {
     const opId = generateOpId()
     const tempId = `temp_${opId}`
-    
+
     // Apply optimistic update
     applyOptimisticUpdate(entityType, 'create', { ...data, id: tempId }, opId)
-    
+
     try {
       // Send to server
       const response = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/post/${entityType}`, {
@@ -245,12 +245,12 @@ export const useRealtimeStore = defineStore('realtime', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
-      
+
       if (!response.ok) throw new Error(`Server error: ${response.status}`)
-      
+
       const result = await response.json()
       confirmUpdate(opId, result.newGeneral)
-      
+
       return result.newGeneral
     } catch (error) {
       rollbackUpdate(opId, error.message)
@@ -260,10 +260,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
 
   const updateEntity = async (entityType, entityId, updates) => {
     const opId = generateOpId()
-    
+
     // Apply optimistic update
     applyOptimisticUpdate(entityType, 'update', { ...updates, id: entityId }, opId)
-    
+
     try {
       // Send to server
       const response = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/patch/${entityType}?id=${entityId}`, {
@@ -271,12 +271,14 @@ export const useRealtimeStore = defineStore('realtime', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       })
-      
+
       if (!response.ok) throw new Error(`Server error: ${response.status}`)
-      
+
       const result = await response.json()
+      console.log("resuly in 🏪🏪🏪🏪🏪", result);
+
       confirmUpdate(opId, result.newGeneral)
-      
+
       return result.newGeneral
     } catch (error) {
       rollbackUpdate(opId, error.message)
@@ -287,10 +289,10 @@ export const useRealtimeStore = defineStore('realtime', () => {
   const deleteEntity = async (entityType, entityId) => {
     const opId = generateOpId()
     const deleted_at = new Date().toISOString()
-    
+
     // Apply optimistic update
     applyOptimisticUpdate(entityType, 'delete', { id: entityId, deleted_at }, opId)
-    
+
     try {
       // Send to server
       const response = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/patch/${entityType}?id=${entityId}`, {
@@ -298,12 +300,12 @@ export const useRealtimeStore = defineStore('realtime', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deleted_at })
       })
-      
+
       if (!response.ok) throw new Error(`Server error: ${response.status}`)
-      
+
       const result = await response.json()
       confirmUpdate(opId, result.newGeneral)
-      
+
       return result.newGeneral
     } catch (error) {
       rollbackUpdate(opId, error.message)
@@ -318,15 +320,15 @@ export const useRealtimeStore = defineStore('realtime', () => {
     try {
       // Load initial data
       await loadInitialData()
-      
+
       // Setup socket listeners
       setupSocketListeners()
-      
+
       // Request sync if we've been offline
       if (lastEventVersion.value > 0) {
         socket.emit('request-sync', lastEventVersion.value)
       }
-      
+
       connectionState.value = 'connected'
     } catch (error) {
       console.error('Failed to initialize realtime store:', error)
@@ -345,7 +347,7 @@ export const useRealtimeStore = defineStore('realtime', () => {
     })
 
     const data = await response.json()
-    
+
     // Populate entity maps
     if (data.amounts) {
       data.amounts.forEach(invoice => {
@@ -358,19 +360,19 @@ export const useRealtimeStore = defineStore('realtime', () => {
 
   const setupSocketListeners = () => {
     socket.on('data-change', handleRealtimeEvent)
-    
+
     socket.on('sync-events', (events) => {
       console.log(`🔄 Syncing ${events.length} missed events`)
       events.forEach(handleRealtimeEvent)
     })
-    
+
     socket.on('connect', () => {
       connectionState.value = 'connected'
       if (lastEventVersion.value > 0) {
         socket.emit('request-sync', lastEventVersion.value)
       }
     })
-    
+
     socket.on('disconnect', () => {
       connectionState.value = 'disconnected'
     })
@@ -390,17 +392,23 @@ export const useRealtimeStore = defineStore('realtime', () => {
     payments,
     connectionState,
     conflictQueue,
-    
+
     // Actions
     createEntity,
     updateEntity,
     deleteEntity,
     initialize,
     handleRealtimeEvent,
-    
+
     // Computed
     isConnected: computed(() => connectionState.value === 'connected'),
     hasPendingOperations: computed(() => pendingOperations.value.size > 0),
-    hasConflicts: computed(() => conflictQueue.value.length > 0)
+    hasConflicts: computed(() => conflictQueue.value.length > 0),
+
+    entities: {
+      projects: projectsMap,
+      invoices: invoicesMap,
+      payments: paymentsMap
+    }
   }
 })

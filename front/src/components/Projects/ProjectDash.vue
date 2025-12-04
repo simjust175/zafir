@@ -69,7 +69,7 @@
     <v-dialog v-model="addProjectDialog">
       <add-new-project
         @close="addProjectDialog = false"
-        @new-project-added="forceRemove"
+        @new-project-added="addNewProject"
       />
     </v-dialog>
 
@@ -146,6 +146,16 @@ const forceRemove = (projectName) => {
   )
 }
 
+/* ADD NEW PROJECT HANDLER */
+const addNewProject = (newProject) => {
+  if (!newProject) return
+  
+  // Push to DB response list
+  invoiceArray.dbResponse.push(newProject)
+
+  // Close modal
+  addProjectDialog.value = false
+}
 
 /* Show list only if exists */
 const projects = computed(() => groupedProjects.value.map(g => g[0].project_name))
