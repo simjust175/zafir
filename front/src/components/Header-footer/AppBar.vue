@@ -16,7 +16,6 @@
         size="30"
         @click="pushMainRoute"
       />
-      <h2>TES TEST TEST !!</h2>
       <!-- <h1
         class="ml-5 zafir-text-primary cursor-pointer"
         @click.stop="pushMainRoute"
