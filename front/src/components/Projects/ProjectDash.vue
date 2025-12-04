@@ -67,7 +67,7 @@
     />
 
     <v-dialog v-model="addProjectDialog">
-      <add-new-project
+      <AddNewProject
         @close="addProjectDialog = false"
         @new-project-added="addNewProject"
       />
@@ -140,11 +140,11 @@ const undoRemove = () => {
 }
 
 /* No undo — permanent delete */
-const forceRemove = (projectName) => {
-  invoiceArray.dbResponse = invoiceArray.dbResponse.filter(
-    inv => inv.project_name !== projectName
-  )
-}
+// const forceRemove = (projectName) => {
+//   invoiceArray.dbResponse = invoiceArray.dbResponse.filter(
+//     inv => inv.project_name !== projectName
+//   )
+// }
 
 /* ADD NEW PROJECT HANDLER */
 const addNewProject = (newProject) => {

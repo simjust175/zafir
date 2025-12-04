@@ -14,13 +14,13 @@
       <div class="d-flex align-center">
         <!-- Progress Circle for loading states -->
         <div
-          v-if="snack.color === 'info' && !isComplete"
+          v-if="snack.color === 'progress' && !isComplete"
           class="mr-3"
         >
           <v-progress-circular
             :size="24"
             :width="3"
-            color="white"
+            color="primary"
             indeterminate
           />
         </div>
@@ -83,7 +83,7 @@
           </div>
           <!-- Progress bar for loading states -->
           <v-progress-linear
-            v-if="snack.color === 'info' && !isComplete"
+            v-if="snack.color === 'progress' && !isComplete"
             :model-value="progressValue"
             color="white"
             height="2"
@@ -94,7 +94,7 @@
         </div>
       </div>
       
-      <template #actions>
+      <!-- <template #actions>
         <v-btn
           icon="mdi-close"
           size="small"
@@ -102,7 +102,7 @@
           color="white"
           @click="show = false"
         />
-      </template>
+      </template> -->
     </v-snackbar>
 
     <!-- Success Completion Modal -->
@@ -155,14 +155,14 @@
             </div>
             
             <!-- Floating particles animation -->
-            <div class="particles">
+            <!-- <div class="particles">
               <div
                 v-for="i in 6"
                 :key="i"
                 class="particle"
                 :style="`--i: ${i}`"
               />
-            </div>
+            </div> -->
           </div>
           
           <!-- Success Title -->
@@ -187,6 +187,7 @@
           <v-btn
             color="success"
             variant="elevated"
+            class="px-8"
             size="large"
             rounded="xl"
             prepend-icon="mdi-check"
@@ -215,7 +216,7 @@ const showSnack = (message, color = 'success') => {
   show.value = true
   isComplete.value = false
 
-  if (color === 'info') {
+  if (color === 'progress') {
     progressValue.value = 0
     progressInterval = setInterval(() => {
       progressValue.value += 2

@@ -144,7 +144,7 @@
     <SnackbarSteps ref="snackbarRef" />
     <v-snackbar
       v-model="snack.show"
-      :color="snack.color"
+      
       location="top"
       multi-line
       timeout="3500"
@@ -251,7 +251,7 @@ const submitForm = async () => {
     })
 
     if (addingNewEmail.value) {
-      await snackbarRef.value.showSnack('Verifying email access...', 'info')
+      await snackbarRef.value.showSnack('Verifying email access...', 'progress')
 
       const verify = await verifyEmail(emailToUse, pass)
       console.log('[submitForm] verifyEmail result:', verify)
@@ -263,10 +263,10 @@ const submitForm = async () => {
         )
       }
 
-      await snackbarRef.value.showSnack(' Email verified!', 'info')
+      await snackbarRef.value.showSnack(' Email verified!', 'progress')
     }
 
-    await snackbarRef.value.showSnack('Checking availability...', 'info')
+    await snackbarRef.value.showSnack('Checking availability...', 'progress')
 
     const payload = {
       email: emailToUse,
@@ -281,7 +281,7 @@ const submitForm = async () => {
     const url = `${import.meta.env.VITE_BASE_URL}${endpoint}`
     console.log('[submitForm] Sending request to:', url, 'with payload:', payload)
 
-    await snackbarRef.value.showSnack('Creating project...', 'info')
+    await snackbarRef.value.showSnack('Creating project...', 'progress')
 
     let response
     try {
