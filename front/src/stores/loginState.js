@@ -23,9 +23,6 @@ export const useLoginStore = defineStore("loginState", () => {
     token.value = null;
     userName.value = "";
     userInfo.value = {};
-    theme.value = "light"; // Reset theme if you want
-
-    // Pinia persists store automatically, so logout stays effective after refresh
   }
 
   const isLoggedIn = computed(() => !!token.value);

@@ -113,6 +113,15 @@ async function getPayments() {
     console.error("❌ Failed to fetch payments:", err)
   }
 }
+
+// -----------------------------
+// THEME CHANGE HANDLER
+// -----------------------------
+function handleThemeChange(newTheme) {
+  localTheme.value = newTheme;
+  loginState.theme = newTheme;
+  theme.change(newTheme);
+}
 </script>
 
 <style>
