@@ -34,6 +34,7 @@
       <emails-live 
         v-if="loginState.token"
       />
+
       <!-- <v-tooltip
         activator="#liveBanner"
         location="bottom"
@@ -88,10 +89,10 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import { useTheme } from "vuetify";
-import { setLogin } from "@/stores/loginState.js"
-const loginState = setLogin()
+import { useLoginStore } from "@/stores/loginState.js";
+const loginState = useLoginStore();
 import { invoices  } from "@/stores/invoiceState.js";
-const invoiceArray = invoices()
+const invoiceArray = invoices();
 //import LanguageSwitch from "./LanguageSwitch.vue"
 import { useRouter } from 'vue-router';
 
@@ -129,7 +130,7 @@ watch(
   (newVal) => {
     loggedIn.value = newVal;
   }
-);
+)
 // watch(
 //   () => props.loggedInStat,
 //   (newVal) => {
@@ -137,8 +138,7 @@ watch(
 //   }
 // );
 const logout = async () => {
-  console.log("userName", loginState.userName);
-  const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userName}`, {
+  const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userInfo.email}`, {
       method: "POST",
       headers: {
           "Content-Type": "application/json"

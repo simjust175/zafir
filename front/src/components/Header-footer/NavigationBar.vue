@@ -147,8 +147,10 @@ import NavItemWithTooltip from "./NavItemWithTooltip.vue";
 import { ref, computed, watch } from "vue";
 import { useRouter } from 'vue-router';
 import { useDisplay } from 'vuetify';
-import { setLogin } from "@/stores/loginState"
-const loginState = setLogin()
+// import { setLogin } from "@/stores/loginState"
+// const loginState = setLogin()
+import { useLoginStore } from "@/stores/loginState.js";
+const loginState = useLoginStore()
 
 
 const display = useDisplay();
@@ -193,7 +195,7 @@ const logout = async () => {
   console.log("=> =>", loginState.userName);
   
   try {
-    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userName}`, {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userInfo.email}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

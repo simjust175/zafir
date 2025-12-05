@@ -1,49 +1,23 @@
 <template>
   <v-form ref="formData">
-    <alert-prop
-      :alert="alertActivate"
-      type="error"
-      label="User name or password are incorrect"
-      :closable="true"
-    />
-    <alert-prop
-      label="Email must be provided"
-      type="error"
-      :alert="toggleAlert"
-    />
+    <alert-prop :alert="alertActivate" type="error" label="User name or password are incorrect" :closable="true" />
+    <alert-prop label="Email must be provided" type="error" :alert="toggleAlert" />
     <div class="input-box">
-      <login-input-2
-        placeholder="Username"
-        icon="mdi-account"
-        type="email"
-        :pwd="false"
-        @input="credentials.user_email = $event"
-      />
+      <login-input-2 placeholder="Username" icon="mdi-account" type="email" :pwd="false"
+        @input="credentials.user_email = $event" />
     </div>
     <div class="input-box">
-      <login-input-2
-        v-model="credentials.pwd"
-        placeholder="Password"
-        icon="mdi-lock"
-        :pwd="true"
-        type="pwd"
-        @input="credentials.pwd = $event"
-      />
+      <login-input-2 v-model="credentials.pwd" placeholder="Password" icon="mdi-lock" :pwd="true" type="pwd"
+        @input="credentials.pwd = $event" />
     </div>
 
     <div class="forgot-link">
-      <p
-        class="cursor-pointer text-blue-darken-4 text-body-2 text-right"
-        @click="emitForgot"
-      >
+      <p class="cursor-pointer text-blue-darken-4 text-body-2 text-right" @click="emitForgot">
         Forgot password?
       </p>
     </div>
 
-    <button
-      class="btn"
-      @click.prevent="login"
-    >
+    <button class="btn" @click.prevent="login">
       Login
     </button>
   </v-form>
@@ -60,10 +34,10 @@
 import LoginInput2 from "./LoginInput2.vue";
 import { ref, reactive, watch } from "vue";
 import { useRouter } from "vue-router";
-import { setLogin } from "@/stores/loginState.js";
+import { useLoginStore } from "@/stores/loginState.js";
 
 const router = useRouter();
-const loginState = setLogin();
+const loginState = useLoginStore();
 
 const alertActivate = ref(false);
 const toggleAlert = ref(false);
@@ -105,11 +79,12 @@ const login = async () => {
     }
 
     // Save to store
-    loginState.setLogin({
+    loginState.login({
       token,
-      email: credentials.user_email,
-      user: userName,
+      name: userName,
+      info: { email: credentials.user_email, id: userId } // optional extra info
     });
+
 
     // Save to localStorage
     localStorage.setItem("token", token);
