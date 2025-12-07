@@ -25,6 +25,7 @@
 
       <v-card-text>
         <v-container>
+          <h5>{{ editedItem }}</h5>
           <v-row>
             <v-col cols="12">
               <v-text-field
