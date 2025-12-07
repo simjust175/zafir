@@ -60,7 +60,7 @@ export const invoices = defineStore(
     }
 
     const getAmounts = async () => {
-      console.log("Starting to fetch...")
+      console.log("Starting to fetch...", loginState.token)
       const token = loginState.token;
       if (!token) return console.log("No token found")
       warnings.value = [];
