@@ -1,6 +1,8 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
 import { useRealtimeStore } from './realtimeStore.js';
+import { useLoginStore } from "@/stores/loginState.js";
+const loginState = useLoginStore();
 
 export const invoices = defineStore(
   "invoiceState",
@@ -58,7 +60,7 @@ export const invoices = defineStore(
 
     const getAmounts = async () => {
       console.log("Starting to fetch...")
-      const token = localStorage.getItem("token")
+      const token = loginState.token;
       if (!token) return console.log("No token found")
       warnings.value = [];
 
