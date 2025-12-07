@@ -9,15 +9,14 @@ export const useLoginStore = defineStore("loginState", () => {
   const theme = ref("light");
 
   // ========== ACTIONS ==========
-  function login({ token: userToken, name, info }) {
-    console.log("in shop", name, info);
-    
-    token.value = userToken;
-    userName.value = name || "";
-    userInfo.value = info || {};
+ function login(payload) {
+    console.log("in shop", payload.name, payload.info, payload.token);
 
-    // Persistence handled by pinia-plugin-persist — NO manual localStorage
+    token.value = payload.token;       // ✅ assign string to ref
+    userName.value = payload.name || "";
+    userInfo.value = payload.info || {};
   }
+
 
   function logout() {
     token.value = null;
@@ -48,14 +47,14 @@ export const useLoginStore = defineStore("loginState", () => {
 //   const theme = ref("light");
 
 //   // Actions
-//   function setLogin({ token: userToken, name, info }) {
-//     token.value = userToken;
+//   function setLogin({ token: token, name, info }) {
+//     token.value = token;
 //     user.value = name || "";
 //     userName.value = name || "";
 //     userInfo.value = info || {};
 
 //     // Optional: persist in localStorage
-//     localStorage.setItem("token", userToken);
+//     localStorage.setItem("token", token);
 //     localStorage.setItem("user_email", name);
 //   }
 
