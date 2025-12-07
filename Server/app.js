@@ -48,8 +48,22 @@ app.get("/health/email-listeners", (req, res) => {
 });
 
 // ----------- Routes -----------
-app.use("/invoice", invoiceRoutes);
-app.use("/file/", express.static(path.join(__dirname, "email-service/downloads")));
+try {
+  app.use("/file/", express.static(path.join(__dirname, "email-service/downloads")));
+  console.log("✅ Static file route set");
+} catch (err) {
+  console.error("❌ Failed to set static file route:", err);
+}
+// ----------- Safe Imports -----------
+try {
+  const invoiceRoutes = (await import("./Routers/invoiceRoutes.js")).default;
+  app.use("/invoice", invoiceRoutes);
+  console.log("✅ invoiceRoutes loaded");
+} catch (err) {
+  console.error("❌ Failed to load invoiceRoutes:", err);
+}
+// app.use("/invoice", invoiceRoutes);
+//app.use("/file/", express.static(path.join(__dirname, "email-service/downloads")));
 app.use("/register", RegisterRoutes);
 app.use("/email", emailRoutes);
 
