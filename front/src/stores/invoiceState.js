@@ -1,7 +1,7 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
 import { useRealtimeStore } from './realtimeStore.js';
-import { useLoginStore } from "@/stores/loginState.js";
+import { useLoginStore } from "./loginState.js";
 const loginState = useLoginStore();
 
 export const invoices = defineStore(
