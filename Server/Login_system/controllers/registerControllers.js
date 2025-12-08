@@ -48,11 +48,10 @@ class RegisterControllers{
     // };
 
     //validate Token
-    static async validateLoggedInController({ body }, res) { 
-        console.log("in validate controllers:", body);
-        
+    static async validateLoggedInController({ body }, res) {
+ 
         try {
-            const isTokenValid = await RegisterService.verifyLoggedInService((body));
+            const isTokenValid = await RegisterService.verifyLoggedInService(body);
             if (!isTokenValid) return res.status(401).json({ Error : "[registerControllers/validateLoggedInController token" });
             res.status(201).json({ Success: "user validated" });
         } catch (error) {
