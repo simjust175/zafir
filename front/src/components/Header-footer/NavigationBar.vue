@@ -193,6 +193,8 @@ const openExpandedTable = () => {
 
 const logout = async () => {
     const email = loginState.userInfo?.email;
+    console.log("email before logout", email);
+    
   if (!email) {
     console.warn("No email in loginState, cannot logout");
     return;
