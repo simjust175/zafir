@@ -59,6 +59,8 @@ class RegisterService {
     }
 
     static async verifyLoggedInService({ user_email, token }) {
+        console.log("in registerService", user_email, token);
+        
         if (!user_email || !token) throw new Error("You must be logged in to access info.")
         try {
             const isTokenValid = await Register.verifyLoggedInByToken(user_email, token);
