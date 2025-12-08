@@ -10,7 +10,7 @@ export const invoices = defineStore(
     // Initialize realtime store
     const realtimeStore = useRealtimeStore()
     const loginState = useLoginStore();
-    
+
     // state
     const dbResponse = ref([]);
     const activeEmails = ref([]);
@@ -60,42 +60,63 @@ export const invoices = defineStore(
     }
 
     const getAmounts = async () => {
-      console.log("Starting to fetch...", loginState.token)
-      const token = loginState.token;
-      if (!token) return console.log("No token found")
-      warnings.value = [];
-
-      const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/get`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      })
-
-      const data = await res.json()
-      console.log("Raw data example:", data.amounts?.[0])
-
-      if (Array.isArray(data.amounts)) {
-        const filtered = processIncomingData(data.amounts)
-        dbResponse.value = filtered
-        console.log("db response", dbResponse.value)
-        
-        // Sync with realtime store
-     filtered.forEach(invoice => {
-  if (!invoice) {
-    console.warn("Skipping null invoice:", invoice);
+  console.log("Starting to fetch...", loginState.token);
+  const token = loginState.token;
+  if (!token) {
+    console.log("No token found");
     return;
   }
 
-  const key = invoice.invoice_id ?? invoice.id;
-  if (!key) {
-    console.warn("Skipping invoice without ID:", invoice);
-    return;
-  }
+  warnings.value = [];
 
-  realtimeStore.entities.invoices.set(key, invoice);
-});
-      }
+  try {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/get`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+
+    if (!res.ok) {
+      console.error("getAmounts fetch failed:", res.status, await res.text());
+      return;
     }
+
+    const data = await res.json();
+    console.log("Raw data example:", data.amounts?.[0]);
+
+    if (!Array.isArray(data.amounts)) return;
+
+    const filtered = processIncomingData(data.amounts);
+    dbResponse.value = filtered;
+    console.log("db response", dbResponse.value);
+
+    // --- SYNC to realtime store (safe, single pass) ---
+    const rs = useRealtimeStore();
+
+    // Clear old cached invoices once
+    if (rs?.entities?.invoices && typeof rs.entities.invoices.clear === "function") {
+      rs.entities.invoices.clear();
+    }
+
+    // Use the realtime store's bulkInsert if available (it triggers reactivity)
+    if (typeof rs.bulkInsert === "function") {
+      rs.bulkInsert("invoices", filtered);
+    } else {
+      // Fallback: populate the map directly (less ideal if updateCounter not exposed)
+      filtered.forEach(inv => {
+        const key = inv.invoice_id ?? inv.id;
+        if (!key) {
+          console.warn("Skipping invoice without ID:", inv);
+          return;
+        }
+        rs.entities.invoices.set(key, structuredClone ? structuredClone(inv) : JSON.parse(JSON.stringify(inv)));
+      });
+      // Note: if your realtime store exposes an update trigger, call it here.
+    }
+  } catch (err) {
+    console.error("getAmounts error:", err);
+  }
+};
 
     const getActiveEmails = async () => {
       const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/activeEmails`)
@@ -137,12 +158,12 @@ export const invoices = defineStore(
       setPaymentsData,
       getAmounts,
       getActiveEmails,
-      
+
       // Real-time operations
       createInvoice,
       updateInvoice,
       deleteInvoice,
-      
+
       // Real-time state
       realtimeStore,
       isConnected: realtimeStore.isConnected,
