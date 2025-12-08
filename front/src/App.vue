@@ -50,7 +50,7 @@ const localTheme = ref("light")
 // -----------------------------
 async function validateToken() {
   if (!loginState.token || !loginState.userName) return false
-  console.log("VALIDATING:", loginState.token, loginState.userInfo);
+  console.log("BASE_URL:", import.meta.env.VITE_BASE_URL)
   try {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/validateToken`, {
       method: "POST",
