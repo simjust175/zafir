@@ -32,12 +32,12 @@
 
 <script setup>
 import { ref, onMounted } from "vue"
-import { useRouter } from "vue-router"
+// import { useRouter } from "vue-router"
 import { useTheme } from "vuetify"
 import { useLoginStore } from "@/stores/loginState.js"
 import { invoices } from "@/stores/invoiceState.js"
 
-const router = useRouter()
+// const router = useRouter()
 const theme = useTheme()
 const loginState = useLoginStore()
 const invoiceStore = invoices()
@@ -50,7 +50,7 @@ const localTheme = ref("light")
 // -----------------------------
 async function validateToken() {
   if (!loginState.token || !loginState.userName) return false
-
+  console.log("VALIDATING:", loginState.token, loginState.userInfo);
   try {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/validateToken`, {
       method: "POST",
