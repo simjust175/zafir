@@ -10,8 +10,6 @@ export const useLoginStore = defineStore("loginState", () => {
 
   // ========== ACTIONS ==========
  function login(payload) {
-    console.log("in shop", payload.name, payload.info, payload.token);
-
     token.value = payload.token;       // ✅ assign string to ref
     userName.value = payload.name || "";
     userInfo.value = payload.info || {};
