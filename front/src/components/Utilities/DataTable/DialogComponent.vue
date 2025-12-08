@@ -148,6 +148,7 @@ const save = () => {
     close();
     return;
   }
+  console.log("in edit", {body: changes, id: toEdit.invoice_id});
   
   emit('save', { body: changes, id: toEdit.invoice_id });
   close();

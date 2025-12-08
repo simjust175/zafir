@@ -280,14 +280,14 @@ function formatDateToMySQL(date) {
     String(date.getSeconds()).padStart(2, '0');
 }
 
-const prepareEditChanges = ({ body, invoice_id }) => {
-  console.log("event in prepare", body, invoice_id);
+const prepareEditChanges = ({ body, id }) => {
+  console.log("event in prepare", body, id);
   
   const updatedBody = { ...body };
 
   // If btwPercent changed and amount exists
   if ('btwPercent' in updatedBody && 'amount' in updatedBody) {
-    const currentInvoice = invoiceArray.value.find(inv => inv.invoice_id === invoice_id);
+    const currentInvoice = invoiceArray.value.find(inv => inv.invoice_id === id);
     if (currentInvoice) {
       // Determine net amount without BTW
       const netAmount = currentInvoice.btwPercent
