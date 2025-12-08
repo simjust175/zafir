@@ -148,7 +148,8 @@ const save = () => {
     close();
     return;
   }
-  console.log("in edit", {body: changes, id: toEdit.invoice_id});
+  console.log("in etered the palace");
+  console.log("in edit", toEdit.invoice_id);
   
   emit('save', { body: changes, id: toEdit.invoice_id });
   close();
