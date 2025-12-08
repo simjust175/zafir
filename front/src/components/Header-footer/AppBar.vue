@@ -31,9 +31,7 @@
       >
       <v-spacer />
 
-      <emails-live 
-        v-if="loginState.token"
-      />
+      <emails-live v-if="loginState.token" />
 
       <!-- <v-tooltip
         activator="#liveBanner"
@@ -43,12 +41,8 @@
       </v-tooltip> -->
 
       <!-- Logout/Login Button -->
-      <div
-        class="d-flex align-center justify-space-between ml-8 mr-4"
-      >
-        <notification-menu
-          v-if="loginState.token" 
-        />
+      <div class="d-flex align-center justify-space-between ml-8 mr-4">
+        <notification-menu v-if="loginState.token" />
         <v-btn
           :icon="themeIcon"
           @click="toggleTheme"
@@ -91,16 +85,16 @@ import { ref, computed, watch } from "vue";
 import { useTheme } from "vuetify";
 import { useLoginStore } from "@/stores/loginState.js";
 const loginState = useLoginStore();
-import { invoices  } from "@/stores/invoiceState.js";
+import { invoices } from "@/stores/invoiceState.js";
 const invoiceArray = invoices();
 //import LanguageSwitch from "./LanguageSwitch.vue"
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
-  
+
 //CHECK IF ONLINE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-const online = computed(()=> true)
+const online = computed(() => true)
 const theme = useTheme();
 const emit = defineEmits(['themeUpdate'])
 
@@ -110,8 +104,8 @@ function toggleTheme() {
 }
 
 const activateDialog = ref(false)
-const pushMainRoute = ()=> localStorage.token ? router.push('/') : null;
-const pushLogoHome = ()=> localStorage.getItem('token')?.length > 0 ? router.push('/') : router.push('/register');
+const pushMainRoute = () => localStorage.token ? router.push('/') : null;
+const pushLogoHome = () => localStorage.getItem('token')?.length > 0 ? router.push('/') : router.push('/register');
 
 const themeIcon = computed(() =>
   theme.global.current.value.dark
@@ -138,20 +132,28 @@ watch(
 //   }
 // );
 const logout = async () => {
+  const email = localStorage.getItem('email') || loginState.userInfo?.email;
+  console.log("email before logout", email);
+
+  if (!email) {
+    console.warn("No email in loginState, cannot logout");
+    return;
+  }
+
   const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userInfo.email}`, {
-      method: "POST",
-      headers: {
-          "Content-Type": "application/json"
-      }
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    }
   });
   const data = await res.json();
   console.log("logout", data);
   if (data.Success) {
-      // localStorage.removeItem("token");
-      // localStorage.removeItem("user_email") 
-      // loginState.token = false;
-      loginState.logout()
-      router.push("/register")
+    // localStorage.removeItem("token");
+    // localStorage.removeItem("user_email") 
+    // loginState.token = false;
+    loginState.logout()
+    router.push("/register")
   }
 }
 </script>
