@@ -192,10 +192,15 @@ const openExpandedTable = () => {
 };
 
 const logout = async () => {
-  console.log("=> =>", loginState.userName);
+    const email = loginState.userInfo?.email;
+  if (!email) {
+    console.warn("No email in loginState, cannot logout");
+    return;
+  }
+
   
-  try {
-    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${loginState.userInfo.email}`, {
+   try {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/logout/${email}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
