@@ -80,9 +80,20 @@ export const invoices = defineStore(
         console.log("db response", dbResponse.value)
         
         // Sync with realtime store
-        filtered.forEach(invoice => {
-          realtimeStore.entities.invoices.set(invoice.invoice_id || invoice.id, invoice)
-        })
+     filtered.forEach(invoice => {
+  if (!invoice) {
+    console.warn("Skipping null invoice:", invoice);
+    return;
+  }
+
+  const key = invoice.invoice_id ?? invoice.id;
+  if (!key) {
+    console.warn("Skipping invoice without ID:", invoice);
+    return;
+  }
+
+  realtimeStore.entities.invoices.set(key, invoice);
+});
       }
     }
 
