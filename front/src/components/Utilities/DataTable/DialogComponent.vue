@@ -25,7 +25,6 @@
 
       <v-card-text>
         <v-container>
-          <h5>{{ editedItem }}</h5>
           <v-row>
             <v-col cols="12">
               <v-text-field
@@ -149,8 +148,9 @@ const save = () => {
     close();
     return;
   }
-
-  emit('save', { body: changes, id: toEdit.id });
+  console.log("in edit", {body: changes, id: toEdit.invoice_id});
+  
+  emit('save', { body: changes, id: toEdit.invoice_id });
   close();
 };
 </script>
