@@ -52,7 +52,7 @@ async function validateToken() {
   if (!loginState.token || !loginState.userName) return false;
   
   try {
-    console.log("🧪 in App.vue/validateToken", loginState.userInfo?.email);
+    console.log("🧪in App.vue/validateToken", loginState.userInfo?.email, loginState.token);
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/validateToken`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
