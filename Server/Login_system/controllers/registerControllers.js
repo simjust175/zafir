@@ -49,7 +49,7 @@ class RegisterControllers{
 
     //validate Token
     static async validateLoggedInController({ body }, res) { 
-        console.log("in registerControllers.js", body);
+        console.log("in validate controllers:", body);
         
         try {
             const isTokenValid = await RegisterService.verifyLoggedInService((body));
