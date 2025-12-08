@@ -50,10 +50,9 @@ const localTheme = ref("light")
 // -----------------------------
 async function validateToken() {
   if (!loginState.token || !loginState.userName) return false;
-  console.log("in App.vue/validateToken", loginState.userName, loginState.userInfo);
   
   try {
-    console.log("in App.vue/validateToken", loginState.userInfo?.email);
+    console.log("🧪 in App.vue/validateToken", loginState.userInfo?.email);
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/validateToken`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
