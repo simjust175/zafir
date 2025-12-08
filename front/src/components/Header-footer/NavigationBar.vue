@@ -192,7 +192,7 @@ const openExpandedTable = () => {
 };
 
 const logout = async () => {
-    const email = loginState.userInfo?.email;
+    const email = localStorage.getItem('email') || loginState.userInfo?.email;
     console.log("email before logout", email);
     
   if (!email) {
