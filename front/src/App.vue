@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted, nextTick } from "vue"
 // import { useRouter } from "vue-router"
 import { useTheme } from "vuetify"
 import { useLoginStore } from "@/stores/loginState.js"
@@ -49,7 +49,15 @@ const localTheme = ref("light")
 // VALIDATE TOKEN (non-destructive)
 // -----------------------------
 async function validateToken() {
-  if (!loginState.token || !loginState.userName) return false;
+ await nextTick();
+
+  if (
+    !loginState.token ||
+    !loginState.userInfo ||
+    !loginState.userInfo.email
+  ) {
+    return false;
+  }
   
   try {
     console.log("🧪in App.vue/validateToken", loginState.userInfo?.email, loginState.token);
