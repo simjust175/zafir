@@ -13,6 +13,7 @@ export const useLoginStore = defineStore("loginState", () => {
     token.value = payload.token;       // ✅ assign string to ref
     userName.value = payload.name || "";
     userInfo.value = payload.info || {};
+    localStorage.setItem('email', payload.info.email)
   }
 
 
@@ -20,6 +21,7 @@ export const useLoginStore = defineStore("loginState", () => {
     token.value = null;
     userName.value = "";
     userInfo.value = {};
+    localStorage.removeItem('email')
   }
 
   const isLoggedIn = computed(() => !!token.value);
