@@ -105,7 +105,7 @@ function toggleTheme() {
 
 const activateDialog = ref(false)
 const pushMainRoute = () => localStorage.token ? router.push('/') : null;
-const pushLogoHome = () => localStorage.getItem('token')?.length > 0 ? router.push('/') : router.push('/register');
+const pushLogoHome = () => loginState.token?.length > 0 ? router.push('/') : router.push('/register');
 
 const themeIcon = computed(() =>
   theme.global.current.value.dark
