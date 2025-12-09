@@ -17,7 +17,7 @@ class AmountControllers {
             'emails',
             'email',
             'email = ?',
-            [body.email] // <-- pass the email as a parameter
+            [body.email]
           );
         console.log("does this email exists?", doesEmailExist);
         
