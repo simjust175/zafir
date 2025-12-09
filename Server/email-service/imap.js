@@ -8,6 +8,7 @@ import pdf from "pdf-parse/lib/pdf-parse.js";
 import analyze from "./gpt.js";
 import emailAccounts from "./imap/accounts.js";
 import { v4 as uuidv4 } from "uuid";
+import { savePdfAndGetInfo } from "./savePdf.js";
 
 dotenv.config();
 
@@ -76,17 +77,6 @@ function extractPrice(text) {
   return result.amount ? result : null;
 }
 
-// --------- IMAP Configuration ---------
-// const imapConfig = {
-//   user: process.env.EMAIL_USER,
-//   password: process.env.EMAIL_PASS,
-//   host: process.env.EMAIL_HOST,
-//   port: parseInt(process.env.EMAIL_PORT),
-//   tls: true,
-//   tlsOptions: { rejectUnauthorized: false },
-// };
-
-// --------- Core Email Handling ---------
 function openInbox(imap, cb) {
   imap.openBox("INBOX", false, cb);
 }
@@ -114,25 +104,33 @@ function handleNewEmails(imap) {
                 for (const att of parsed.attachments || []) {
                   if (att.contentType === "application/pdf") {
                     try {
+                      const saved = savePdfAndGetInfo(att.filename, att.content);
+
+                      // Parse the PDF text
                       const pdfData = await pdf(att.content);
                       const senderEmail = parsed.from?.value?.[0]?.address;
                       const extracted = await analyze(pdfData.text, senderEmail);
 
-                      if (extracted) {
-                        results.push({ ...extracted, pdf_file: att.filename });
+                      if (extracted && saved) {
+                        results.push({
+                          ...extracted,
+                          pdf_file: saved.stored_filename,
+                          pdf_checksum: saved.checksum,
+                          pdf_saved: !saved.skipped,
+                        });
+                      }}
+                      catch (err) {
+                        console.error("❌ PDF parse error:", err);
                       }
-                    } catch (err) {
-                      console.error("❌ PDF parse error:", err);
                     }
+                }
+
+                  if (uid) {
+                    imap.addFlags(uid, "\\Seen", () => { });
                   }
-                }
 
-                if (uid) {
-                  imap.addFlags(uid, "\\Seen", () => {});
-                }
-
-                res(); // resolve this message's promise
-              })
+                  res(); // resolve this message's promise
+                })
               .catch((err) => {
                 console.error("❌ simpleParser error:", err);
                 res(); // still resolve to avoid hanging
@@ -157,36 +155,5 @@ function handleNewEmails(imap) {
   });
 }
 
-// // --------- Start Listening Loop ---------
-// function startListening(postToDb) {
-//   const imap = new Imap(imapConfig);
-//   imap.once("ready", async () => {
-//     openInbox(imap, async (err) => {
-//       if (err) throw err;
-//       console.log("👀 IMAP ready, watching for new emails...");
-
-//       imap.on("mail", async () => {
-//         console.log("📨 New mail event detected");
-//         const handleResults = await handleNewEmails(imap);
-//         if (handleResults) postToDb(handleResults);
-//       });
-
-//       // Also check unseen emails on startup
-//       const handleResults = await handleNewEmails(imap);
-//       if (handleResults) postToDb(handleResults);
-//     });
-//   });
-
-//   imap.once("error", (err) => {
-//     console.error("❌ IMAP error:", err);
-//     setTimeout(() => startListening(postToDb), 5000);
-//   });
-
-//   imap.once("end", () => {
-//     console.warn("⚠️ IMAP connection ended, restarting...");
-//     setTimeout(() => startListening(postToDb), 5000);
-//   });
-//   imap.connect();
-// }
 
 export { openInbox, handleNewEmails }
