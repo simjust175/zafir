@@ -200,14 +200,24 @@ const selectedProjectData = computed(() =>
 
 // Select first project by default
 watch(
-  () => projects.value,
-  (newProjects) => {
-    if (newProjects.length > 0 && !selectedProject.value) {
-      selectedProject.value = newProjects[0].id
+  () => props.invoices,
+  (newInvoices) => {
+    if (newInvoices.length > 0 && !selectedProject.value) {
+      selectedProject.value = projects.value[0].id;
     }
+    loading.value = false;
   },
   { immediate: true }
 )
+// watch(
+//   () => projects.value,
+//   (newProjects) => {
+//     if (newProjects.length > 0 && !selectedProject.value) {
+//       selectedProject.value = newProjects[0].id
+//     }
+//   },
+//   { immediate: true }
+// )
 
 // Simulate data load
 onMounted(() => {
