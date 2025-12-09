@@ -88,7 +88,7 @@ export const invoices = defineStore(
 
     const filtered = processIncomingData(data.amounts);
     dbResponse.value = filtered;
-    console.log("db response", dbResponse.value);
+    console.log("db response 🧪🧪🧪", dbResponse.value);
 
     // --- SYNC to realtime store (safe, single pass) ---
     const rs = useRealtimeStore();
