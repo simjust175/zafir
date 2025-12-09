@@ -175,7 +175,8 @@
 <script setup>
 import SnackBar from '../SnackBar.vue';
 import { ref, computed, watch, nextTick } from 'vue';
-//THEME 
+import { invoices as useInvoiceStore } from '@/stores/invoiceState.js'; // adjust path if your stores folder differs
+const invoiceStore = useInvoiceStore();
 import { useTheme } from "vuetify"
   const theme = useTheme();
   const themeColor = computed(() =>
@@ -356,36 +357,66 @@ const save = () => {
 };
 
 const patchChanges = async (changes) => {
+  const { id, body } = changes;
   try {
-    const response = await fetch(
-      `${import.meta.env.VITE_BASE_URL}/invoice/patch/invoices?id=${changes.id}`,
-      {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(changes.body)
-      }
-    );
+    // Try to use the store (optimistic updates + sync)
+    console.log("➡️ patchChanges using invoiceStore.updateInvoice", id, body);
+    const result = await invoiceStore.updateInvoice(id, body);
+    const index = invoiceArray.value.findIndex(inv => inv.invoice_id === id || inv.id === id);
 
-    if (!response.ok) throw new Error('Failed to patch invoice');
-    const data = await response.json();
-    // ✅ Always update the corresponding item by ID
-    const index = invoiceArray.value.findIndex(inv => inv.invoice_id === changes.id);
     if (index !== -1) {
       Object.assign(invoiceArray.value[index], {
         ...invoiceArray.value[index],
         ...changes.body
       });
+      // // If store returned an updated object, use it; otherwise merge the changes.
+      // if (result && typeof result === 'object') {
+      //   //Object.assign(invoiceArray.value[index], result);
+      //   invoiceArray.value[index] = { ...invoiceArray.value[index], ...result };
+      // } else {
+      //   //Object.assign(invoiceArray.value[index], { ...invoiceArray.value[index], ...body });
+      //   invoiceArray.value[index] = { ...invoiceArray.value[index], ...body };
+      // }
     }
 
-    updatedId.value = changes.id; // 🚨 Highlight updated row
-    setTimeout(() => {
-      updatedId.value = null;
-    }, 2000); // Reset highlight
-
     close();
-    console.log('✅ Successfully patched:', data);
-  } catch (error) {
-    console.error('❌ Patch error:', error.message);
+    console.log('✅ Successfully edited via store:', result);
+    return result;
+  } catch (storeErr) {
+    // If store update fails for any reason, fall back to the old network path (preserves behaviour)
+    console.warn('⚠️ invoiceStore.updateInvoice failed, falling back to direct PATCH:', storeErr);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BASE_URL}/invoice/patch/invoices?id=${id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to patch invoice (fallback)');
+
+      const data = await response.json();
+
+      // Ensure local invoiceArray gets updated (same logic as before)
+      const index = invoiceArray.value.findIndex(inv => inv.invoice_id === id || inv.id === id);
+      if (index !== -1) {
+        Object.assign(invoiceArray.value[index], {
+          ...invoiceArray.value[index],
+          ...body
+        });
+      }
+
+      close();
+      console.log('✅ Successfully edited (fallback):', data);
+      return data;
+    } catch (netErr) {
+      console.error('❌ Patch error (fallback):', netErr.message || netErr);
+      // keep UI stable — don't close dialog so user can retry
+      throw netErr;
+    }
   }
 };
 </script>
