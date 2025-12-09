@@ -12,8 +12,8 @@ class Amount {
     
     const sql = "SELECT user_id FROM users WHERE token = ?";
     const [rows] = await db.query(sql, [token]);
-    return rows;
     console.log("in models/validateByToken", rows);
+    return rows;
   }
 
   static async getAmounts() {
