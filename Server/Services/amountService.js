@@ -52,6 +52,7 @@ class AmountService {
   }
 
   static async getService({ token }) {
+    console.log("in amountService token", token);
     console.log("in amountService", await Amount.validateByToken(token));
     
     const [{ user_id }] = await Amount.validateByToken(token);
