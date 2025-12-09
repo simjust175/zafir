@@ -71,6 +71,7 @@ try {
 }
 
 try {
+  console.log("Serving PDFs from:", path.join(__dirname, "email-service/downloads"));
   app.use("/file/", express.static(path.join(__dirname, "email-service/downloads")));
   console.log("✅ Static file route set");
 } catch (err) {
