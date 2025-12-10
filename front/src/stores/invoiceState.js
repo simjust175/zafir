@@ -60,63 +60,62 @@ export const invoices = defineStore(
     }
 
     const getAmounts = async () => {
-  console.log("Starting to fetch...", loginState.token);
-  const token = loginState.token;
-  if (!token) {
-    console.log("No token found");
-    return;
-  }
+      console.log("Starting to fetch...", loginState.token);
+      const token = loginState.token;
+      if (!token) {
+        console.log("No token found");
+        return;
+      }
 
-  warnings.value = [];
+      warnings.value = [];
 
-  try {
-    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/get`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    });
+      try {
+        const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/get`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
 
-    if (!res.ok) {
-      console.error("getAmounts fetch failed:", res.status, await res.text());
-      return;
-    }
-
-    const data = await res.json();
-    console.log("Raw data example:", data.amounts?.[0]);
-
-    if (!Array.isArray(data.amounts)) return;
-
-    const filtered = processIncomingData(data.amounts);
-    dbResponse.value = filtered;
-    console.log("db response 🧪🧪🧪", dbResponse.value);
-
-    // --- SYNC to realtime store (safe, single pass) ---
-    const rs = useRealtimeStore();
-
-    // Clear old cached invoices once
-    if (rs?.entities?.invoices && typeof rs.entities.invoices.clear === "function") {
-      rs.entities.invoices.clear();
-    }
-
-    // Use the realtime store's bulkInsert if available (it triggers reactivity)
-    if (typeof rs.bulkInsert === "function") {
-      rs.bulkInsert("invoices", filtered);
-    } else {
-      // Fallback: populate the map directly (less ideal if updateCounter not exposed)
-      filtered.forEach(inv => {
-        const key = inv.invoice_id ?? inv.id;
-        if (!key) {
-          console.warn("Skipping invoice without ID:", inv);
+        if (!res.ok) {
+          console.error("getAmounts fetch failed:", res.status, await res.text());
           return;
         }
-        rs.entities.invoices.set(key, structuredClone ? structuredClone(inv) : JSON.parse(JSON.stringify(inv)));
-      });
-      // Note: if your realtime store exposes an update trigger, call it here.
-    }
-  } catch (err) {
-    console.error("getAmounts error:", err);
-  }
-};
+
+        const data = await res.json();
+        console.log("Raw data example:", data.amounts?.[0]);
+
+        if (!Array.isArray(data.amounts)) return;
+
+        const filtered = processIncomingData(data.amounts);
+        dbResponse.value = filtered;
+
+        // --- SYNC to realtime store (safe, single pass) ---
+        const rs = useRealtimeStore();
+
+        // Clear old cached invoices once
+        if (rs?.entities?.invoices && typeof rs.entities.invoices.clear === "function") {
+          rs.entities.invoices.clear();
+        }
+
+        // Use the realtime store's bulkInsert if available (it triggers reactivity)
+        if (typeof rs.bulkInsert === "function") {
+          rs.bulkInsert("invoices", filtered);
+        } else {
+          // Fallback: populate the map directly (less ideal if updateCounter not exposed)
+          filtered.forEach(inv => {
+            const key = inv.invoice_id ?? inv.id;
+            if (!key) {
+              console.warn("Skipping invoice without ID:", inv);
+              return;
+            }
+            rs.entities.invoices.set(key, structuredClone ? structuredClone(inv) : JSON.parse(JSON.stringify(inv)));
+          });
+          // Note: if your realtime store exposes an update trigger, call it here.
+        }
+      } catch (err) {
+        console.error("getAmounts error:", err);
+      }
+    };
 
     const getActiveEmails = async () => {
       const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/activeEmails`)
