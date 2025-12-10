@@ -65,5 +65,5 @@ function resetTimer(router) {
       router.push("/register"); // ✔ now works safely
     }
 
-  }, 10 * 3 * 1000);
+  }, 10 * 60 * 1000);
 }
