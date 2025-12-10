@@ -217,15 +217,24 @@ watch(
   { immediate: true }
 )
 watch(
-  projects,
-  (list) => {
-    if (list.length > 0) {
-      selectedProject.value ??= list[0].id
+  selectedProjectData,
+  (newVal) => {
+    if (!newVal) {
+      selectedProject.value = projects.value[0]?.id
     }
-    loading.value = false
   },
   { immediate: true }
 )
+// watch(
+//   projects,
+//   (list) => {
+//     if (list.length > 0) {
+//       selectedProject.value ??= list[0].id
+//     }
+//     loading.value = false
+//   },
+//   { immediate: true }
+// )
 
 // Simulate data load
 onMounted(() => {
