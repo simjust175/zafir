@@ -25,8 +25,6 @@ class GeneralService {
   }
 
   static async getFilteredService({ params, query }) {
-    console.log("getFilteredService is being called");
-    
     const columns = query.what || "*";
     let whereClause = "";
     let values = [];
@@ -107,7 +105,6 @@ class GeneralService {
       whereClause = "project_id = ?";
       params = [query.project];
     } else if (query.allWarnings) {
-      console.log("in allWarnings");
       whereClause = "conflict_resolved IS NULL";
     } else {
       throw new Error("Valid query must be provided for patch");

@@ -53,7 +53,6 @@ class AmountService {
 
   static async getService({ token }) {
     const [{ user_id }] = await Amount.validateByToken(token);
-    console.log("test user_id from token in amountService", user_id, token)
     if (!user_id) throw new Error("Invalid user token");
     return await Amount.getAmounts();
   }

@@ -44,8 +44,6 @@ class AmountControllers {
     }
 
     static async getAmounts({ body }, res) {
-        console.log("body in amountControllers/getAmount", body);
-        
         if (!body) return res.status(400).json({ message: 'Error in amountServices/getAmountService' });
         try {
             const amounts = await AmountService.getService(body);

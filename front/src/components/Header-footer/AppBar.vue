@@ -85,9 +85,6 @@ import { ref, computed, watch } from "vue";
 import { useTheme } from "vuetify";
 import { useLoginStore } from "@/stores/loginState.js";
 const loginState = useLoginStore();
-import { invoices } from "@/stores/invoiceState.js";
-const invoiceArray = invoices();
-//import LanguageSwitch from "./LanguageSwitch.vue"
 import { useRouter } from 'vue-router';
 
 const router = useRouter();

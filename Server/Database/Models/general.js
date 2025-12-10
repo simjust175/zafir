@@ -81,8 +81,6 @@ class General {
       invoicing: ["invoicing_amount"],
       users: ["deleted_at", "user_name", "user_email"]
     };
-
-    console.log("in models => =>", table, body, whereClause, params);
     
     const validFields = fieldWhitelist[table] || [];
     const updates = Object.entries(body).filter(([key]) => validFields.includes(key));
@@ -95,7 +93,6 @@ class General {
     const values = updates.map(([, value]) => value);
 
     const sql = `UPDATE \`${table}\` SET ${setClause} WHERE ${whereClause}`;
-    console.log("in models =>=>", sql);
     
     const [result] = await db.query(sql, [...values, ...params]);
 
