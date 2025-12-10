@@ -148,10 +148,10 @@
   </v-container>
 </template>
 
+<!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { ref, computed, onMounted, watch } from "vue"
 
-// Props from parent
 const props = defineProps({
   invoices: { type: Array, default: () => [] },
   emails: Array,
