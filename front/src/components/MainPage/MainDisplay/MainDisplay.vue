@@ -209,15 +209,15 @@ watch(
   },
   { immediate: true }
 )
-// watch(
-//   () => projects.value,
-//   (newProjects) => {
-//     if (newProjects.length > 0 && !selectedProject.value) {
-//       selectedProject.value = newProjects[0].id
-//     }
-//   },
-//   { immediate: true }
-// )
+watch(
+  () => projects.value,
+  (newProjects) => {
+    if (newProjects.length > 0 && !selectedProject.value) {
+      selectedProject.value = newProjects[0].id
+    }
+  },
+  { immediate: true }
+)
 
 // Simulate data load
 onMounted(() => {
