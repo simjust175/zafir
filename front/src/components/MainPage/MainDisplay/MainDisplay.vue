@@ -210,11 +210,12 @@ watch(
   { immediate: true }
 )
 watch(
-  () => projects.value,
-  (newProjects) => {
-    if (newProjects.length > 0 && !selectedProject.value) {
-      selectedProject.value = newProjects[0].id
+  projects,
+  (list) => {
+    if (list.length > 0) {
+      selectedProject.value ??= list[0].id
     }
+    loading.value = false
   },
   { immediate: true }
 )
