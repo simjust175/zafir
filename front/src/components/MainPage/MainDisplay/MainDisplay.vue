@@ -102,7 +102,7 @@
                 class="pa-4"
               >
                 <table-parent
-                  :key="selectedProjectData?.id"
+                  :key="selectedProjectData?.id || 'no-project'"
                   :search-val="search"
                   class="mt-4"
                   :invoices="invoicesByProject[selectedProjectData?.name]?.invoices || []"
@@ -150,7 +150,7 @@
 
 <!-- eslint-disable vue/require-default-prop -->
 <script setup>
-import { ref, computed, onMounted, watch } from "vue"
+import { ref, computed, onMounted, watch, watchEffect } from "vue"
 
 const props = defineProps({
   invoices: { type: Array, default: () => [] },
@@ -180,6 +180,12 @@ const projects = computed(() => {
   return set
 })
 
+// Prevent null before rendering anything
+watchEffect(() => {
+  if (!selectedProject.value && projects.value.length) {
+    selectedProject.value = projects.value[0].id
+  }
+}) 
 // Map project → invoices
 const invoicesByProject = computed(() => {
   const map = {}
