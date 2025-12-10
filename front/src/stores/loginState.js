@@ -52,7 +52,7 @@ function resetTimer(router) {
   inactivityTimer = setTimeout(() => {
     const login = useLoginStore();
     login.logout();
-
+    
     if (login.token) {
       window.dispatchEvent(new CustomEvent("token-warning", {
         detail: {
@@ -65,5 +65,5 @@ function resetTimer(router) {
       router.push("/register"); // ✔ now works safely
     }
 
-  }, 10 * 3 * 1000);
+  }, 10 * 60 * 1000);
 }
