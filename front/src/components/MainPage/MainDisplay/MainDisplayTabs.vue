@@ -293,7 +293,6 @@ watch(filteredProjects, (val) => {
 // Watch tab changes
 watch(tab, (val) => {
   if (val === "__add__") {
-    //addProjectDialog.value = true;
     // Reset tab so dialog isn't triggered forever
     tab.value = filteredProjects.value[0] || projects.value[0] || null;
   }
