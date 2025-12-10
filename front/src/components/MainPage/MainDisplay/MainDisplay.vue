@@ -101,6 +101,7 @@
                 rounded="xl"
                 class="pa-4"
               >
+              <h2>{{ selectedProjectData?.id || 'no-project' }}</h2>
                 <table-parent
                   :key="selectedProjectData?.id || 'no-project'"
                   :search-val="search"

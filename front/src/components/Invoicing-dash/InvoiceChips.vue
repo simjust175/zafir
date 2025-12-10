@@ -4,7 +4,7 @@
       color="primary"
       label
     >
-      Total invoiced: 
+      Invoiced: 
       {{ formatCurrency(totalInvoiced || 0) }}
     </v-chip>
   
@@ -14,27 +14,9 @@
       label
       class="ml-2"
     >
-      Total Paid:       
+      Paid:       
       {{ formatCurrency(totalPaid || 0) }}
     </v-chip>
-    <!-- Add Button -->
-    <!-- <v-btn
-            icon="mdi-plus"
-            size="small"
-            rounded="xl"
-            color="indigo-darken-2"
-            variant="tonal"
-            @click="$emit('open-dialog', 'invoiced', false)"
-          /> -->
-    <!-- Add Button -->
-    <!-- <v-btn
-          icon="mdi-plus"
-          size="small"
-          rounded="xl"
-          color="green-darken-2"
-          variant="tonal"
-          @click="$emit('open-dialog', 'paid', false)"
-        /> -->
   </div>
 </template>
 
