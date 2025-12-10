@@ -1,11 +1,17 @@
 <template>
-  <transition name="fade">
-    <div
+  <transition name="slide-fade">
+    <v-alert
       v-if="visible"
-      class="fixed top-0 left-0 w-full z-50 bg-red-600 text-white text-center py-3 shadow-md"
+      type="error"
+      variant="tonal"
+      class="fixed top-0 left-0 w-full z-50 rounded-0 py-4 shadow-lg backdrop-blur-sm"
+      border="bottom"
+      density="comfortable"
+      closable
+      @click:close="visible = false"
     >
       <strong>{{ title }}</strong> — {{ message }}
-    </div>
+    </v-alert>
   </transition>
 </template>
 
@@ -20,23 +26,33 @@ onMounted(() => {
   window.addEventListener("token-warning", (e) => {
     title.value = e.detail.title || "Session Warning";
     message.value = e.detail.message || "";
+
     visible.value = true;
 
-    // Auto-hide after 8 seconds (safe)
-    // setTimeout(() => {
-    //   visible.value = false;
-    // }, 8000);
+    // Auto-hide
+    setTimeout(() => {
+      visible.value = false;
+    }, 6000);
   });
 });
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity .3s ease;
+/* Slide down + fade */
+.slide-fade-enter-active {
+  transition: all .35s ease;
 }
-.fade-enter-from,
-.fade-leave-to {
+.slide-fade-leave-active {
+  transition: all .25s ease;
   opacity: 0;
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateY(-15px);
+}
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

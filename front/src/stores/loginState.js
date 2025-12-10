@@ -1,8 +1,5 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
-import { useRouter } from "vue-router";
-
-const router = useRouter();
 
 export const useLoginStore = defineStore("loginState", () => {
 
@@ -11,63 +8,62 @@ export const useLoginStore = defineStore("loginState", () => {
   const userInfo = ref({});
   const theme = ref("light");
 
-  // ========== ACTIONS ==========
- function login(payload) {
-    token.value = payload.token;       // ✅ assign string to ref
+  function login(payload) {
+    token.value = payload.token;
     userName.value = payload.name || "";
     userInfo.value = payload.info || {};
-    localStorage.setItem('email', payload.info.email)
+    localStorage.setItem("email", payload.info.email);
   }
-
 
   function logout() {
     token.value = null;
     userName.value = "";
     userInfo.value = {};
-    localStorage.removeItem('email')
+    localStorage.removeItem("email");
   }
-  
 
   const isLoggedIn = computed(() => !!token.value);
 
   return { token, userName, userInfo, theme, login, logout, isLoggedIn };
-}, 
-{
+}, {
   persist: {
-    storage: localStorage,     // persist automatically
-    paths: ["token", "userName", "userInfo", "theme"] // saves only what matters
+    storage: localStorage,
+    paths: ["token", "userName", "userInfo", "theme"]
   }
 });
 
+
+// ===================================================
+// AUTO LOGOUT (router-safe)
+
 let inactivityTimer;
 
-export function setupAutoLogout() {
-  resetTimer();
+export function setupAutoLogout(router) {
+  resetTimer(router);
 
-  // Reset timer on any interaction
   ["mousemove", "keydown", "click", "scroll", "touchstart"].forEach(evt => {
-    window.addEventListener(evt, resetTimer, { passive: true });
+    window.addEventListener(evt, () => resetTimer(router), { passive: true });
   });
 }
 
-function resetTimer() {
+function resetTimer(router) {
   clearTimeout(inactivityTimer);
+
   inactivityTimer = setTimeout(() => {
     const login = useLoginStore();
 
-    if (login.token) { 
-      console.log("🔒 Auto-logout after 10 min inactivity");
-       window.dispatchEvent(
-        new CustomEvent("token-warning", {
-          detail: {
-            title: "Logged Out",
-            message: "You were logged out due to inactivity."
-          }
-        })
-      );
+    if (login.token) {
+      window.dispatchEvent(new CustomEvent("token-warning", {
+        detail: {
+          title: "Logged Out",
+          message: "You were logged out due to inactivity."
+        }
+      }));
 
       login.logout();
-      router.push('/register')
+
+      router.push("/register"); // ✔ now works safely
     }
-  }, 10 * 60 * 1000); // 10 minutes
+
+  }, 10 * 3 * 1000);
 }

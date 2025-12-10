@@ -26,6 +26,9 @@ import { useTheme } from "vuetify"
 import { useLoginStore } from "@/stores/loginState.js"
 import { invoices } from "@/stores/invoiceState.js"
 import { setupAutoLogout } from "@/stores/loginState";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const theme = useTheme()
 const loginState = useLoginStore()
@@ -69,33 +72,30 @@ async function validateToken() {
 // MOUNT LOGIC
 // -----------------------------
 onMounted(() => {
-  setupAutoLogout();
+  setupAutoLogout(router);
 });
+
 onMounted(async () => {
   loading.value = true
 
-  // Trust Pinia persistence first
   if (loginState.isLoggedIn) {
-    // Apply saved theme
     if (loginState.theme) {
       localTheme.value = loginState.theme
       theme.global.name.value = loginState.theme
     }
+
+    // Only validate if user is logged in
+    const isValid = await validateToken()
+    if (!isValid) {
+      window.dispatchEvent(new CustomEvent("token-warning", {
+        detail: { title: "Session Expired", message: "Please re-authenticate." }
+      }));
+    }
   }
 
-  // Validate in background
-  const isValid = await validateToken()
-  if (!isValid) {
-    window.dispatchEvent(new CustomEvent("token-warning", {
-      detail: { title: "Session Expired", message: "Please re-authenticate." }
-    }));
-  }
-
-  // Fetch data
   await getPayments()
   loading.value = false
 })
-
 // -----------------------------
 // FETCH PAYMENTS
 // -----------------------------
