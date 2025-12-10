@@ -1,5 +1,8 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 export const useLoginStore = defineStore("loginState", () => {
 
@@ -23,6 +26,7 @@ export const useLoginStore = defineStore("loginState", () => {
     userInfo.value = {};
     localStorage.removeItem('email')
   }
+  
 
   const isLoggedIn = computed(() => !!token.value);
 
@@ -35,62 +39,35 @@ export const useLoginStore = defineStore("loginState", () => {
   }
 });
 
-// import { ref } from "vue";
-// import { defineStore } from "pinia";
+let inactivityTimer;
 
-// export const setLogin = defineStore("loginState", () => {
-//   // State
-//   const token = ref(null);
-//   const userName = ref("");
-//   const user = ref("");
-//   const userInfo = ref({});
-//   const theme = ref("light");
+export function setupAutoLogout() {
+  resetTimer();
 
-//   // Actions
-//   function setLogin({ token: token, name, info }) {
-//     token.value = token;
-//     user.value = name || "";
-//     userName.value = name || "";
-//     userInfo.value = info || {};
+  // Reset timer on any interaction
+  ["mousemove", "keydown", "click", "scroll", "touchstart"].forEach(evt => {
+    window.addEventListener(evt, resetTimer, { passive: true });
+  });
+}
 
-//     // Optional: persist in localStorage
-//     localStorage.setItem("token", token);
-//     localStorage.setItem("user_email", name);
-//   }
+function resetTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    const login = useLoginStore();
 
-//   function logout() {
-//     token.value = null;
-//     userName.value = "";
-//     user.value = "";
-//     userInfo.value = {};
-//     localStorage.removeItem("token");
-//     localStorage.removeItem("user_email");
-//   }
+    if (login.token) { 
+      console.log("🔒 Auto-logout after 10 min inactivity");
+       window.dispatchEvent(
+        new CustomEvent("token-warning", {
+          detail: {
+            title: "Logged Out",
+            message: "You were logged out due to inactivity."
+          }
+        })
+      );
 
-//   function initializeFromLocalStorage() {
-//     const storedToken = localStorage.getItem("token");
-//     const storedUser = localStorage.getItem("user_email");
-
-//     if (storedToken) token.value = storedToken;
-//     if (storedUser) userName.value = storedUser;
-//   }
-
-//   function setTheme(newTheme) {
-//     theme.value = newTheme;
-//   }
-
-//   return {
-//     token,
-//     userName,
-//     user,
-//     userInfo,
-//     theme,
-//     setLogin,
-//     logout,
-//     initializeFromLocalStorage,
-//     setTheme
-//   };
-// },
-// {
-//   persist: true
-// });
+      login.logout();
+      router.push('/register')
+    }
+  }, 10 * 60 * 1000); // 10 minutes
+}
