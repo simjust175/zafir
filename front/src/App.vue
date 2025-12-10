@@ -71,13 +71,10 @@ async function validateToken() {
 // -----------------------------
 // MOUNT LOGIC
 // -----------------------------
-onMounted(() => {
-  setupAutoLogout(router);
-});
 
 onMounted(async () => {
   loading.value = true
-
+  setupAutoLogout(router);
   if (loginState.isLoggedIn) {
     if (loginState.theme) {
       localTheme.value = loginState.theme
