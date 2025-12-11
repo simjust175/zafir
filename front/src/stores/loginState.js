@@ -51,9 +51,10 @@ function resetTimer(router) {
 
   inactivityTimer = setTimeout(() => {
     const login = useLoginStore();
-    login.logout();
     
     if (login.token) {
+      console.log("AUTO-LOGOUT FIRED:");
+
       window.dispatchEvent(new CustomEvent("token-warning", {
         detail: {
           title: "Logged Out",
@@ -61,8 +62,11 @@ function resetTimer(router) {
         }
       }));
 
+      login.logout();
+      setTimeout(() => {
+        router.push("/register");
+      }, 8000)
 
-      router.push("/register"); // ✔ now works safely
     }
 
   }, 10 * 60 * 1000);

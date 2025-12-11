@@ -17,22 +17,22 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-
 const visible = ref(false);
 const title = ref("");
 const message = ref("");
 
 onMounted(() => {
   window.addEventListener("token-warning", (e) => {
+    console.log("Logout event triggred!", visible.value);
+    
     title.value = e.detail.title || "Session Warning";
     message.value = e.detail.message || "";
-
     visible.value = true;
 
     // Auto-hide
     setTimeout(() => {
       visible.value = false;
-    }, 6000);
+    }, 10 * 60 * 1000);
   });
 });
 </script>

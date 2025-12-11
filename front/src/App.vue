@@ -16,8 +16,11 @@
         v-if="loading"
         :overlay-trigger="loading"
       />
-      <session-banner />
-      <router-view v-slot="{ Component }">
+      <session-banner v-if="!loading" />
+      <router-view
+        v-if="!loading"
+        v-slot="{ Component }"
+      >
         <transition>
           <component :is="Component" />
         </transition>
