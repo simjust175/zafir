@@ -62,7 +62,7 @@
           :color="progressColor"
           height="8"
           rounded
-          bg-color="grey-lighten-3"
+          bg-color="grey-lighten-1"
         />
         <div class="text-caption text-medium-emphasis mt-1">
           {{ formatCurrency(payments) }} / {{ formatCurrency(invoicing) }} paid
