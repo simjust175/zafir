@@ -9,14 +9,8 @@
   </v-app>
 </template>
 
-<script setup>
-import { useTheme } from 'vuetify';
-import { useRouter } from 'vue-router';
+<script setup>;
 import RegisterMain from '@/components/RegisterForms/RegisterMain.vue';
-
-
-const router = useRouter();
-const theme = useTheme();
 </script>
 
 <style></style>

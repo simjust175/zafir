@@ -3,9 +3,11 @@
 </template>
 
 <script setup>
-//import { ref } from 'vue'
 import MainPage from '@/components/MainPage/MainPage.vue';
-//import AppBar from '@/components/Header-footer/AppBar.vue';
-
-// const language = ref(store.lang)
+import { useLoginStore } from "@/stores/loginState.js";
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+const router = useRouter()
+const login = useLoginStore()
+onMounted(()=> {if(!login.token) router.push("/")})
 </script>
