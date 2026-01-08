@@ -11,15 +11,13 @@
 </template>
 
 <script setup>
-import ForgotPwd from "./ForgotPwd.vue"
-// import LogIn from "./LogIn.vue";
+import ForgotPwd from "./ForgotPwd.vue";
 import LoginForm2 from "./LoginForm2.vue";
 import { ref, watch, defineEmits } from "vue";
 const emit = defineEmits(["forgotActive"])
 
 const forgotPassword = ref(false);
 watch(forgotPassword , (newVal)=>{
-    console.log("forgotActive", newVal);
     emit("forgotActive", newVal);
 })
 

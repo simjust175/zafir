@@ -33,7 +33,7 @@
 
     <div class="forgot-link">
       <p
-        class="cursor-pointer text-blue-darken-4 text-body-2 text-right"
+        class="cursor-pointer text-white text-body-2 text-right"
         @click="emitForgot"
       >
         Forgot password?
@@ -84,6 +84,7 @@ const validate = async () => {
 const login = async () => {
   const isValid = await validate();
   if (!isValid) return;
+console.log("creds", credentials);
 
   try {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/register/login`, {
@@ -127,15 +128,15 @@ const login = async () => {
 };
 
 const emitForgot = () => {
-  if (!credentials.user_email) {
-    toggleAlert.value = true;
-    return;
-  }
+  // if (!credentials.user_email) {
+  //   toggleAlert.value = true;
+  //   return;
+  // }
   toggleAlert.value = false;
   emit("forgot");
 };
 
-watch(credentials.pwd, () => {
+watch(()=> credentials.pwd, () => {
   if (credentials.pwd.length > 0) {
     toggleAlert.value = false;
   }

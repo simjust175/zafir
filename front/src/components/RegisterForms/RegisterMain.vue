@@ -4,7 +4,7 @@
     fill-height
     class="pa-0 mt-4 "
   >
-  <!-- :class="themeBackgroundColor" -->
+    <!-- :class="themeBackgroundColor" -->
     <!-- <v-card
       color="blue"
       elevation="4"
@@ -38,7 +38,7 @@
         <v-card
           class="py-4 px-7"
           width="450"
-          image="../../../public/construct_bg2.jpeg"
+          image="/construct_bg2.jpeg"
         >
           <LoginForm
             v-bind="$attrs"

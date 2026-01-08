@@ -1,78 +1,144 @@
 <template>
-  <div class="me-n2 text-center d-flex flex-column mb-4 align-center justify-space-between">
-    <v-btn
-      density="comfortable"
-      class="ml-auto"
-      icon="$close"
-      variant="plain"
-      @click="$emit('close')"
-    />
+  <v-container class="pt-6">
+    <!-- =====================
+         FORM
+    ====================== -->
+    <v-card
+      v-if="!sent"
+      elevation="3"
+      rounded="xl"
+      class="pa-6"
+    >
+      <h3 class="text-h6 mb-4">Forgot your password?</h3>
 
-    <h3 class="text-h6 mb-4">
-      Verify Your Account
-    </h3>
+      <v-text-field
+        v-model="email"
+        label="Email address"
+        type="email"
+        variant="outlined"
+        prepend-inner-icon="mdi-email-outline"
+      />
 
-    <div class="text-body-2">
-      {{ OTPLabel }}
-    </div>
-  </div>
+      <v-btn
+        block
+        color="primary"
+        size="large"
+        class="mt-4"
+        :disabled="!validEmail || loading"
+        :loading="loading"
+        @click="sendResetLink"
+      >
+        Send reset link
+      </v-btn>
+    </v-card>
 
+    <!-- =====================
+         SUCCESS STATE
+    ====================== -->
+    <v-card
+      v-else
+      elevation="2"
+      rounded="xl"
+      class="pa-8 text-center success-card"
+    >
+      <v-icon
+        size="64"
+        color="primary"
+        class="mb-4 pulse"
+      >
+        mdi-email-check-outline
+      </v-icon>
 
-  <v-form>
-    <v-otp-input
-      v-model="OTPcode"
-      :label="OTPLabel"
-      variant="outlined"
-      color="surface"
-    />
-  </v-form>
+      <h3 class="text-h6 mb-2">
+        Check your inbox
+      </h3>
 
-  <div class="d-flex justify-center">
-    <v-btn
-      class="my-4"
-      color="purple"
-      height="40"
-      text="Verify"
-      variant="flat"
-      width="70%"
-    />
-  </div>
+      <p class="text-body-2 text-medium-emphasis mb-4">
+        If an account exists for <strong>{{ maskedEmail }}</strong>,
+        we’ve sent a secure password reset link.
+      </p>
 
-  <div class="text-caption">
-    Didn't receive the code? <a
-      href="#"
-      @click.prevent="otp = ''"
-    >Resend</a>
-  </div>
+      <p class="text-caption mb-6">
+        The link expires in 15 minutes.
+      </p>
+
+      <v-btn
+        variant="text"
+        color="primary"
+        @click="resend"
+      >
+        Resend email
+      </v-btn>
+    </v-card>
+  </v-container>
 </template>
 
 <script setup>
-import { computed, watch, ref } from "vue";
+import { ref, computed } from "vue";
 
-// const props = defineProps({
-//     forgot: Boolean
-// })
-defineEmits('close')
+const email = ref("");
+const sent = ref(false);
+const loading = ref(false);
 
-const userEmail = localStorage.getItem("user_email");
+const validEmail = computed(() =>
+  /.+@.+\..+/.test(email.value)
+);
 
-const OTPcode = ref("");
+const maskedEmail = computed(() => {
+  const [name, domain] = email.value.split("@");
+  if (!domain) return "";
+  return `${name.slice(0, 2)}***@${domain}`;
+});
 
-const OTPLabel = computed(() => `Enter the OTP sent to email: ${userEmail.slice(0, 4)}*******  Please check your email and paste the code below`)
+async function sendResetLink() {
+  loading.value = true;
+  console.log("triggred reset");
+  
+  try {
+    await fetch(`${import.meta.env.VITE_BASE_URL}/register/forgot_pwd`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_email: email.value })
+    });
 
+    // Always show success (security best practice)
+    sent.value = true;
 
+  } catch {
+    // still show success to avoid email enumeration
+    sent.value = true;
+  } finally {
+    loading.value = false;
+  }
+}
 
-
-watch(OTPcode, (val) => {
-    if (val.length >= 6) {
-        console.log("RUN OTP!!");
-    }
-})
-
-// watch(props.forgot, (newVal)=>{
-//     forgotPwd.value = newVal;
-// })
-
+function resend() {
+  sent.value = false;
+}
 </script>
 
-<style></style>
+<style scoped>
+.success-card {
+  max-width: 420px;
+  margin: auto;
+}
+
+.pulse {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+}
+</style>

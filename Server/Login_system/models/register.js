@@ -8,24 +8,21 @@ class Register {
 
     //Common Function
     static async getByEmail(body) {
-        console.log("body in register/getByEmail", body);
-        
         const sql = `SELECT * FROM users where user_email = ? AND deleted_at IS NULL`;
         const [userNameAvailable] = await db.query(sql, [body.user_email]);
-        console.log("userAvailible", sql, userNameAvailable);
         return userNameAvailable;
     };
 
     static async patchUser(id, body) {
         const fields = Object.keys(body);
         const values = Object.values(body);
-    
+
         // Build placeholders for each field
         const placeholders = fields.map(field => `${field} = ?`).join(", ");
-    
+
         const sql = `UPDATE users SET ${placeholders} WHERE user_id = ?`;
         const [patchedUser] = await db.query(sql, [...values, id]);
-    
+
         return patchedUser;
     }
 
@@ -70,18 +67,35 @@ class Register {
 
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    static async verifyLoggedInByToken(user_email, token){
+    static async verifyLoggedInByToken(user_email, token) {
         const sql = "SELECT user_email, token FROM users WHERE user_email = ? AND token = ?"
         const [tokenIsValid, _] = await db.query(sql, [user_email, token]);
         return tokenIsValid;
     }
 
 
-    static async forgotPwd(user_email){
+    static async forgotPwd(user_email) {
+        const sql = "SELECT user_id, user_email FROM users WHERE user_email = ? AND deleted_at IS NULL";
+        const [rows] = await db.query(sql, [user_email]);
+        return rows;
+    }
 
-        const sql = "SELECT user_email FROM users WHERE user_email = ? AND token = ?"
-        const [tokenIsValid, _] = await db.query(sql, [user_email]);
-        return tokenIsValid;
+    // Verify reset token
+    static async verifyResetToken(reset_token) {
+    const sql = `
+      SELECT user_id, user_email 
+      FROM users 
+      WHERE reset_token = ? AND deleted_at IS NULL
+    `;
+    const [rows] = await db.query(sql, [reset_token]);
+    return rows;
+}
+
+    // Clear reset token after password change
+    static async clearResetToken(user_id) {
+        const sql = "UPDATE users SET reset_token = NULL WHERE user_id = ?";
+        const [result] = await db.query(sql, [user_id]);
+        return result;
     }
 
 }

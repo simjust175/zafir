@@ -53,8 +53,6 @@ function resetTimer(router) {
     const login = useLoginStore();
     
     if (login.token) {
-      console.log("AUTO-LOGOUT FIRED:");
-
       window.dispatchEvent(new CustomEvent("token-warning", {
         detail: {
           title: "Logged Out",

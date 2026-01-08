@@ -71,11 +71,7 @@ try {
 }
 
 try {
-  console.log("🧪🧪🧪🧪🧪🧪🧪🧪 /file/ called");
-  
   app.use("/file/", express.static(path.join(__dirname, "email-service/downloads")));
-  console.log("📁🗃️🗃️ Serving PDFs from:", path.join(__dirname, "email-service/downloads"));
-  console.log("✅ Static file route set");
 } catch (err) {
   console.error("❌ Failed to set static file route:", err);
 }

@@ -1,5 +1,7 @@
 import Register from "../models/register.js";
 import bcrypt from "bcrypt";
+import JWT from 'jsonwebtoken'
+import { sendResetPasswordEmail } from "../reset_email/sendResetPasswordEmail.js"
 
 class RegisterService {
     static async registerNewUser(body) {
@@ -29,7 +31,6 @@ class RegisterService {
     static async loginUser(body) {
         const isDataValid = await Register.validateUserData(body);
         const dataFromDB = await Register.getByEmail(body);
-        console.log("isdatavalid ->", isDataValid, "dataFromDb", dataFromDB, "BODY", body);
 
         if (!isDataValid || dataFromDB.length === 0) throw new Error("invalid user name");
         const [{ user_name, user_email, pwd, user_id }] = dataFromDB;
@@ -46,14 +47,11 @@ class RegisterService {
     };
 
     static async logoutUser(params) {
-        console.log("params in registerServicee/logout", params);
-        
         if (!params.user_email) throw new Error("email must be provided")
         try {
             const [user] = await Register.getByEmail(params);
             if (!user || !user.user_id) throw new Error("User not found");
             const removeToken = await Register.patchUser(user.user_id, { token: null })
-            //console.log("user status:", setStatusAsInactive);
             return removeToken;
         } catch (error) {
             throw new Error(error);
@@ -71,16 +69,52 @@ class RegisterService {
         }
     }
     static async forgotPwdService({ user_email }) {
-        if (!user_email || !token) throw new Error("You must be logged in to access info.")
+
+        const user = await Register.forgotPwd(user_email);
+        if (!user || user.length === 0) return null;
+
+        const resetToken = JWT.sign(
+            { user_email },
+            process.env.JWT_SECRET,
+            { expiresIn: "15m" }
+        );
+
+        await Register.patchUser(user[0].user_id, { reset_token: resetToken });
+
+        await sendResetPasswordEmail({
+            email: user_email,
+            resetToken
+        });
+
+        return true;
+    }
+
+    static async resetPwdService({ reset_token, new_password }) {
+
+        if (!reset_token || !new_password)
+            throw new Error("Missing reset token or password");
+
+        let payload;
         try {
-            const isTokenValid = await Register.forgotPwd(user_email);
-            console.log("is the token valid: ", isTokenValid.length > 1);
-            if (isTokenValid.length < 1) return null;
-            console.log("its valid: ", isTokenValid);
-            return true
-        } catch (error) {
-            throw new Error(error);
+            payload = JWT.verify(reset_token, process.env.JWT_SECRET);
+            console.log("in reset pwd services", payload);
+        } catch {
+            return null; // expired or invalid token
         }
+
+        const user = await Register.verifyResetToken(reset_token);
+        if (!user || user.length === 0)
+            return null;
+
+        const { user_id, user_email } = user[0];
+
+        const salt = await bcrypt.genSalt(12);
+        const hashed = await bcrypt.hash(new_password, salt);
+
+        await Register.patchUser(user_id, { pwd: hashed });
+        await Register.clearResetToken(user_id);
+
+        return { user_id, email: user_email };
     }
 
     static async patchUser(id, body) {
