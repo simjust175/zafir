@@ -67,5 +67,5 @@ function resetTimer(router) {
 
     }
 
-  }, 1 * 60 * 1000);
+  }, 10 * 60 * 1000);
 }
