@@ -122,7 +122,7 @@ const outstanding = computed(() => {
 })
 
 const formatCurrency = (val) =>
-  new Intl.NumberFormat('nl-NL', {
+  new Intl.NumberFormat('en-EN', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 0,
