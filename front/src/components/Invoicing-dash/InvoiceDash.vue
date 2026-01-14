@@ -80,15 +80,14 @@ const totalPaid = computed(() => {
 })
 
 const baseInvoiced = computed(() => {
-  console.log("INV NV INV INV INV", invoicing.value);
-  
   const entries = invoicing.value.filter(p => p.project === props.currentProjectId)
   return entries.reduce((acc, curr) => acc + curr.amount, 0)
 })
 
 const totalInvoiced = computed(() => {
-  console.log('marginAdjustedTotal:', props.marginAdjustedTotal)
-  return props.marginAdjustedTotal != null ? props.marginAdjustedTotal : baseInvoiced.value
+  // console.log('marginAdjustedTotal:', props.marginAdjustedTotal)
+  // return props.marginAdjustedTotal != null ? props.marginAdjustedTotal : baseInvoiced.value
+    return baseInvoiced.value
 })
 
 const percentPaid = computed(() => {
