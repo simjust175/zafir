@@ -2,16 +2,40 @@
   <div class="table-container">
     <div class="table-header">
       <div class="header-left">
-        <h1 class="project-title">{{ projectName }}</h1>
+        <h1 class="project-title">
+          {{ projectName }}
+        </h1>
         <span class="supplier-count">{{ groupedInvoices.length }} suppliers</span>
       </div>
       <div class="header-right">
         <div class="search-wrapper">
-          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <svg
+            class="search-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle
+              cx="11"
+              cy="11"
+              r="8"
+            />
+            <line
+              x1="21"
+              y1="21"
+              x2="16.65"
+              y2="16.65"
+            />
           </svg>
-          <input v-model="search" type="text" class="search-input" placeholder="Search..." />
+          <input
+            v-model="search"
+            type="text"
+            class="search-input"
+            placeholder="Search..."
+          >
         </div>
         <div class="action-buttons">
           <download-file
@@ -44,7 +68,10 @@
       </div>
     </div>
 
-    <div v-if="expanded" class="metrics-section">
+    <div
+      v-if="expanded"
+      class="metrics-section"
+    >
       <invoice-dash
         :current-project-id="project_id"
         :expanded="expanded"
@@ -53,43 +80,98 @@
     </div>
 
     <div class="table-content">
-      <table v-if="!loading && filteredInvoices.length > 0" class="invoice-table">
+      <table
+        v-if="!loading && filteredInvoices.length > 0"
+        class="invoice-table"
+      >
         <thead>
           <tr>
-            <th class="col-supplier" @click="sortBy('issuer')">
+            <th
+              class="col-supplier"
+              @click="sortBy('issuer')"
+            >
               <span class="th-content">
                 Supplier
-                <svg v-if="sortKey === 'issuer'" class="sort-icon" :class="{ desc: sortOrder === 'desc' }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg
+                  v-if="sortKey === 'issuer'"
+                  class="sort-icon"
+                  :class="{ desc: sortOrder === 'desc' }"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
                   <polyline points="18 15 12 9 6 15" />
                 </svg>
               </span>
             </th>
-            <th class="col-amount" @click="sortBy('totalAmount')">
+            <th
+              class="col-amount"
+              @click="sortBy('totalAmount')"
+            >
               <span class="th-content">
                 Amount
-                <svg v-if="sortKey === 'totalAmount'" class="sort-icon" :class="{ desc: sortOrder === 'desc' }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg
+                  v-if="sortKey === 'totalAmount'"
+                  class="sort-icon"
+                  :class="{ desc: sortOrder === 'desc' }"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
                   <polyline points="18 15 12 9 6 15" />
                 </svg>
               </span>
             </th>
-            <th class="col-margin">Margin</th>
-            <th class="col-total" @click="sortBy('totalWithMargin')">
+            <th class="col-margin">
+              Margin
+            </th>
+            <th
+              class="col-total"
+              @click="sortBy('totalWithMargin')"
+            >
               <span class="th-content">
                 Total
-                <svg v-if="sortKey === 'totalWithMargin'" class="sort-icon" :class="{ desc: sortOrder === 'desc' }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg
+                  v-if="sortKey === 'totalWithMargin'"
+                  class="sort-icon"
+                  :class="{ desc: sortOrder === 'desc' }"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
                   <polyline points="18 15 12 9 6 15" />
                 </svg>
               </span>
             </th>
-            <th class="col-status">Status</th>
+            <th class="col-status">
+              Status
+            </th>
             <th class="col-action" />
           </tr>
         </thead>
         <tbody>
-          <tr v-for="group in filteredInvoices" :key="group.issuer" class="invoice-row" :class="{ highlighted: updatedIssuer === group.issuer }" @click="openInvoiceDialog(group)">
+          <tr
+            v-for="group in filteredInvoices"
+            :key="group.issuer"
+            class="invoice-row"
+            :class="{ highlighted: updatedIssuer === group.issuer }"
+            @click="openInvoiceDialog(group)"
+          >
             <td class="col-supplier">
               <div class="supplier-cell">
-                <div class="supplier-avatar" :style="{ background: getAvatarColor(group.issuer) }">
+                <div
+                  class="supplier-avatar"
+                  :style="{ background: getAvatarColor(group.issuer) }"
+                >
                   {{ getInitials(group.issuer) }}
                 </div>
                 <div class="supplier-info">
@@ -101,19 +183,35 @@
             <td class="col-amount">
               <span class="amount-value">{{ formatCurrency(group.totalAmount) }}</span>
             </td>
-            <td class="col-margin" @click.stop>
-              <margin-setter :item="group" @margin-update="(newMargin) => updateMargin(group, newMargin)" />
+            <td
+              class="col-margin"
+              @click.stop
+            >
+              <margin-setter
+                :item="group"
+                @margin-update="(newMargin) => updateMargin(group, newMargin)"
+              />
             </td>
             <td class="col-total">
               <span class="total-value">{{ formatCurrency(group.totalWithMargin) }}</span>
             </td>
             <td class="col-status">
-              <span class="status-pill" :class="group.allChecked ? 'verified' : 'pending'">
+              <span
+                class="status-pill"
+                :class="group.allChecked ? 'verified' : 'pending'"
+              >
                 {{ group.allChecked ? 'Verified' : 'Pending' }}
               </span>
             </td>
             <td class="col-action">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </td>
@@ -121,14 +219,32 @@
         </tbody>
       </table>
 
-      <div v-else-if="loading" class="state-container">
-        <v-progress-circular indeterminate color="#171717" size="24" width="2" />
+      <div
+        v-else-if="loading"
+        class="state-container"
+      >
+        <v-progress-circular
+          indeterminate
+          color="#171717"
+          size="24"
+          width="2"
+        />
         <p>Loading...</p>
       </div>
 
-      <div v-else class="state-container empty">
+      <div
+        v-else
+        class="state-container empty"
+      >
         <div class="empty-icon">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
           </svg>
@@ -162,6 +278,7 @@
   </div>
 </template>
 
+<!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { invoices as invoiceStore } from '@/stores/invoiceState.js';
@@ -261,7 +378,7 @@ const allInvoicesChecked = computed(() => {
 });
 
 // --- UTILITY FUNCTIONS ---
-const formatCurrency = (value) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(Number(value) || 0);
+const formatCurrency = (value) => new Intl.NumberFormat('en-EN', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(Number(value) || 0);
 
 const getInitials = (name) => {
   if (!name) return '?';
@@ -292,6 +409,7 @@ const refreshComputedData = () => {
 };
 
 const handleNewInvoice = (invoice) => {
+  console.log("new emaik entered", invoice)
   if (!invoice) return;
   if (!invoice.invoice_id) return;
   // Inject safely into store, deduplicated

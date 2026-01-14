@@ -205,7 +205,7 @@ const formatCurrency = (val) =>
 }
 
 .metric-action:hover {
-  background: #171717;
+  background: #6366F1;
   border-color: #171717;
   color: #fff;
 }
