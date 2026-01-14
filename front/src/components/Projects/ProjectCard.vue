@@ -18,9 +18,27 @@
             <h3 class="project-name">
               {{ projectName }}
             </h3>
-            <p class="project-email">
-              {{ projectEmailDisplay }}
-            </p>
+            <div class="d-flex align-center">
+              <p class="project-email mr-2">
+                {{ projectEmailDisplay }}
+              </p>
+              <v-tooltip
+                :text="copied ? 'Copied!' : 'Copy email'"
+                location="top"
+              >
+                <template #activator="{ props }">
+                  <v-icon
+                    v-bind="props"
+                    :icon="copied ? 'mdi-check-circle' : 'mdi-content-copy'"
+                    :color="copied ? 'green-lighten-2' : 'grey-darken-1'"
+                    :size="copied ? 20 : 15"
+                    class="cursor-pointer copy-icon"
+                    :class="{ 'fade-icon': copied }"
+                    @click="copyProjectEmail(projectEmailDisplay)"
+                  />
+                </template>
+              </v-tooltip>
+            </div>
           </div>
         </div>
         <v-btn
@@ -95,6 +113,15 @@
       </div>
     </v-card>
 
+    <v-snackbar
+      v-model="snackbar"
+      color="primary"
+      timeout="2000"
+      rounded="lg"
+    >
+      {{ snackbarMessage }}
+    </v-snackbar>
+
     <complete-project-dialog
       :project="project"
       :trigger="dialogTrigger"
@@ -126,6 +153,7 @@ const props = defineProps({
 const invoiceStore = invoices()
 const dialogTrigger = ref(false)
 const editDialog = ref(false)
+const copied = ref(false)
 
 const projectId = computed(() => props.project?.[0]?.project_id ?? null)
 const projectName = computed(() => props.project?.[0]?.project_name || "Unnamed Project")
@@ -140,6 +168,23 @@ const projectEmailDisplay = computed(() => {
   return match?.email_address || 'No email'
 })
 
+const snackbar = ref(false)
+const snackbarMessage = ref("")
+
+const copyProjectEmail = async (emailAddress) => {
+  try {
+    await navigator.clipboard.writeText(emailAddress)
+
+    copied.value = true
+
+    setTimeout(() => {
+      copied.value = false
+    }, 1000)
+
+  } catch (err) {
+    console.error("Copy failed", err)
+  }
+}
 const invoiceCount = computed(() => props.project?.length || 0)
 const paidCount = computed(() => props.project?.filter(inv => inv.paid)?.length || 0)
 
@@ -251,6 +296,7 @@ const progressColorClass = computed(() => {
   font-size: 0.7125rem;
   color: rgb(var(--v-theme-grey-500));
   margin: 2px 0 0;
+  text-transform: none;
 }
 
 .card-body {
@@ -308,5 +354,16 @@ const progressColorClass = computed(() => {
 
 .card-actions {
   padding: 0 20px 20px;
+}
+
+.icon-bounce {
+  animation: bounce 0.4s ease;
+}
+
+@keyframes bounce {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.3); }
+  60%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
 }
 </style>
