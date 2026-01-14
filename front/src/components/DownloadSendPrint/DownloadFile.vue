@@ -2,7 +2,6 @@
 <!-- eslint-disable vue/no-template-shadow -->
 <template>
   <div>
-    <!-- Invisible canvas but still renderable -->
     <canvas
       id="invoice-chart"
       ref="invoiceCanvas"
@@ -17,52 +16,52 @@
       "
     />
 
-    <v-tooltip
-      location="top"
-      open-delay="300"
+    <button 
+      class="action-btn"
+      :class="{ loading: isGenerating }"
+      :disabled="isGenerating"
+      :title="print ? 'Print summary' : 'Download summary'"
+      @click="checkBeforeAction"
     >
-      <template #activator="{ props }">
-        <v-btn
-          v-bind="props"
-          :icon="print ? 'mdi-printer-outline' : 'mdi-download-outline'"
-          :loading="isGenerating"
-          @click="checkBeforeAction"
-        />
-      </template>
-      <span>{{ print ? 'Print' : 'Download' }} summary</span>
-    </v-tooltip>
+      <svg v-if="!isGenerating && !print" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      <svg v-else-if="!isGenerating && print" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+        <rect x="6" y="14" width="12" height="8"></rect>
+      </svg>
+      <span v-if="isGenerating" class="spinner"></span>
+    </button>
 
-    <!-- ⚠️ Warning Confirmation Dialog -->
-    <v-dialog
-      v-model="warningDialog"
-      max-width="450"
-    >
-      <v-card
-        rounded="xl"
-        class="pa-4"
-      >
-        <v-card-title class="text-h6 font-weight-bold text-warning-darken-2">
-          ⚠️ Not all invoices are double-checked
-        </v-card-title>
-        <v-card-text class="text-body-2 text-grey-darken-2">
-          Some invoices have not been double-checked yet.
-          Are you sure you want to continue {{ print ? 'printing' : 'downloading' }} this summary?
-        </v-card-text>
-        <v-card-actions class="justify-end">
-          <v-btn
-            text
-            @click="warningDialog = false"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-            color="warning"
-            @click="forceContinue"
-          >
-            Yes, Continue
-          </v-btn>
-        </v-card-actions>
-      </v-card>
+    <v-dialog v-model="warningDialog" max-width="400">
+      <div class="dialog-container">
+        <div class="dialog-header warning">
+          <div class="dialog-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <h2 class="dialog-title">Pending Verification</h2>
+          <button class="close-btn" @click="warningDialog = false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <p>Some invoices have not been verified yet. Would you like to proceed with {{ print ? 'printing' : 'downloading' }} this summary?</p>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn-secondary" @click="warningDialog = false">Cancel</button>
+          <button class="btn-warning" @click="forceContinue">Continue Anyway</button>
+        </div>
+      </div>
     </v-dialog>
   </div>
 </template>
@@ -73,9 +72,6 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import Chart from "chart.js/auto";
 
-/* ------------------------------------------
-   Props with safe defaults
--------------------------------------------*/
 const props = defineProps({
   groupedInvoices: { type: Array, default: () => [] },
   total: { type: Number, default: 0 },
@@ -85,18 +81,12 @@ const props = defineProps({
   doubleChecked: { type: Boolean, default: true },
 });
 
-/* ------------------------------------------
-   State
--------------------------------------------*/
 const warningDialog = ref(false);
 const isGenerating = ref(false);
 let pendingAction = null;
 let chartInstance = null;
 const invoiceCanvas = ref(null);
 
-/* ------------------------------------------
-   Helpers
--------------------------------------------*/
 const formatCurrency = (amount) => {
   const n = typeof amount === "number" ? amount : parseFloat(amount);
   return isNaN(n)
@@ -107,9 +97,6 @@ const formatCurrency = (amount) => {
       })}`;
 };
 
-/* ------------------------------------------
-   Chart Rendering (Hidden Canvas)
--------------------------------------------*/
 const renderChart = () => {
   const canvas = invoiceCanvas.value;
   if (!canvas) return;
@@ -124,7 +111,6 @@ const renderChart = () => {
     typeof g?.totalWithMargin === "number" ? g.totalWithMargin : 0
   );
 
-  // destroy old chart
   if (chartInstance) {
     try { chartInstance.destroy(); } catch {}
     chartInstance = null;
@@ -138,13 +124,13 @@ const renderChart = () => {
         {
           label: "Total (€)",
           data,
-          backgroundColor: "rgba(63,81,181,0.7)",
+          backgroundColor: "rgba(23,23,23,0.8)",
         },
       ],
     },
     options: {
       responsive: false,
-      animation: false, // faster for invisible chart
+      animation: false,
       plugins: {
         legend: { display: false },
       },
@@ -168,12 +154,9 @@ onUnmounted(() => {
   chartInstance = null;
 });
 
-/* ------------------------------------------
-   PDF Utilities
--------------------------------------------*/
 const drawFooter = (doc, pageHeight) => {
   const y = pageHeight - 12;
-  doc.setFillColor(63, 81, 181);
+  doc.setFillColor(23, 23, 23);
   doc.rect(0, y, doc.internal.pageSize.getWidth(), 12, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(9);
@@ -196,9 +179,6 @@ const drawCompanyInfo = (doc, y) => {
   ].forEach((line, i) => doc.text(line, 14, y + i * 5));
 };
 
-/* ------------------------------------------
-   Build PDF
--------------------------------------------*/
 const buildPdf = async () => {
   const doc = new jsPDF();
 
@@ -230,7 +210,6 @@ const buildPdf = async () => {
 
   let bottomY = (doc.lastAutoTable?.finalY || 30) + 15;
 
-  // payments
   if (props.payments.length) {
     doc.setFontSize(14);
     doc.text("Payments", 14, bottomY);
@@ -260,7 +239,6 @@ const buildPdf = async () => {
 
   drawCompanyInfo(doc, bottomY);
 
-  // Give Chart.js time to finish render
   await new Promise((res) => setTimeout(res, 100));
 
   if (chartInstance) {
@@ -279,9 +257,6 @@ const buildPdf = async () => {
   return doc;
 };
 
-/* ------------------------------------------
-   Download + Print
--------------------------------------------*/
 const handleDownload = async () => {
   isGenerating.value = true;
   const doc = await buildPdf();
@@ -303,9 +278,6 @@ const handlePrint = async () => {
   isGenerating.value = false;
 };
 
-/* ------------------------------------------
-   Confirmation / flow control
--------------------------------------------*/
 const checkBeforeAction = () => {
   if (!props.doubleChecked) {
     warningDialog.value = true;
@@ -322,9 +294,153 @@ const forceContinue = () => {
 };
 </script>
 
-
 <style scoped>
-#invoice-chart {
-  display: none;
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.action-btn:hover {
+  background: #fafafa;
+  border-color: #d4d4d4;
+  color: #171717;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #eaeaea;
+  border-top-color: #171717;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.dialog-container {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.dialog-header.warning {
+  background: #fffbeb;
+  border-bottom-color: #fde68a;
+}
+
+.dialog-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #fef3c7;
+  border-radius: 10px;
+  color: #d97706;
+}
+
+.dialog-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  color: #171717;
+  margin: 0;
+}
+
+.close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.close-btn:hover {
+  background: rgba(0,0,0,0.05);
+  color: #171717;
+}
+
+.dialog-body {
+  padding: 20px 24px;
+}
+
+.dialog-body p {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #fafafa;
+  border-top: 1px solid #eaeaea;
+}
+
+.btn-secondary,
+.btn-warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #171717;
+  border: 1px solid #eaeaea;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+}
+
+.btn-warning {
+  background: #f59e0b;
+  color: #fff;
+}
+
+.btn-warning:hover {
+  background: #d97706;
 }
 </style>

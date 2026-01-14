@@ -1,344 +1,142 @@
 <template>
-  <v-dialog
-    v-model="dialog"
-    scrollable
-  >
-    <v-card
-      v-if="url"
-      rounded="lg"
-      elevation="3"
-      class="pa-0"
-      width="600"
-      :class="cardBackground"
-    >
-      <!-- Toolbar -->
-      <v-toolbar
-        flat
-        density="comfortable"
-        height="56"
-        :class="toolbarBackground"
-      >
-        <v-btn
-          icon="mdi-close"
-          variant="text"
-          size="small"
-          :color="iconColor"
-          :disabled="mode === 'double-check' && !allConfirmed"
-          @click="handleClose"
-        />
-        <v-toolbar-title class="text-body-1 font-weight-medium">
-          PDF Preview
-        </v-toolbar-title>
-        <v-spacer />
-        <div class="d-flex align-center text-body-2 mr-4">
-          <v-icon
-            size="18"
-            class="mr-1"
-            :color="iconColor"
-          >
-            mdi-file-pdf-box
-          </v-icon>
-          <span>{{ fileDetails?.issuer || 'Unknown Supplier' }}</span>
+  <v-dialog v-model="dialog" max-width="650" scrollable>
+    <div v-if="url" class="pdf-viewer-dialog">
+      <!-- Header -->
+      <PdfDialogToolbar
+        :issuer="fileDetails?.issuer"
+        :pdf-url="pdfUrl"
+        :disable-close="mode === 'double-check' && !allConfirmed"
+        @close="handleClose"
+      />
+
+      <!-- Conflict Alert -->
+      <div v-if="mode === 'conflict'" class="conflict-alert">
+        <v-icon size="20" color="warning">mdi-alert-circle</v-icon>
+        <div class="alert-content">
+          <span class="alert-title">{{ conflictTitle }}</span>
+          <span class="alert-message">{{ conflictMessage }}</span>
         </div>
-        <v-btn
-          icon="mdi-open-in-new"
-          variant="text"
-          size="small"
-          :href="pdfUrl"
-          target="_blank"
-          rel="noopener"
-          :color="iconColor"
-          title="Open in New Tab"
-        />
-        <v-btn
-          icon="mdi-download"
-          variant="text"
-          size="small"
-          :href="pdfUrl"
-          download
-          :color="iconColor"
-          title="Download PDF"
-        />
-      </v-toolbar>
-
-      <!-- Conflict Banner -->
-      <v-alert
-        v-if="mode === 'conflict'"
-        type="warning"
-        border="start"
-        prominent
-        variant="tonal"
-        class="mb-2"
-      >
-        <template #title>
-          {{ conflictTitle }}
-        </template>
-        {{ conflictMessage }}
-      </v-alert>
-
-      <!-- Duplicate Action Bar -->
-      <div
-        v-if="mode === 'conflict' && conflictType === 'duplicate'"
-        class="d-flex flex-wrap justify-end pa-3 ga-2 sticky-action-bar"
-      >
-        <v-btn
-          color="success"
-          rounded="lg"
-          elevation="1"
-          @click="keepBoth"
-        >
-          <v-icon left>
-            mdi-content-duplicate
-          </v-icon> Keep Both
-        </v-btn>
-      
-        <v-btn
-          color="warning"
-          rounded="lg"
-          elevation="1"
-          @click="keepDuplicate"
-        >
-          <v-icon left>
-            mdi-file-replace
-          </v-icon> Keep Duplicate
-        </v-btn>
-        <v-btn
-          color="error"
-          rounded="lg"
-          elevation="1"
-          @click="keepNone"
-        >
-          <v-icon left>
-            mdi-delete
-          </v-icon> Delete Both
-        </v-btn>
       </div>
 
-      <!-- Summary / Edit -->
-      <div
-        v-if="mode !== 'conflict' || conflictType === 'unknown-supplier'"
-        :class="[summaryBackground, 'pa-4', 'text-body-2']"
-      >
-        <div class="d-flex justify-space-between flex-wrap ga-8">
-          <!-- Supplier -->
-          <div>
-            <strong>Supplier:</strong>
-            <template v-if="mode === 'conflict' && conflictType === 'unknown-supplier'">
-              <v-text-field
-                v-model="editableFields.issuer"
-                variant="outlined"
-                density="compact"
-                hide-details
-                placeholder="Enter supplier name..."
-                style="max-width: 250px"
-              />
-            </template>
-            <template v-else>
-              <span v-if="!editing.issuer">{{ editableFields.issuer || fileDetails.issuer }}</span>
-              <v-text-field
-                v-else
-                v-model="editableFields.issuer"
-                variant="outlined"
-                density="compact"
-                hide-details
-                style="max-width: 250px"
-                @keyup.enter="finishEdit('issuer')"
-              />
-            </template>
+      <!-- Duplicate Actions -->
+      <div v-if="mode === 'conflict' && conflictType === 'duplicate'" class="duplicate-actions">
+        <button class="action-btn success" @click="keepBoth">
+          <v-icon size="16">mdi-content-duplicate</v-icon>
+          Keep Both
+        </button>
+        <button class="action-btn warning" @click="keepDuplicate">
+          <v-icon size="16">mdi-file-replace</v-icon>
+          Keep Duplicate
+        </button>
+        <button class="action-btn danger" @click="keepNone">
+          <v-icon size="16">mdi-delete</v-icon>
+          Delete Both
+        </button>
+      </div>
 
-            <v-chip
-              v-if="mode === 'double-check'"
-              class="ml-2"
-              :color="confirmed.issuer ? 'success' : 'warning'"
-              label
-              @click="toggleConfirm('issuer')"
-            >
-              <v-icon left>
-                {{ confirmed.issuer ? 'mdi-check-circle' : 'mdi-alert' }}
-              </v-icon>
-              {{ confirmed.issuer ? 'Looks good' : 'Check?' }}
-            </v-chip>
-            <v-btn
-              v-if="mode === 'double-check' && !confirmed.issuer"
-              icon="mdi-pencil"
-              size="small"
-              variant="text"
-              @click="editing.issuer = true"
-            />
-
-            <br>
-            <strong>Issued:</strong> {{ formatDate(fileDetails.invoice_date) }}
+      <!-- Summary Section -->
+      <div v-if="mode !== 'conflict' || conflictType === 'unknown-supplier'" class="summary-panel">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">Supplier</span>
+            <div class="value-row">
+              <template v-if="mode === 'conflict' && conflictType === 'unknown-supplier'">
+                <input
+                  v-model="editableFields.issuer"
+                  type="text"
+                  class="inline-input"
+                  placeholder="Enter supplier name..."
+                >
+              </template>
+              <template v-else>
+                <span v-if="!editing.issuer">{{ editableFields.issuer || fileDetails?.issuer }}</span>
+                <input
+                  v-else
+                  v-model="editableFields.issuer"
+                  type="text"
+                  class="inline-input"
+                  @keyup.enter="finishEdit('issuer')"
+                >
+              </template>
+              <div v-if="mode === 'double-check'" class="confirm-chip" :class="{ confirmed: confirmed.issuer }" @click="toggleConfirm('issuer')">
+                <v-icon size="14">{{ confirmed.issuer ? 'mdi-check-circle' : 'mdi-alert' }}</v-icon>
+                {{ confirmed.issuer ? 'Confirmed' : 'Check' }}
+              </div>
+              <button v-if="mode === 'double-check' && !confirmed.issuer" class="edit-btn" @click="editing.issuer = true">
+                <v-icon size="14">mdi-pencil</v-icon>
+              </button>
+            </div>
+            <span class="sub-value">Issued: {{ formatDate(fileDetails?.invoice_date) }}</span>
           </div>
 
-          <!-- Amounts -->
-          <div>
-            <strong>BTW percent:</strong> {{ fileDetails.btwPercent || 0 }}%
-            <v-chip
-              v-if="mode === 'double-check'"
-              class="ml-2"
-              :color="confirmed.btw ? 'success' : 'warning'"
-              label
-              @click="toggleConfirm('btw')"
-            >
-              <v-icon left>
-                {{ confirmed.btw ? 'mdi-check-circle' : 'mdi-alert' }}
-              </v-icon>
-              {{ confirmed.btw ? 'Looks good' : 'Check?' }}
-            </v-chip>
-            <br>
-
-            <strong>Total (invoice):</strong> €{{ formattedAmount }}
-            <v-chip
-              v-if="mode === 'double-check'"
-              class="ml-2"
-              :color="confirmed.amount ? 'success' : 'warning'"
-              label
-              @click="toggleConfirm('amount')"
-            >
-              <v-icon left>
-                {{ confirmed.amount ? 'mdi-check-circle' : 'mdi-alert' }}
-              </v-icon>
-              {{ confirmed.amount ? 'Looks good' : 'Check?' }}
-            </v-chip>
+          <div class="summary-item">
+            <span class="label">VAT: {{ fileDetails?.btwPercent || 0 }}%</span>
+            <div class="value-row">
+              <div v-if="mode === 'double-check'" class="confirm-chip" :class="{ confirmed: confirmed.btw }" @click="toggleConfirm('btw')">
+                <v-icon size="14">{{ confirmed.btw ? 'mdi-check-circle' : 'mdi-alert' }}</v-icon>
+                {{ confirmed.btw ? 'Confirmed' : 'Check' }}
+              </div>
+            </div>
+            <span class="label mt-2">Total: €{{ formattedAmount }}</span>
+            <div class="value-row">
+              <div v-if="mode === 'double-check'" class="confirm-chip" :class="{ confirmed: confirmed.amount }" @click="toggleConfirm('amount')">
+                <v-icon size="14">{{ confirmed.amount ? 'mdi-check-circle' : 'mdi-alert' }}</v-icon>
+                {{ confirmed.amount ? 'Confirmed' : 'Check' }}
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Unknown supplier buttons -->
-        <div
-          v-if="mode === 'conflict' && conflictType === 'unknown-supplier'"
-          class="text-right mt-4"
-        >
-          <v-btn
-            color="primary"
-            @click="saveSupplier"
-          >
-            Save
-          </v-btn>
-          <v-btn
-            variant="outlined"
-            class="ml-2"
-            @click="keepUnknown"
-          >
-            Keep as Unknown
-          </v-btn>
+        <!-- Unknown Supplier Actions -->
+        <div v-if="mode === 'conflict' && conflictType === 'unknown-supplier'" class="unknown-actions">
+          <button class="btn btn-primary" @click="saveSupplier">Save</button>
+          <button class="btn btn-secondary" @click="keepUnknown">Keep as Unknown</button>
         </div>
 
-        <!-- Double-check confirm -->
-        <div
-          v-if="mode === 'double-check'"
-          class="text-right mt-4"
-        >
-          <v-btn
-            color="primary"
-            variant="flat"
-            :disabled="!allConfirmed"
-            @click="confirmDoubleCheck"
-          >
-            <v-icon left>
-              mdi-check-bold
-            </v-icon>
+        <!-- Double-check Confirm -->
+        <div v-if="mode === 'double-check'" class="confirm-section">
+          <button class="btn btn-primary" :disabled="!allConfirmed" @click="confirmDoubleCheck">
+            <v-icon size="16">mdi-check-bold</v-icon>
             Confirm & Continue
-          </v-btn>
-          <div
-            v-if="!allConfirmed"
-            class="text-caption text-error mt-1"
-          >
-            Confirm all fields before continuing.
-          </div>
+          </button>
+          <p v-if="!allConfirmed" class="confirm-hint">Confirm all fields before continuing.</p>
         </div>
       </div>
 
-      <!-- PDF Viewer Area -->
-      <v-card-text
-        class="pa-0"
-        style="height: 80vh; overflow: auto;"
-      >
-        <!-- Duplicate Conflict PDFs -->
+      <!-- PDF Content -->
+      <div class="pdf-content">
         <template v-if="mode === 'conflict' && conflictType === 'duplicate'">
-          <div class="d-flex flex-wrap ga-4 pa-4">
-            <div style="flex: 1; min-width: 300px;">
-              <h4 class="mb-2">
-                Current File
-              </h4>
-              <v-responsive
-                aspect-ratio="1.414"
-                class="rounded-lg elevation-1"
-              >
-                <embed
-                  :src="pdfUrl"
-                  type="application/pdf"
-                  width="100%"
-                  height="100%"
-                  style="border-radius: 12px; border: 1px solid var(--v-theme-surface-variant);"
-                >
-              </v-responsive>
+          <div class="pdf-compare">
+            <div class="pdf-panel">
+              <h4>Current File</h4>
+              <embed :src="pdfUrl" type="application/pdf" width="100%" height="100%">
             </div>
-            <div style="flex: 1; min-width: 300px;">
-              <h4 class="mb-2">
-                Possible Duplicate
-              </h4>
-              <v-responsive
-                aspect-ratio="1.414"
-                class="rounded-lg elevation-1"
-              >
-                <embed
-                  :src="duplicatePdfUrl"
-                  type="application/pdf"
-                  width="100%"
-                  height="100%"
-                  style="border-radius: 12px; border: 1px solid var(--v-theme-surface-variant);"
-                >
-              </v-responsive>
+            <div class="pdf-panel">
+              <h4>Possible Duplicate</h4>
+              <embed :src="duplicatePdfUrl" type="application/pdf" width="100%" height="100%">
             </div>
           </div>
         </template>
-
-        <!-- Normal / Double-check PDFs -->
-        <embed
-          v-else-if="pdfUrl"
-          :src="`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`"
-          type="application/pdf"
-          width="100%"
-          height="100%"
-          style="border:none;display:block;"
-        >
-      </v-card-text>
-    </v-card>
-
-    <!-- No PDF fallback -->
-    <v-card
-      v-else
-      height="900"
-      class="d-flex flex-column align-center justify-center px-5 py-4 pt-12"
-      :class="cardBackground"
-      flat
-    >
-      <h1 class="text-center text-h1">
-        ☹️
-      </h1>
-      <div class="text-subtitle-1 mt-2">
-        No PDF available
+        <embed v-else :src="`${pdfUrl}#toolbar=0&navpanes=0`" type="application/pdf" width="100%" height="100%">
       </div>
-      <div class="text-body-2">
-        There is no document to preview at the moment.
-      </div>
-      <v-btn
-        class="mt-4"
-        variant="outlined"
-        color="primary"
-        @click="handleClose"
-      >
-        Close
-      </v-btn>
-    </v-card>
+    </div>
+
+    <!-- No PDF Fallback -->
+    <div v-else class="no-pdf">
+      <v-icon size="64" color="grey-lighten-1">mdi-file-remove-outline</v-icon>
+      <h3>No PDF Available</h3>
+      <p>There is no document to preview.</p>
+      <button class="btn btn-primary" @click="handleClose">Close</button>
+    </div>
   </v-dialog>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useTheme } from 'vuetify'
+import PdfDialogToolbar from './PdfDialogToolbar.vue'
 
 const dialog = defineModel('dialog')
+
 const props = defineProps({
   url: String,
   fileDetails: Object,
@@ -347,78 +145,303 @@ const props = defineProps({
   conflictType: String,
   duplicateFileUrl: String
 })
+
 const emit = defineEmits([
   'close', 'double-checked', 'close-double-check',
   'save-supplier', 'keep-unknown', 'keep-both', 'keep-this', 'keep-duplicate', 'keep-none'
 ])
 
-// Theme
-const theme = useTheme()
-const isDark = computed(() => theme.global.name.value === 'dark')
-const cardBackground = computed(() => isDark.value ? 'bg-grey-darken-4' : 'bg-grey-lighten-4')
-const toolbarBackground = computed(() => isDark.value ? 'bg-grey-darken-3' : 'bg-grey-lighten-3')
-const summaryBackground = computed(() => isDark.value ? 'bg-grey-darken-2 text-grey-lighten-3' : 'bg-grey-lighten-3 text-grey-darken-3')
-const iconColor = computed(() => isDark.value ? 'grey-lighten-1' : 'grey-darken-2')
-
-// URLs
 const pdfUrl = computed(() => props.url ? `${import.meta.env.VITE_BASE_URL}/file/${props.url}` : '')
 const duplicatePdfUrl = computed(() => props.duplicateFileUrl ? `${import.meta.env.VITE_BASE_URL}/file/${props.duplicateFileUrl}` : '')
 
-// Editable
 const editableFields = ref({ issuer: props.fileDetails?.issuer || '' })
 const editing = ref({ issuer: false, btw: false, amount: false })
-
-// Double-check
 const confirmed = ref({ issuer: false, btw: false, amount: false })
 const toggleConfirm = (field) => { confirmed.value[field] = !confirmed.value[field] }
 const allConfirmed = computed(() => Object.values(confirmed.value).every(Boolean))
 const finishEdit = (field) => { editing.value[field] = false; confirmed.value[field] = true }
+
+const conflictTitle = computed(() => {
+  if (props.conflictType === 'unknown-supplier') return "Missing Supplier"
+  if (props.conflictType === 'duplicate') return "Duplicate Detected"
+  return ""
+})
+
+const conflictMessage = computed(() => {
+  if (props.conflictType === 'unknown-supplier') return "Please enter the supplier name."
+  if (props.conflictType === 'duplicate') return "This document seems similar to another."
+  return ""
+})
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A'
+  const d = new Date(dateStr)
+  return isNaN(d) ? 'N/A' : d.toLocaleDateString()
+}
+
+const formattedAmount = computed(() => props.fileDetails?.amount?.toFixed(2) || "0.00")
+
+const handleClose = () => { emit('close'); dialog.value = false }
+const saveSupplier = () => emit('save-supplier', editableFields.value.issuer)
+const keepUnknown = () => emit('keep-unknown')
+const keepBoth = () => emit('keep-both')
+const keepDuplicate = () => emit('keep-duplicate')
+const keepNone = () => emit('keep-none')
+
 const confirmDoubleCheck = () => {
-  emit('double-checked', props.fileDetails.invoice_id)
+  emit('double-checked', props.fileDetails?.invoice_id)
   emit('close-double-check')
   emit('close')
   dialog.value = false
 }
-
-// Conflict
-const conflictTitle = computed(() => {
-  if (props.conflictType === 'unknown-supplier') return "Missing Supplier Name"
-  if (props.conflictType === 'duplicate') return "Duplicate Detected"
-  return ""
-})
-const conflictMessage = computed(() => {
-  if (props.conflictType === 'unknown-supplier')
-    return "We couldn’t detect a supplier name for this invoice. Please enter it below or keep it as 'Unknown Supplier'."
-  if (props.conflictType === 'duplicate')
-    return "This document seems similar to another one in your records. Please review and decide."
-  return ""
-})
-const saveSupplier = () => emit('save-supplier', editableFields.value.issuer)
-const keepUnknown = () => emit('keep-unknown')
-const keepBoth = () => emit('keep-both')
-const keepThis = () => emit('keep-this')
-const keepDuplicate = () => emit('keep-duplicate')
-const keepNone = () => emit('keep-none')
-
-// Helpers
-const formatDate = (dateStr) => {
-  const d = new Date(dateStr)
-  return isNaN(d) ? 'Invalid date' : d.toLocaleDateString()
-}
-const formattedAmount = computed(() =>
-  props.fileDetails?.amount ? props.fileDetails.amount.toFixed(2) : "0.00"
-)
-const handleClose = () => { emit('close'); dialog.value = false }
 </script>
 
 <style scoped>
-.v-chip { cursor: pointer; transition: 0.3s; }
-embed::-webkit-scrollbar { display: none; }
-.sticky-action-bar {
-  position: sticky;
-  top: 0;
-  background: inherit;
-  z-index: 5;
-  border-bottom: 1px solid var(--v-theme-surface-variant);
+.pdf-viewer-dialog {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
 }
+
+.conflict-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #fef3c7;
+}
+
+.alert-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.alert-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.alert-message {
+  font-size: 12px;
+  color: #a16207;
+}
+
+.duplicate-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e3e8ee;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.action-btn.success { background: #dcfce7; color: #166534; }
+.action-btn.success:hover { background: #bbf7d0; }
+.action-btn.warning { background: #fef3c7; color: #92400e; }
+.action-btn.warning:hover { background: #fcd34d; }
+.action-btn.danger { background: #fef2f2; color: #b91c1c; }
+.action-btn.danger:hover { background: #fecaca; }
+
+.summary-panel {
+  padding: 16px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e3e8ee;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #697386;
+}
+
+.value-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sub-value {
+  font-size: 12px;
+  color: #697386;
+  margin-top: 4px;
+}
+
+.inline-input {
+  padding: 4px 8px;
+  font-size: 13px;
+  border: 1px solid #e3e8ee;
+  border-radius: 4px;
+}
+
+.inline-input:focus {
+  outline: none;
+  border-color: #635bff;
+}
+
+.confirm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.confirm-chip.confirmed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.edit-btn {
+  padding: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #697386;
+}
+
+.edit-btn:hover {
+  color: #1a1f36;
+}
+
+.unknown-actions, .confirm-section {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.confirm-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #ef4444;
+}
+
+.pdf-content {
+  height: 60vh;
+  background: #f0f2f5;
+}
+
+.pdf-content embed {
+  border: none;
+  display: block;
+}
+
+.pdf-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 100%;
+  gap: 8px;
+  padding: 8px;
+}
+
+.pdf-panel {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pdf-panel h4 {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fafbfc;
+  border-bottom: 1px solid #e3e8ee;
+  margin: 0;
+}
+
+.pdf-panel embed {
+  flex: 1;
+}
+
+.no-pdf {
+  background: #fff;
+  border-radius: 12px;
+  padding: 60px;
+  text-align: center;
+}
+
+.no-pdf h3 {
+  margin-top: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1f36;
+}
+
+.no-pdf p {
+  margin-top: 8px;
+  color: #697386;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: #635bff;
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #5851ea;
+}
+
+.btn-primary:disabled {
+  background: #c4c9d4;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #1a1f36;
+  border: 1px solid #e3e8ee;
+  margin-left: 8px;
+}
+
+.btn-secondary:hover {
+  background: #f6f8fa;
+}
+
+.mt-2 { margin-top: 8px; }
 </style>

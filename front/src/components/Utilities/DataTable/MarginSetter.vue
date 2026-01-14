@@ -1,157 +1,224 @@
 <template> 
-  <div class="margin-setter d-flex align-center px-0">
-    <v-card
-      class="wrapper d-flex ga-0"
-      variant="tonal"
-    >
-      <v-number-input
-        v-model="localMargin"
-        control-variant="hidden"
-        density="compact"
-        variant="text"
-        hide-details
-        max-height="10"
-        prefix="%"
-        :rules="inputRules"
-        class="margin-input"
-        @update:model-value="onMarginChange"
-        @click.stop
-      />
-      <div class="d-flex flex-column align-center pl-0 pr-1">
-        <v-icon
-          icon="mdi-chevron-up"
-          @click.stop="localMargin++"
-        />
-        <v-icon
-          icon="mdi-chevron-down"
-          @click.stop="localMargin--"
-        />
+  <div class="margin-setter">
+    <div class="margin-control">
+      <button class="stepper-btn" @click.stop="decrementMargin">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+      <div class="margin-value">
+        <input
+          v-model.number="localMargin"
+          type="number"
+          step="1"
+          class="margin-input"
+          @input="onMarginChange"
+          @click.stop
+        >
+        <span class="percent-sign">%</span>
       </div>
-    </v-card>
-    <v-sheet
-      class="button-wrapper mt-1 d-flex flex-column ga-1 ml-1 pl-0 d-flex justify-center"
-      :width="55"
-    >
-      <v-btn
-        v-show="marginChangedMap[item.issuer]"
-        :loading="loading"
-        size="small"
-        class="px-8"
-        text="Save"
-        density="comfortable"
-        color="success"
+      <button class="stepper-btn" @click.stop="incrementMargin">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+    
+    <div v-if="marginChangedMap[item.issuer]" class="action-buttons">
+      <button
+        class="action-btn save"
+        :disabled="loading"
         @click.stop="saveMargin(item)"
-      />
-      <v-btn
-        v-show="marginChangedMap[item.issuer]"
-        :loading="loading"
-        size="small"
-        class="px-8"
-        text="Cancel"
-        density="comfortable"
-        color="error"
+      >
+        <svg v-if="!loading" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <v-progress-circular v-else indeterminate size="12" width="2" color="white" />
+      </button>
+      <button
+        class="action-btn cancel"
+        :disabled="loading"
         @click.stop="cancelMargin(item)"
-      />
-    </v-sheet>
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
   </div>
 </template>
   
-  <script setup>
-  import { ref, watch } from "vue";
-  
-  const props = defineProps({
-    item: {
-      type: Object,
-      required: true,
-    },
-  });
+<script setup>
+import { ref, watch } from "vue";
 
-const inputRules = [
-  (value) => !!value && value != 0 || "", //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 👁️👁️
-];
-  const emit = defineEmits(['marginUpdate'])
+const props = defineProps({
+  item: {
+    type: Object,
+    required: true,
+  },
+});
+
+const emit = defineEmits(['marginUpdate']);
+
+const localMargin = ref(props.item?.totalMargin || 0);
+const marginChangedMap = ref({});
+const loading = ref(false);
+
+const onMarginChange = () => {
+  marginChangedMap.value[props.item.issuer] = localMargin.value !== props.item.totalMargin;
+};
+
+watch(() => localMargin.value, () => onMarginChange());
+
+watch(() => props.item?.totalMargin, (newVal) => {
+  localMargin.value = newVal || 0;
+});
+
+const incrementMargin = () => {
+  localMargin.value = (localMargin.value || 0) + 1;
+};
+
+const decrementMargin = () => {
+  localMargin.value = Math.max(0, (localMargin.value || 0) - 1);
+};
+
+const saveMargin = async (item) => {
+  const query = [{ project: props.item.invoices?.[0]?.project }, { issuer: item.issuer }];
+  if (localMargin.value === null) return null;
   
-  const localMargin = ref(props.item.totalMargin);
-  const marginChangedMap = ref({});
-  const loading = ref(false)
+  loading.value = true;
   
-  // Watch localMargin for changes
-  const onMarginChange = (value) => {
-    marginChangedMap.value[props.item.issuer] = value !== props.item.totalMargin;
-  };
-  watch(()=>localMargin.value, (update)=> onMarginChange(update))
-  
- 
-  const saveMargin = async(item) => {
-    const query = [{project: props.item.invoices[0].project}, {issuer: item.issuer}];
-    if(localMargin.value === null) return null
+  try {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/patch/invoices?margin=${JSON.stringify(query)}`, {
-        method: 'PATCH',
-        headers: {'Content-Type' : 'application/json'},
-        body: JSON.stringify({margin: localMargin.value})
-    })
-    if (!res.ok) {
-      throw new Error('Failed to change margin')
-    }
-    loading.value = true
-    setTimeout(() => {
-        loading.value = false;
-      }, 2000);
-    const data = await res.json()
-    console.log("Margin has been updated!!", data);
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ margin: localMargin.value })
+    });
     
-    // Reset changed flag
+    if (!res.ok) {
+      throw new Error('Failed to change margin');
+    }
+    
+    await res.json();
     marginChangedMap.value[item.issuer] = false;
-    emit('marginUpdate', localMargin.value)
-  };
+    emit('marginUpdate', localMargin.value);
+  } catch (err) {
+  } finally {
+    loading.value = false;
+  }
+};
 
-  const cancelMargin = (item) => {
-  localMargin.value = item.totalMargin
-  marginChangedMap.value[item.issuer] = false
-}
-
+const cancelMargin = (item) => {
+  localMargin.value = item.totalMargin || 0;
+  marginChangedMap.value[item.issuer] = false;
+};
 </script>
 
-<style>
+<style scoped>
+.margin-setter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.margin-control {
+  display: inline-flex;
+  align-items: center;
+  background: #fafafa;
+  border: 1px solid #eaeaea;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.stepper-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.stepper-btn:hover {
+  background: #f0f0f0;
+  color: #171717;
+}
+
+.margin-value {
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+}
+
 .margin-input {
-  max-width: 90px;
-  height: 80%; 
-  padding: 0 !important;
-  margin: 0 !important;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #171717;
+  text-align: center;
+  background: transparent;
+  border: none;
+  outline: none;
 }
 
-.margin-setter .v-field {
-  margin: 0 !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-}
-.margin-setter .v-field__input {
-  padding-right: 2px !important;
+.margin-input::-webkit-outer-spin-button,
+.margin-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-
-.margin-setter .v-field__field{
-  margin: 0 !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
+.percent-sign {
+  font-size: 12px;
+  color: #999;
+  margin-right: 4px;
 }
 
-.margin-setter .v-input__control {
-  margin-block: 0 !important;
-  padding: 0 !important;
+.action-buttons {
+  display: flex;
+  gap: 4px;
 }
 
-.margin-setter .v-number-input--stacked .v-number-input__control {
-  height: 100% !important; /* now this works correctly */
-  align-items: center !important;
-  display: flex !important;
-  padding: 0 !important;
-  margin: 0 !important;
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.margin-setter .button-wrapper {
-  min-height: 48px;
+.action-btn.save {
+  background: #10b981;
+  color: #fff;
+}
+
+.action-btn.save:hover {
+  background: #059669;
+}
+
+.action-btn.cancel {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.action-btn.cancel:hover {
+  background: #eaeaea;
+  color: #171717;
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

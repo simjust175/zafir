@@ -144,7 +144,6 @@
     <SnackbarSteps ref="snackbarRef" />
     <v-snackbar
       v-model="snack.show"
-      
       location="top"
       multi-line
       timeout="3500"
@@ -168,7 +167,12 @@ import SnackbarSteps from '@/components/Utilities/SnackbarSteps.vue'
 const snackbarRef = ref(null)
 
 defineProps({ inTabs: Boolean })
-const emit = defineEmits(['close', 'newProjectAdded'])
+const emit = defineEmits(['close', 'new-project-added'])
+
+// emit('new-project-added', {
+//   project_name: project_name.value,
+//   email: emailToUse
+// })
 
 const pwd = ref(true)
 const adding = ref(false)
@@ -180,7 +184,7 @@ const project_name = ref('')
 const availableEmails = ref([])
 const formRef = ref(null)
 
-watch(availableEmails, (update)=> {if(update.length < 1) addingNewEmail.value = true})
+watch(availableEmails, (update) => { if (update.length < 1) addingNewEmail.value = true })
 const snack = ref({ show: false, color: 'success', message: '' })
 
 const showSnack = (message, color = 'success') => {
@@ -206,17 +210,31 @@ onMounted(async () => {
 
 const getAvailableEmails = async () => {
   try {
-    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/freeEmails`, {
+    const baseUrl = import.meta.env.VITE_BASE_URL
+    if (!baseUrl) return []
+
+    const res = await fetch(`${baseUrl}/invoice/freeEmails`, {
       headers: { 'Content-Type': 'application/json' }
     })
+
+    if (!res.ok) {
+      console.debug('Failed to fetch available emails:', res.status)
+      return []
+    }
+
     const set = new Set();
     const data = await res.json()
-    data.freeEmails.forEach(email => set.add(email.email_address));
+    const freeEmails = data?.freeEmails || []
+
+    if (!Array.isArray(freeEmails)) return []
+
+    freeEmails.forEach(item => {
+      if (item?.email_address) set.add(item.email_address)
+    });
+
     return [...set];
-    //return data.freeEmails.map(email => email.email_address) || []
   } catch (err) {
-    console.error(err)
-    showSnack('Problems with emails: ' + err.message, 'error')
+    console.debug('Could not fetch available emails - backend may not be running')
     return []
   }
 }
@@ -321,8 +339,11 @@ const submitForm = async () => {
 
     await snackbarRef.value.showSnack('Project successfully added!', 'success')
     emit('close')
-    emit('newProjectAdded')
 
+    emit('new-project-added', {
+      project_name: project_name.value,
+      email: emailToUse
+    })
     // Reset
     adding.value = false
     email.value = ''
@@ -338,25 +359,27 @@ const submitForm = async () => {
 </script>
 
 <style scoped>
-.gap-2 > * + * {
+.gap-2>*+* {
   margin-left: 8px;
 }
+
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition: all 0.4s ease;
 }
+
 .slide-up-enter-from {
   opacity: 0;
   transform: translateY(30px);
 }
+
 .slide-up-leave-to {
   opacity: 0;
   transform: translateY(-30px);
 }
 </style>
 <style>
-.select-email .v-input__details{
-  display:none;
+.select-email .v-input__details {
+  display: none;
 }
-
 </style>

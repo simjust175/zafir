@@ -337,24 +337,37 @@ export const useRealtimeStore = defineStore('realtime', () => {
   }
 
   const loadInitialData = async () => {
-    const token = localStorage.getItem('token')
-    if (!token) return
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
 
-    const response = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/get`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
-    })
+      const baseUrl = import.meta.env.VITE_BASE_URL
+      if (!baseUrl) return
 
-    const data = await response.json()
-
-    // Populate entity maps
-    if (data.amounts) {
-      data.amounts.forEach(invoice => {
-        invoicesMap.set(invoice.invoice_id || invoice.id, invoice)
+      const response = await fetch(`${baseUrl}/invoice/get`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
       })
-      // Trigger reactivity
-      updateCounter.value++
+
+      if (!response.ok) {
+        console.debug('Failed to load initial data:', response.status)
+        return
+      }
+
+      const data = await response.json()
+
+      // Populate entity maps
+      if (data?.amounts && Array.isArray(data.amounts)) {
+        data.amounts.forEach(invoice => {
+          const id = invoice?.invoice_id || invoice?.id
+          if (id) invoicesMap.set(id, invoice)
+        })
+        // Trigger reactivity
+        updateCounter.value++
+      }
+    } catch (err) {
+      console.debug('Could not load initial data - backend may not be running')
     }
   }
 

@@ -9,10 +9,12 @@ export const useLoginStore = defineStore("loginState", () => {
   const theme = ref("light");
 
   function login(payload) {
-    token.value = payload.token;
-    userName.value = payload.name || "";
-    userInfo.value = payload.info || {};
-    localStorage.setItem("email", payload.info.email);
+    token.value = payload?.token || null;
+    userName.value = payload?.name || "";
+    userInfo.value = payload?.info || {};
+    if (payload?.info?.email) {
+      localStorage.setItem("email", payload.info.email);
+    }
   }
 
   function logout() {

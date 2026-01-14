@@ -118,9 +118,9 @@ class RegisterService {
     }
 
     static async patchUser(id, body) {
-        if (!id || !body) throw new Error("Id and Body must be provided.", error)
+        if (!id || !body) throw new Error("Id and Body must be provided.")
         try {
-            const patch = Register.patchUser(id, body);
+            const patch = await Register.patchUser(id, body);
             if (!patch) return null
             return patch
         } catch (error) {

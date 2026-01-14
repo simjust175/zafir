@@ -32,7 +32,7 @@ class Amount {
 
   static async getFreeEmails() {
     const sql = `
-      SELECT e.email AS email_address, e.password, e.email_id
+      SELECT e.email AS email_address, e.email_id
       FROM emails e
       WHERE NOT EXISTS (
         SELECT 1 FROM projects p
@@ -62,9 +62,14 @@ class Amount {
   }
 
   static async getPayments(table) {
+    const allowedTables = ["payments", "invoicing"];
+    if (!allowedTables.includes(table)) {
+      throw new Error(`Invalid table name: ${table}`);
+    }
+    
     const sql = `
       SELECT t.amount, t.project, t.created_on, p.project_name
-      FROM ${table} t
+      FROM \`${table}\` t
       INNER JOIN projects p ON t.project = p.project_id
       WHERE p.completed_on IS NULL;
     `;

@@ -67,20 +67,21 @@
                 class="pa-4 py-6 fill-height"
                 rounded="lg"
               >
-                <v-list-item-content>
+                <div class="d-flex flex-column align-center">
                   <v-icon
                     size="80"
                     :class="themeColorText"
                   >
                     mdi-alert-remove
                   </v-icon>
+
                   <div
                     class="text-h5 mt-3 mb-3"
                     :class="themeColorText"
                   >
                     Hurray! No issues
                   </div>
-                </v-list-item-content>
+                </div>
               </v-card>
             </v-list-item>
 
@@ -96,9 +97,9 @@
                 @click="openDialog(message)"
               >
                 <v-hover v-slot="{ isHovering, props }">
-                  <v-list-item-content
+                  <div
                     v-bind="props"
-                    class="d-flex ga-4 align-center justify-space-between"
+                    class="d-flex ga-4 align-center justify-space-between w-100"
                   >
                     <!-- Left side: icon + text -->
                     <div class="d-flex align-center ga-4">
@@ -156,7 +157,7 @@
                         @click.stop="clearMessage(index, message)"
                       />
                     </div>
-                  </v-list-item-content>
+                  </div>
                 </v-hover>
               </v-list-item>
 
@@ -178,7 +179,7 @@
       mode="conflict"
       :conflict-type="alertTitle"
       :duplicate-file-url="duplicateFile"
-      :duplicate-id = duplicateId
+      :duplicate-id="duplicateId"
       :double-check="false"
       :file-details="selectedMessage"
       @save-supplier="resolveSaveSupplier"

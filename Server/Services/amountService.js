@@ -52,8 +52,13 @@ class AmountService {
   }
 
   static async getService({ token }) {
-    const [{ user_id }] = await Amount.validateByToken(token);
-    if (!user_id) throw new Error("Invalid user token");
+    if (!token) throw new Error("Token is required");
+    
+    const result = await Amount.validateByToken(token);
+    if (!result || result.length === 0 || !result[0]?.user_id) {
+      throw new Error("Invalid user token");
+    }
+    
     return await Amount.getAmounts();
   }
 
@@ -64,14 +69,31 @@ class AmountService {
   }
 
   static async getProjectIdService(email) {
-    const [{ email_id }] = await General.getWithFilter("emails", "email_id", "email = ?", [email]);
-    const [{ project_id }] = await Amount.getProjectId(email_id);
-    return project_id;
+    if (!email) throw new Error("Email is required");
+    
+    const emailResult = await General.getWithFilter("emails", "email_id", "email = ?", [email]);
+    if (!emailResult || emailResult.length === 0) {
+      throw new Error("Email not found");
+    }
+    
+    const { email_id } = emailResult[0];
+    const projectResult = await Amount.getProjectId(email_id);
+    if (!projectResult || projectResult.length === 0) {
+      throw new Error("Project not found for email");
+    }
+    
+    return projectResult[0].project_id;
   }
 
   static async getActiveProjectIdService(email_id) {
-    const [{ project_id }] = await Amount.getProjectId(email_id);
-    return project_id;
+    if (!email_id) throw new Error("Email ID is required");
+    
+    const projectResult = await Amount.getProjectId(email_id);
+    if (!projectResult || projectResult.length === 0) {
+      throw new Error("Project not found for email ID");
+    }
+    
+    return projectResult[0].project_id;
   }
 }
 

@@ -66,7 +66,8 @@ class AmountControllers {
     static async getActiveEmails(req, res) {
         try {
             const activeEmails = await AmountService.getActiveEmailsService();
-            res.status(200).json({ message: `activeEmails retrieved successfully`, activeEmails });
+            const sanitizedEmails = (activeEmails || []).map(({ password, ...rest }) => rest);
+            res.status(200).json({ message: `activeEmails retrieved successfully`, activeEmails: sanitizedEmails });
         } catch (error) {
             res.status(500).json({ message: `Error in activeEmailServices/getFeeEmails: ${error.message}` });
         }

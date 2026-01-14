@@ -1,48 +1,41 @@
 <template>
-  <v-app
-    :theme="localTheme"
-    class="d-flex flex-column justify-space-between"
-    :class="themeColor"
-  >
-    <v-main>
-      <AppBar
-        :logged-in-stat="loggedIn"
-        @theme-update="handleThemeChange"
-      />
-
-      <navigation-bar language="en" />
-
-      <overlay-component
-        v-if="loading"
-        :overlay-trigger="loading"
-      />
-      <session-banner v-if="!loading" />
-      <router-view
-        v-if="!loading"
-        v-slot="{ Component }"
-      >
-        <transition>
+  <v-app :theme="localTheme">
+    <template v-if="isAuthPage">
+      <v-main class="auth-main">
+        <router-view v-slot="{ Component }">
           <component :is="Component" />
-        </transition>
-      </router-view>
+        </router-view>
+      </v-main>
+    </template>
 
-      <footer>
-        <footer-component class="bottom-0 right-0 left-0" />
-      </footer>
-    </v-main>
+    <template v-else>
+      <AppShell>
+        <OverlayComponent v-if="loading" :overlay-trigger="loading" />
+        <SessionBanner v-if="!loading" />
+        <router-view v-if="!loading" v-slot="{ Component }">
+          <component :is="Component" />
+        </router-view>
+      </AppShell>
+    </template>
+
+    <GlobalToast />
   </v-app>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from "vue"
+import { ref, computed, onMounted, nextTick, watch } from "vue"
 import { useTheme } from "vuetify"
+import { useRoute, useRouter } from "vue-router"
 import { useLoginStore } from "@/stores/loginState.js"
 import { invoices } from "@/stores/invoiceState.js"
-import { setupAutoLogout } from "@/stores/loginState";
-import { useRouter } from "vue-router";
+import { setupAutoLogout } from "@/stores/loginState"
+import AppShell from "@/components/layout/AppShell.vue"
+import GlobalToast from "@/components/ui/GlobalToast.vue"
+import OverlayComponent from "@/components/Utilities/OverlayComponent.vue"
+import SessionBanner from "@/components/Utilities/SessionBanner.vue"
 
-const router = useRouter();
-
+const route = useRoute()
+const router = useRouter()
 const theme = useTheme()
 const loginState = useLoginStore()
 const invoiceStore = invoices()
@@ -50,18 +43,20 @@ const invoiceStore = invoices()
 const loading = ref(false)
 const localTheme = ref("light")
 
-// -----------------------------
-// VALIDATE TOKEN (non-destructive)
-// -----------------------------
-async function validateToken() {
-  await nextTick();
+const authPages = ['/register', '/forgot-password', '/reset-password']
+const isAuthPage = computed(() => authPages.includes(route.path))
 
-  if (
-    !loginState.token ||
-    !loginState.userInfo ||
-    !loginState.userInfo.email
-  ) {
-    return false;
+watch(() => loginState.theme, (newTheme) => {
+  if (newTheme) {
+    localTheme.value = newTheme
+  }
+}, { immediate: true })
+
+async function validateToken() {
+  await nextTick()
+
+  if (!loginState.token || !loginState.userInfo?.email) {
+    return false
   }
 
   try {
@@ -76,42 +71,17 @@ async function validateToken() {
     const json = await res.json()
     return json?.Success === true
   } catch (err) {
-    console.error("❌ Token validation failed:", err)
+    console.error("Token validation failed:", err)
     return false
   }
 }
 
-// -----------------------------
-// MOUNT LOGIC
-// -----------------------------
-
-onMounted(async () => {
-  loading.value = true
-  setupAutoLogout(router);
-  if (loginState.isLoggedIn) {
-    if (loginState.theme) {
-      localTheme.value = loginState.theme
-      theme.global.name.value = loginState.theme
-    }
-
-    // Only validate if user is logged in
-    const isValid = await validateToken()
-    if (!isValid) {
-      window.dispatchEvent(new CustomEvent("token-warning", {
-        detail: { title: "Session Expired", message: "Please re-authenticate." }
-      }));
-    }
-  }
-
-  await getPayments()
-  loading.value = false
-})
-// -----------------------------
-// FETCH PAYMENTS
-// -----------------------------
 async function getPayments() {
   try {
-    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/payments`, {
+    const baseUrl = import.meta.env.VITE_BASE_URL
+    if (!baseUrl) return
+    
+    const res = await fetch(`${baseUrl}/invoice/payments`, {
       headers: { "Content-Type": "application/json" }
     })
     const json = await res.json()
@@ -120,70 +90,36 @@ async function getPayments() {
       json?.payments?.invoicing || []
     )
   } catch (err) {
-    console.error("❌ Failed to fetch payments:", err)
+    console.debug("Could not fetch payments - backend may not be running")
   }
 }
 
-// -----------------------------
-// THEME CHANGE HANDLER
-// -----------------------------
-function handleThemeChange(newTheme) {
-  localTheme.value = newTheme;
-  loginState.theme = newTheme;
-  theme.change(newTheme);
-}
+onMounted(async () => {
+  loading.value = true
+  setupAutoLogout(router)
+
+  if (loginState.isLoggedIn) {
+    if (loginState.theme) {
+      localTheme.value = loginState.theme
+    }
+
+    const isValid = await validateToken()
+    if (!isValid) {
+      window.dispatchEvent(new CustomEvent("token-warning", {
+        detail: { title: "Session Expired", message: "Please re-authenticate." }
+      }))
+    }
+  }
+
+  await invoiceStore.getActiveEmails() 
+  await getPayments()
+  loading.value = false
+})
 </script>
 
 <style>
-#app {
-  background-color: var(--v-theme-background);
-  color: var(--v-theme-on-background);
-}
-
-.zafir-text-primary {
-  color: #18578c;
-}
-
-.zafir-text-secondary {
-  color: #3788bf;
-}
-
-.zafir-primary {
-  background-color: #18578c;
-}
-
-.zafir-secondary {
-  background-color: #3788bf;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.bounce {
-  animation: bounce 0.8s infinite alternate;
-}
-
-@keyframes bounce {
-  0% {
-    transform: translateY(0);
-  }
-
-  100% {
-    transform: translateY(-8px);
-  }
-}
-
-.overlay-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.auth-main {
+  min-height: 100vh;
+  background: linear-gradient(135deg, rgb(var(--v-theme-grey-100)) 0%, rgb(var(--v-theme-surface)) 100%);
 }
 </style>

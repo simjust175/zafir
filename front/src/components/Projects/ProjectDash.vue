@@ -1,85 +1,91 @@
 <template>
-  <v-container
-    fluid
-    class="pa-8"
-  >
-    <!-- PROJECT LIST -->
-    <transition-group
+  <div class="projects-container">
+    <div
       v-if="projects.length"
-      tag="v-row"
-      name="project-fade-slide"
-      class="d-flex flex-wrap"
+      class="projects-grid"
     >
-      <v-col
-        v-for="(projectGroup, index) in groupedProjects"
-        :key="projectGroup[0].project_name"
-        :style="{ '--index': index }"
-        cols="12"
-        sm="6"
-        md="4"
-      >
-        <project-card
-          :project="projectGroup"
-          @project-removed="removeWithUndo"
-        />
-      </v-col>
-    </transition-group>
-
-    <!-- EMPTY STATE -->
-    <v-row
-      v-else
-      justify="center"
-    >
-      <v-col
-        cols="12"
-        class="text-center"
-      >
-        <v-card
-          class="py-12 d-flex flex-column align-center"
-          elevation="0"
+      <TransitionGroup name="project-fade">
+        <div
+          v-for="(projectGroup, index) in groupedProjects"
+          :key="projectGroup[0].project_name"
+          :style="{ '--index': index }"
+          class="project-grid-item"
         >
-          <h1 class="text-h1">
-            🫢
-          </h1>
-          <h2 class="text-grey-lighten-1 mb-6">
-            Oops... Nothing here.. Yet...
-          </h2>
-          <v-btn
-            prepend-icon="mdi-plus"
-            color="primary"
-            text="Add Project"
+          <project-card
+            :project="projectGroup"
+            @project-removed="removeWithUndo"
           />
-        </v-card>
-      </v-col>
-    </v-row>
+        </div>
+      </TransitionGroup>
+    </div>
 
-    <!-- ADD NEW -->
-    <v-fab
+    <div
+      v-else
+      class="empty-state"
+    >
+      <div class="empty-icon">
+        <v-icon
+          size="64"
+          color="grey-lighten-1"
+        >
+          mdi-folder-open-outline
+        </v-icon>
+      </div>
+      <h2 class="empty-title">
+        No projects yet
+      </h2>
+      <p class="empty-text">
+        Create your first project to start organizing your invoices
+      </p>
+      <v-btn
+        color="primary"
+        size="large"
+        prepend-icon="mdi-plus"
+        rounded="lg"
+        @click="addProjectDialog = true"
+      >
+        Create Project
+      </v-btn>
+    </div>
+
+    <!-- <v-fab
+      v-if="projects.length"
       extended
       color="primary"
-      text="Add project"
+      text="New Project"
       prepend-icon="mdi-plus"
       location="right bottom"
-      height="50"
-      width="180"
+      size="large"
       app
-      @click="addProjectDialog = !addProjectDialog"
-    />
+      @click="addProjectDialog = true"
+    /> -->
 
-    <v-dialog v-model="addProjectDialog">
+    <v-dialog
+      :model-value="addProjectDialog"
+      max-width="500"
+      @update:model-value="emit('update:addProjectDialog', $event)"
+    >
       <AddNewProject
-        @close="addProjectDialog = false"
+        @close="emit('update:addProjectDialog', false)"
         @new-project-added="addNewProject"
       />
     </v-dialog>
 
-    <!-- 🔥 SNACKBAR UNDO -->
     <v-snackbar
       v-model="undoSnackbar"
       location="bottom"
       timeout="5000"
+      color="surface"
     >
-      Project removed
+      <div class="d-flex align-center">
+        <v-icon
+          color="warning"
+          class="mr-2"
+        >
+          mdi-folder-remove-outline
+        </v-icon>
+        Project removed
+      </div>
       <template #actions>
         <v-btn
           variant="text"
@@ -90,7 +96,7 @@
         </v-btn>
       </template>
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <script setup>
@@ -99,14 +105,16 @@ import AddNewProject from "./AddNewProject.vue"
 import { ref, computed } from "vue"
 import { invoices } from "@/stores/invoiceState.js"
 
+const props = defineProps({
+  addProjectDialog: Boolean
+})
+
+const emit = defineEmits(["update:addProjectDialog"])
+
 const invoiceArray = invoices()
-
-const addProjectDialog = ref(false)
 const undoSnackbar = ref(false)
-let lastRemovedProject = null // store for undo restore
+let lastRemovedProject = null
 
-
-/* GROUP PROJECTS */
 const groupedProjects = computed(() => {
   const map = new Map()
   invoiceArray.dbResponse?.forEach(inv => {
@@ -117,74 +125,122 @@ const groupedProjects = computed(() => {
   return Array.from(map.values())
 })
 
+const addNewProject = (project) => {
+  if (!project?.project_name) return
 
-/* LEVEL 2 LOGIC 🔥 Undo-enabled removal */
+  // instant UI update
+  invoiceArray.addProjectOptimistic(project)
+
+  emit("update:addProjectDialog", false)
+
+  // safety net (authoritative)
+  queueMicrotask(() => {
+    invoiceArray.refreshInvoices()
+  })
+}
+
 const removeWithUndo = (projectName) => {
-  lastRemovedProject = invoiceArray.dbResponse.filter(
-    inv => inv.project_name === projectName
+  lastRemovedProject = Object.freeze(
+    invoiceArray.dbResponse.filter(
+      inv => inv.project_name === projectName
+    )
   )
 
-  invoiceArray.dbResponse = invoiceArray.dbResponse.filter(
-    inv => inv.project_name !== projectName
-  )
-
+  invoiceArray.removeProjectOptimistic(projectName)
   undoSnackbar.value = true
 }
 
-/* Restore after undo press */
 const undoRemove = () => {
   if (!lastRemovedProject) return
-  invoiceArray.dbResponse.push(...lastRemovedProject)
+
+  lastRemovedProject.forEach(p => {
+    invoiceArray.addProjectOptimistic(p)
+  })
+
   lastRemovedProject = null
   undoSnackbar.value = false
+
+  queueMicrotask(() => {
+    invoiceArray.refreshInvoices()
+  })
 }
 
-/* No undo — permanent delete */
-// const forceRemove = (projectName) => {
-//   invoiceArray.dbResponse = invoiceArray.dbResponse.filter(
-//     inv => inv.project_name !== projectName
-//   )
+// const addNewProject = (newProject) => {
+//   if (!newProject) return
+//   // invoiceArray.dbResponse.push(newProject)
+//   emit("update:addProjectDialog", false)
 // }
 
-/* ADD NEW PROJECT HANDLER */
-const addNewProject = (newProject) => {
-  if (!newProject) return
-  
-  // Push to DB response list
-  invoiceArray.dbResponse.push(newProject)
-
-  // Close modal
-  addProjectDialog.value = false
-}
-
-/* Show list only if exists */
 const projects = computed(() => groupedProjects.value.map(g => g[0].project_name))
 </script>
 
 <style scoped>
-/* ==========================================================
-     LEVEL 2 — Premium Motion
-   ========================================================== */
-
-:root { --project-ease: cubic-bezier(.22,.61,.36,1); }
-
-/*** ENTER (soft pop) ***/
-.project-fade-slide-enter-active {
-  transition: opacity .45s var(--project-ease), transform .45s var(--project-ease), filter .45s var(--project-ease);
-}
-.project-fade-slide-enter-from {
-  opacity: 0; transform: translateY(14px) scale(.97); filter: blur(3px);
+.projects-container {
+  min-height: 400px;
 }
 
-/*** LEAVE (melt + fold upward + blur) ***/
-.project-fade-slide-leave-active {
-  transition: opacity .45s var(--project-ease), transform .45s var(--project-ease), filter .45s var(--project-ease);
-  transition-delay: calc(var(--index, 0) * 65ms);
-}
-.project-fade-slide-leave-to {
-  opacity: 0; transform: translateY(-20px) scale(.88); filter: blur(5px) brightness(1.1);
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
 }
 
-/* Smooth spacing while animating */
-.d-flex.flex-wrap { gap: 12px 0; }
+.project-grid-item {
+  height: 100%;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 24px;
+  background: rgb(var(--v-theme-surface));
+  border-radius: 20px;
+  border: 2px dashed rgb(var(--v-theme-grey-200));
+}
+
+.empty-icon {
+  margin-bottom: 24px;
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+  margin: 0 0 8px;
+}
+
+.empty-text {
+  font-size: 0.9375rem;
+  color: rgb(var(--v-theme-grey-500));
+  margin: 0 0 24px;
+  max-width: 300px;
+}
+
+.project-fade-enter-active {
+  transition: all 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition-delay: calc(var(--index, 0) * 50ms);
+}
+
+.project-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.project-fade-enter-from {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+
+.project-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

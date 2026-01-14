@@ -1,186 +1,197 @@
 <template>
-  <v-container fluid>
-    <!-- Add User FAB -->
-    <v-fab
-      extended
-      color="primary"
-      density="comfortable"
-      prepend-icon="mdi-plus"
-      location="right bottom"
-      text="Add User"
-      height="50"
-      width="180"
-      app
-      @click="openDialog()"
-    >
-      Add User
-    </v-fab>
-
-    <!-- User Management Card -->
-    <v-card
-      class="pa-6"
-      elevation="3"
-    >
-      <v-card-title class="text-h5 font-weight-bold mb-4">
-        <v-icon
-          class="mr-6 cursor-pointer"
-          size="25"
-          @click="$router.push('/')"
+  <div class="users-container">
+    <div class="users-card">
+      <div class="card-header">
+        <div class="search-section">
+          <v-text-field
+            v-model="search"
+            prepend-inner-icon="mdi-magnify"
+            placeholder="Search users..."
+            variant="outlined"
+            density="compact"
+            hide-details
+            rounded="lg"
+            class="search-input"
+          />
+        </div>
+        <v-btn
+          color="primary"
+          prepend-icon="mdi-plus"
+          rounded="lg"
+          @click="openDialog()"
         >
-          mdi-arrow-left
-        </v-icon>
-        <v-icon>mdi-account-multiple</v-icon>
-        User Management
-      </v-card-title>
+          Add User
+        </v-btn>
+      </div>
 
-      <!-- User Table -->
-      <v-data-table
-        :headers="headers"
-        :items="users"
-        item-value="id"
-        class="mt-4"
-        density="comfortable"
-      >
-        <template #item.active="{ item }">
-          <v-chip
-            :class="{'px-4' : item.token}"
-            :color="item.token ? 'success' : 'warning'"
-            label
-          >
-            {{ item.token ? 'Active' : 'Inactive' }}
-          </v-chip>
-        </template>
+      <div class="table-container">
+        <v-data-table
+          :headers="headers"
+          :items="filteredUsers"
+          :search="search"
+          item-value="id"
+          class="users-table"
+          :items-per-page="10"
+        >
+          <template #item.active="{ item }">
+            <v-chip
+              :color="item.token ? 'success' : 'grey'"
+              size="small"
+              variant="tonal"
+            >
+              <v-icon
+                start
+                size="12"
+              >
+                {{ item.token ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+              </v-icon>
+              {{ item.token ? 'Active' : 'Inactive' }}
+            </v-chip>
+          </template>
 
-        <template #item.user_name="{ item }">
-          <div class="text-capitalize">
-            {{ item.user_name }}
-          </div>
-        </template>
+          <template #item.user_name="{ item }">
+            <div class="user-cell">
+              <v-avatar
+                size="36"
+                color="primary"
+                variant="tonal"
+              >
+                <span class="text-caption font-weight-medium">{{ getInitials(item.user_name) }}</span>
+              </v-avatar>
+              <div class="user-info">
+                <span class="user-name">{{ item.user_name }}</span>
+                <span class="user-email">{{ item.user_email }}</span>
+              </div>
+            </div>
+          </template>
 
-        <template #item.actions="{ item }">
-          <div class="d-flex">
-            <v-btn
-              icon="mdi-pencil"
-              color="primary"
-              variant="text"
-              @click="openDialog(item)"
-            />
-            <v-btn
-              icon="mdi-close"
-              color="error"
-              variant="text"
-              :loading="loadingId === item.user_id"
-              @click="confirmDelete(item)"
-            />
-          </div>
-        </template>
-      </v-data-table>
-    </v-card>
+          <template #item.user_email="{ item }">
+            <span class="text-grey-darken-1">{{ item.user_email }}</span>
+          </template>
 
-    <!-- Add/Edit Dialog -->
+          <template #item.actions="{ item }">
+            <div class="action-buttons">
+              <v-btn
+                icon="mdi-pencil-outline"
+                size="small"
+                variant="text"
+                color="grey"
+                @click="openDialog(item)"
+              />
+              <v-btn
+                icon="mdi-trash-can-outline"
+                size="small"
+                variant="text"
+                color="error"
+                :loading="loadingId === item.user_id"
+                @click="confirmDelete(item)"
+              />
+            </div>
+          </template>
+
+          <template #no-data>
+            <div class="empty-state">
+              <v-icon
+                size="48"
+                color="grey-lighten-1"
+              >
+                mdi-account-group-outline
+              </v-icon>
+              <p>No users found</p>
+            </div>
+          </template>
+        </v-data-table>
+      </div>
+    </div>
+
     <v-dialog
       v-model="dialog"
+      max-width="480"
     >
-      <div class="d-flex align-center justify-center">
-        <v-card
-          v-if="editingUser"
-          class="py-4 px-3"
-          width="350"
-          rounded="xl"
-        >
-          <v-card-title class="text-h6">
-            <v-btn
-              icon="mdi-arrow-left"
-              variant="flat"
-              @click="dialog = false"
-            />
-            {{ editingUser ? 'Edit User' : 'Add User' }}
-          </v-card-title>
-
-          <v-card-text>
-            <v-form
-              ref="formRef"
-              v-model="valid"
-            >
-              <v-text-field
-                v-model="form.name"
-                label="Full Name"
-                :rules="[v => !!v || 'Name is required']"
-                required
-              />
-              <v-text-field
-                v-model="form.email"
-                label="Email"
-                type="email"
-                :rules="[v => !!v || 'Email is required']"
-                required
-              />
-            </v-form>
-          </v-card-text>
-
-          <v-card-actions>
-            <v-spacer />
-            <v-btn
-              text
-              @click="dialog = false"
-            >
-              Cancel
-            </v-btn>
-            <v-btn
-              color="primary"
-              :loading="loading"
-              @click="saveUser"
-            >
-              Save
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-        <v-card
-          v-else
-          class="pa-2"
-          rounded="xl"
-          width="450"
-        >
-          <v-card-title class="text-h6 pl-0 ml-0">
-            <v-btn
-              icon="mdi-arrow-left"
-              variant="flat"
-              @click="dialog = false"
-            />
-            {{ editingUser ? 'Edit User' : 'Add User' }}
-          </v-card-title>
-          <register-form
-            class="px-6"
-            @close="dialog = false"
+      <v-card rounded="xl">
+        <v-card-title class="dialog-header">
+          <span>{{ editingUser ? 'Edit User' : 'Add New User' }}</span>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            @click="dialog = false"
           />
-        </v-card>
-      </div>
-    </v-dialog>
-
-    <!-- Delete Confirmation Dialog -->
-    <v-dialog
-      v-model="deleteDialog"
-      max-width="420"
-    >
-      <v-card>
-        <v-card-title class="text-h6">
-          Confirm Delete
         </v-card-title>
-        <v-card-text>
-          Are you sure you want to delete
-          <strong>{{ selectedUser?.user_name }}</strong>?
-          This action cannot be undone.
+
+        <v-card-text class="pa-6">
+          <v-form
+            ref="formRef"
+            v-model="valid"
+          >
+            <v-text-field
+              v-model="form.name"
+              label="Full Name"
+              variant="outlined"
+              :rules="[v => !!v || 'Name is required']"
+              class="mb-4"
+            />
+            <v-text-field
+              v-model="form.email"
+              label="Email Address"
+              type="email"
+              variant="outlined"
+              :rules="[v => !!v || 'Email is required', v => /.+@.+\..+/.test(v) || 'Invalid email']"
+            />
+          </v-form>
         </v-card-text>
-        <v-card-actions>
+
+        <v-card-actions class="pa-6 pt-0">
           <v-spacer />
           <v-btn
-            text
+            variant="text"
+            @click="dialog = false"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            :loading="loading"
+            @click="saveUser"
+          >
+            {{ editingUser ? 'Save Changes' : 'Add User' }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog
+      v-model="deleteDialog"
+      max-width="400"
+    >
+      <v-card rounded="xl">
+        <v-card-title class="dialog-header">
+          <v-icon
+            color="error"
+            class="mr-2"
+          >
+            mdi-alert-circle-outline
+          </v-icon>
+          Confirm Delete
+        </v-card-title>
+
+        <v-card-text class="pa-6">
+          Are you sure you want to delete <strong>{{ selectedUser?.user_name }}</strong>?
+          This action cannot be undone.
+        </v-card-text>
+
+        <v-card-actions class="pa-6 pt-0">
+          <v-spacer />
+          <v-btn
+            variant="text"
             @click="deleteDialog = false"
           >
             Cancel
           </v-btn>
           <v-btn
             color="error"
+            variant="flat"
             :loading="loadingId === selectedUser?.user_id"
             @click="deleteUser(selectedUser.user_id)"
           >
@@ -190,49 +201,59 @@
       </v-card>
     </v-dialog>
 
-    <!-- Snackbar Notifications -->
     <v-snackbar
       v-model="snackbar.show"
       :color="snackbar.color"
-      timeout="2500"
+      timeout="3000"
+      location="bottom right"
     >
       {{ snackbar.message }}
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, computed, onMounted } from "vue"
 
 const headers = [
-  { title: "Active", value: "active" },
-  { title: "Name", value: "user_name" },
-  { title: "Email", value: "user_email" },
-  { title: "", value: "actions", sortable: false }
+  { title: "Status", value: "active", width: "100px" },
+  { title: "User", value: "user_name" },
+  { title: "Actions", value: "actions", sortable: false, width: "100px", align: "end" }
 ]
 
 const users = ref([])
+const search = ref("")
 const dialog = ref(false)
 const editingUser = ref(null)
 const form = ref({ name: "", email: "" })
 const valid = ref(false)
 const loading = ref(false)
-const loadingId = ref(null) // track which row is loading
+const loadingId = ref(null)
 const formRef = ref(null)
-
 const snackbar = ref({ show: false, message: "", color: "success" })
-
 const deleteDialog = ref(false)
 const selectedUser = ref(null)
+
+const filteredUsers = computed(() => users.value)
+
+const getInitials = (name) => {
+  if (!name) return '?'
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+}
 
 function showSnackbar(msg, color = "success") {
   snackbar.value = { show: true, message: msg, color }
 }
 
 async function getUsers() {
-  const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/filtered/users`)
-  const data = await res.json()
-  users.value = data.filtered
+  try {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/filtered/users`)
+    const data = await res.json()
+    users.value = data.filtered || []
+  } catch (err) {
+    console.debug("Could not fetch users - backend may not be running")
+    users.value = []
+  }
 }
 
 function openDialog(user = null) {
@@ -288,7 +309,8 @@ async function deleteUser(id) {
 }
 
 async function saveUser() {
-  if (!formRef.value.validate()) return
+  const { valid: isValid } = await formRef.value.validate()
+  if (!isValid) return
   loading.value = true
   try {
     const url = editingUser.value
@@ -307,7 +329,7 @@ async function saveUser() {
     })
 
     if (!res.ok) throw new Error("Failed to save user")
-    showSnackbar(editingUser.value ? "User updated successfully" : "User added successfully", "success")
+    showSnackbar(editingUser.value ? "User updated" : "User added", "success")
     dialog.value = false
     await getUsers()
   } catch (err) {
@@ -320,3 +342,111 @@ async function saveUser() {
 
 onMounted(getUsers)
 </script>
+
+<style scoped>
+.users-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.users-card {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-grey-200));
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: rgb(var(--v-theme-surface));
+  border-bottom: 1px solid rgb(var(--v-theme-grey-100));
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.search-section {
+  flex: 1;
+  max-width: 320px;
+}
+
+.search-input {
+  background: rgb(var(--v-theme-grey-50));
+}
+
+.table-container {
+  padding: 0;
+}
+
+.users-table {
+  background: transparent !important;
+}
+
+:deep(.v-data-table__thead) {
+  background: rgb(var(--v-theme-grey-50));
+}
+
+:deep(.v-data-table__thead th) {
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgb(var(--v-theme-grey-600)) !important;
+}
+
+:deep(.v-data-table__tr:hover) {
+  background: rgb(var(--v-theme-grey-50)) !important;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 500;
+  color: rgb(var(--v-theme-on-surface));
+  text-transform: capitalize;
+}
+
+.user-email {
+  font-size: 0.8125rem;
+  color: rgb(var(--v-theme-grey-500));
+}
+
+.action-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgb(var(--v-theme-grey-100));
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px;
+  color: rgb(var(--v-theme-grey-500));
+}
+
+.empty-state p {
+  margin-top: 12px;
+}
+</style>

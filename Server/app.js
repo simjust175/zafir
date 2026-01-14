@@ -21,7 +21,7 @@ const eventSystem = new EventSystem(io);
 eventSystem.setupSocketHandlers();
 app.set("eventSystem", eventSystem);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // ----------- Middleware -----------
 app.use(cors());

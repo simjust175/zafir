@@ -133,6 +133,33 @@ export const invoices = defineStore(
       return await realtimeStore.createEntity('invoices', invoiceData)
     }
 
+    const removeProjectOptimistic = (projectName) => {
+  if (!projectName) return
+
+  dbResponse.value = dbResponse.value.filter(
+    inv => inv.project_name !== projectName
+  )
+}
+
+const addProjectOptimistic = (payload) => {
+  if (!payload) return
+
+  // Support single invoice or array
+  const invoicesToAdd = Array.isArray(payload) ? payload : [payload]
+
+  invoicesToAdd.forEach(inv => {
+    if (!inv?.invoice_id) return
+
+    const exists = dbResponse.value.some(
+      existing => existing.invoice_id === inv.invoice_id
+    )
+
+    if (!exists) {
+      dbResponse.value.push(inv)
+    }
+  })
+}
+
     const updateInvoice = async (invoiceId, updates) => {
       const result = await realtimeStore.updateEntity('invoices', invoiceId, updates)
       // Refresh local state
@@ -162,6 +189,10 @@ export const invoices = defineStore(
       createInvoice,
       updateInvoice,
       deleteInvoice,
+
+      // optimistic
+      removeProjectOptimistic,
+      addProjectOptimistic,
 
       // Real-time state
       realtimeStore,

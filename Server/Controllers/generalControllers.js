@@ -35,10 +35,9 @@ class GeneralControllers {
             res.status(500).json({ message: `Error in GeneralServices/getGeneral: ${error.message}` });
         }
     };
-    static async geMultipleFiltered(res) {
-        //if (!body) return res.status(400).json({ message: 'Error in GeneralServices/getGeneralService' });
+    static async geMultipleFiltered(req, res) {
         try {
-            const generals = await GeneralService.getMultipleFilteredService(res);
+            const generals = await GeneralService.getMultipleFilteredService(req);
             if (!generals) return res.status(404).json({ message: 'Error in GeneralServices/getGeneralService' });
             res.status(200).json({ message: `Multiple-details retrieved successfully`, generals });
         } catch (error) {

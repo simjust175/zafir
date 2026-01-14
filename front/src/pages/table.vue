@@ -1,30 +1,50 @@
 <template>
-  <main class="pt-5 px-4">
-    <main-display-tabs
-      :invoice-array="amountArray"
-      :expanded="true"
-      class="overflow-y-auto"
-      @table-update="fetchFromSessionStorage"
-    />
-  </main>
+  <div class="invoices-page">
+    <main class="page-content">
+      <main-display-tabs
+        :invoice-array="amountArray"
+        :expanded="true"
+        :search-value="searchQuery"
+        @table-update="fetchFromSessionStorage"
+      />
+    </main>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch } from "vue"
 import { invoices } from "@/stores/invoiceState.js"
-const invoiceArray = invoices()
 
+const invoiceStore = invoices()
+const amountArray = ref([])
+const searchQuery = ref('')
 
-let amountArray = ref([])
-const fetchFromSessionStorage = () =>{
-    amountArray.value = invoiceArray.dbResponse
+const fetchFromSessionStorage = () => {
+  amountArray.value = invoiceStore.dbResponse || []
 }
 
-watch(invoiceArray.dbResponse, (updatedValue)=> amountArray.value = updatedValue)
-onMounted(()=> fetchFromSessionStorage())
+watch(() => invoiceStore.dbResponse, (updatedValue) => {
+  amountArray.value = updatedValue || []
+}, { deep: true })
 
+onMounted(() => {
+  fetchFromSessionStorage()
+})
 </script>
 
-<style>
+<style scoped>
+.invoices-page {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+}
 
+.page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  min-height: 0;
+}
 </style>

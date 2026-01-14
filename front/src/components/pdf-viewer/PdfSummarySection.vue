@@ -1,72 +1,75 @@
-<!-- eslint-disable vue/no-mutating-props -->
 <template>
-  <v-card
-    class="pa-4"
-    :class="summaryBackground"
-    elevation="2"
-  >
-    <v-container fluid class="pa-0">
-      <v-row dense>
-        <!-- Conflict Mode: Unknown Supplier -->
-        <v-col
-          v-if="mode === 'conflict' && conflictType === 'unknown-supplier'"
-          cols="12"
-        >
-          <unknown-supplier-summary
-            :issuer="fileDetails.issuer"
-            @save-supplier="$emit('save-supplier', $event)"
-            @keep-unknown="$emit('keep-unknown')"
+  <div class="summary-section">
+    <!-- Unknown Supplier Mode -->
+    <div v-if="mode === 'conflict' && conflictType === 'unknown-supplier'" class="unknown-supplier">
+      <unknown-supplier-summary
+        :issuer="fileDetails?.issuer"
+        @save-supplier="$emit('save-supplier', $event)"
+        @keep-unknown="$emit('keep-unknown')"
+      />
+    </div>
+
+    <!-- Normal/Double-check Summary -->
+    <div v-else class="summary-grid">
+      <div class="summary-item">
+        <span class="item-label">Supplier</span>
+        <div class="item-value-row">
+          <span class="item-value">{{ fileDetails?.issuer || 'Unknown' }}</span>
+          <DoubleCheckChip
+            v-if="mode === 'double-check'"
+            :confirmed="confirmed?.issuer"
+            @edit="editItem(fileDetails, 'issuer')"
+            @toggle="$emit('toggle-confirm', 'issuer')"
           />
-        </v-col>
+        </div>
+      </div>
 
-        <!-- Supplier Section -->
-        <v-col v-if="conflictType !== 'unknown-supplier'" cols="6">
-          <div class="summary-item">
-            <span class="label">Supplier:</span>
-            <span class="value">{{ fileDetails.issuer }}</span>
+      <div class="summary-item">
+        <span class="item-label">Invoice Date</span>
+        <span class="item-value">{{ formatDate(fileDetails?.invoice_date) }}</span>
+      </div>
 
-            <DoubleCheckChip
-              v-if="mode === 'double-check'"
-              :confirmed="confirmed.issuer"
-              @edit="editItem(fileDetails, 'issuer')"
-              @toggle="$emit('toggle-confirm', 'issuer')"
-            />
-          </div>
+      <div class="summary-item">
+        <span class="item-label">VAT Rate</span>
+        <div class="item-value-row">
+          <span class="item-value">{{ fileDetails?.btwPercent || 0 }}%</span>
+          <DoubleCheckChip
+            v-if="mode === 'double-check'"
+            :confirmed="confirmed?.btw"
+            @edit="editItem(fileDetails, 'btwPercent')"
+            @toggle="$emit('toggle-confirm', 'btw')"
+          />
+        </div>
+      </div>
 
-          <div class="summary-item">
-            <span class="label">Issued:</span>
-            <span class="value">{{ formatDate(fileDetails.invoice_date) }}</span>
-          </div>
-        </v-col>
+      <div class="summary-item">
+        <span class="item-label">Total Amount</span>
+        <div class="item-value-row">
+          <span class="item-value amount">€{{ formattedAmount }}</span>
+          <DoubleCheckChip
+            v-if="mode === 'double-check'"
+            :confirmed="confirmed?.amount"
+            @edit="editItem(fileDetails, 'amount')"
+            @toggle="$emit('toggle-confirm', 'amount')"
+          />
+        </div>
+      </div>
+    </div>
 
-        <!-- Amounts Section -->
-        <v-col v-if="conflictType !== 'unknown-supplier'" cols="6">
-          <div class="summary-item">
-            <span class="label">BTW Percent:</span>
-            <span class="value">{{ fileDetails.btwPercent || 0 }}%</span>
-
-            <DoubleCheckChip
-              v-if="mode === 'double-check'"
-              :confirmed="confirmed.btw"
-              @edit="editItem(fileDetails, 'btwPercent')"
-              @toggle="$emit('toggle-confirm', 'btw')"
-            />
-          </div>
-
-          <div class="summary-item">
-            <span class="label">Total (Invoice):</span>
-            <span class="value">€{{ formattedAmount }}</span>
-
-            <DoubleCheckChip
-              v-if="mode === 'double-check'"
-              :confirmed="confirmed.amount"
-              @edit="editItem(fileDetails, 'amount')"
-              @toggle="$emit('toggle-confirm', 'amount')"
-            />
-          </div>
-        </v-col>
-      </v-row>
-    </v-container>
+    <!-- Double-check Confirm Button -->
+    <div v-if="mode === 'double-check'" class="confirm-section">
+      <button
+        class="btn btn-primary"
+        :disabled="!allConfirmed"
+        @click="$emit('confirm')"
+      >
+        <v-icon size="18" class="mr-2">mdi-check-bold</v-icon>
+        Confirm & Continue
+      </button>
+      <p v-if="!allConfirmed" class="confirm-hint">
+        Please confirm all fields before continuing
+      </p>
+    </div>
 
     <!-- Edit Dialog -->
     <dialog-component
@@ -77,33 +80,14 @@
       @close="close"
       @save="prepareEditChanges"
     />
-
-    <!-- Double-check Confirm Button -->
-    <div v-if="mode === 'double-check'" class="text-right mt-6">
-      <v-btn
-        color="primary"
-        variant="flat"
-        :disabled="!allConfirmed"
-        class="px-5"
-        @click="$emit('confirm')"
-      >
-        <v-icon left>mdi-check-bold</v-icon>
-        Confirm & Continue
-      </v-btn>
-      <div
-        v-if="!allConfirmed"
-        class="text-caption text-error mt-2"
-      >
-        Confirm all fields before continuing.
-      </div>
-    </div>
-  </v-card>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
 import DoubleCheckChip from './DoubleCheckChip.vue'
-// import DialogComponent from './DialogComponent.vue'
+import UnknownSupplierSummary from './UnknownSupplierSummary.vue'
+import DialogComponent from '@/components/Utilities/DataTable/DialogComponent.vue'
 
 const props = defineProps({
   mode: String,
@@ -121,19 +105,18 @@ defineEmits([
   'confirm'
 ])
 
-// ======= Formatting =======
 const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A'
   const d = new Date(dateStr)
-  return isNaN(d) ? 'Invalid date' : d.toLocaleDateString()
+  return isNaN(d) ? 'N/A' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 const formattedAmount = computed(() =>
   typeof props.fileDetails?.amount === 'number'
-    ? props.fileDetails.amount.toFixed(2)
+    ? props.fileDetails.amount.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : '0.00'
 )
 
-// ======= Dialog State =======
 const triggerDialog = ref(false)
 const editedItem = ref({})
 const editedIndex = ref(-1)
@@ -152,7 +135,7 @@ const formTitle = computed(() =>
 )
 
 function editItem(item, field) {
-  editedIndex.value = 0 // we only edit the single fileDetails
+  editedIndex.value = 0
   editedItem.value = { ...item, field }
   triggerDialog.value = true
 }
@@ -165,16 +148,11 @@ function close() {
   })
 }
 
-// ======= Save Changes =======
 function prepareEditChanges({ body, id }) {
-  console.log('prepareEditChanges', body, id)
-
-  // Apply field change locally to fileDetails
-  Object.assign(props.fileDetails, body)
-
-  // Optionally: call API to persist
+  if (props.fileDetails) {
+    Object.assign(props.fileDetails, body)
+  }
   patchChanges({ id, body })
-  
   close()
 }
 
@@ -188,28 +166,102 @@ async function patchChanges({ id, body }) {
         body: JSON.stringify(body)
       }
     )
-    if (!response.ok) throw new Error('Failed to patch invoice')
-    console.log('✅ Patched successfully')
+    if (!response.ok) throw new Error('Failed to save changes')
   } catch (e) {
-    console.error('❌ Patch error', e.message)
   }
 }
 </script>
 
 <style scoped>
+.summary-section {
+  padding: 20px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e3e8ee;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
 .summary-item {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.label {
+.item-label {
+  font-size: 11px;
   font-weight: 600;
-  min-width: 120px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #697386;
 }
 
-.value {
-  flex: 1;
+.item-value-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1f36;
+}
+
+.item-value.amount {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.confirm-section {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 24px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: #635bff;
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #5851ea;
+}
+
+.btn-primary:disabled {
+  background: #c4c9d4;
+  cursor: not-allowed;
+}
+
+.confirm-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #ef4444;
+}
+
+.unknown-supplier {
+  padding: 0;
+}
+
+@media (max-width: 600px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -1,15 +1,7 @@
 <template>
-  <main>
-    <dashboard-layout />
-  </main>
+  <AnalyticsPage />
 </template>
 
-<script>
-export default {
-
-}
+<script setup>
+import AnalyticsPage from './analytics.vue'
 </script>
-
-<style>
-
-</style>

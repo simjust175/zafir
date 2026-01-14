@@ -1,44 +1,6 @@
 <template>
-  <v-container
-    fluid
-    class="pa-0"
-  >
-    <!-- Expansion panel for xs/sm screens -->
-    <v-expansion-panels
-      multiple
-      class="mb-4 d-md-none"
-      variant="accordion"
-      elevation="1"
-    >
-      <v-expansion-panel>
-        <v-expansion-panel-title class="text-subtitle-2 font-weight-medium">
-          Invoicing Summary
-        </v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <InvoiceSummary
-            :total-invoiced="totalInvoiced"
-            :total-paid="totalPaid"
-            :percent-paid="percentPaid"
-            :loading-invoiced="invoicedLoading"
-            :loading-paid="paidLoading"
-            @open-dialog="openInvoiceDialog"
-          />
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-    </v-expansion-panels>
-    <!-- Regular row for md+ screens -->
+  <div class="invoice-dash">
     <InvoiceSummary
-      v-if="expanded"
-      class="d-none d-md-flex mb-4"
-      :total-invoiced="totalInvoiced"
-      :total-paid="totalPaid"
-      :percent-paid="percentPaid"
-      :loading-invoiced="invoicedLoading"
-      :loading-paid="paidLoading"
-      @open-dialog="openInvoiceDialog"
-    />
-    <invoice-chips
-      v-else
       :total-invoiced="totalInvoiced"
       :total-paid="totalPaid"
       :percent-paid="percentPaid"
@@ -75,7 +37,7 @@
         </v-btn>
       </template>
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <script setup>
@@ -85,7 +47,12 @@ import { invoices } from '@/stores/invoiceState.js'
 import { globalFunctions } from '@/stores/globalFunctions.js'
 
 // eslint-disable-next-line vue/require-default-prop
-const props = defineProps({ currentProjectId: Number, expanded: Boolean, addInvoicing: String })
+const props = defineProps({ 
+  currentProjectId: Number, 
+  expanded: Boolean, 
+  addInvoicing: String,
+  marginAdjustedTotal: { type: Number, default: null }
+})
 
 const invoiceStore = invoices()
 const functions = globalFunctions()
@@ -112,9 +79,16 @@ const totalPaid = computed(() => {
   return entries.reduce((acc, curr) => acc + curr.amount, 0)
 })
 
-const totalInvoiced = computed(() => {
+const baseInvoiced = computed(() => {
+  console.log("INV NV INV INV INV", invoicing.value);
+  
   const entries = invoicing.value.filter(p => p.project === props.currentProjectId)
   return entries.reduce((acc, curr) => acc + curr.amount, 0)
+})
+
+const totalInvoiced = computed(() => {
+  console.log('marginAdjustedTotal:', props.marginAdjustedTotal)
+  return props.marginAdjustedTotal != null ? props.marginAdjustedTotal : baseInvoiced.value
 })
 
 const percentPaid = computed(() => {
@@ -141,7 +115,7 @@ const updateInvoicing = async (newAmount) => {
   const project = props.currentProjectId
 
   if (!project) {
-    console.error("❌ No project ID found")
+    console.error("No project ID found")
     return
   }
 
@@ -160,9 +134,9 @@ const updateInvoicing = async (newAmount) => {
       body: JSON.stringify(payload)
     })
 
-    if (!res.ok) throw new Error('❌ Failed to update')
+    if (!res.ok) throw new Error('Failed to update')
 
-    // ✅ Optimistically push new entry into store
+    // Optimistically push new entry into store
     const entry = {
       project,
       amount: Number(newAmount),
@@ -175,7 +149,7 @@ const updateInvoicing = async (newAmount) => {
     snack.value = {
       show: true,
       color: 'success',
-      message: `✔️  ${isInvoiced ? 'Invoice' : 'Payment'} added successfully`
+      message: isInvoiced ? 'Invoice amount added successfully' : 'Payment recorded successfully'
     }
 
     showInvoiceDialog.value = false
@@ -184,7 +158,7 @@ const updateInvoicing = async (newAmount) => {
     snack.value = {
       show: true,
       color: 'error',
-      message: '❌ Something went wrong. Please try again.'
+      message: 'Unable to save. Please try again.'
     }
   } finally {
     setTimeout(() => {

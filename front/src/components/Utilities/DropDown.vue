@@ -48,7 +48,6 @@ const methodSelection = ref(props.beforeUpdate ? props.beforeUpdate : label[curr
 const emit = defineEmits(["methodSelect"]);
 
 const handleButtonClick = (item) => {
-  console.log("Button clicked for item:", item);
 };
 
 watch(methodSelection, (newValue) => {

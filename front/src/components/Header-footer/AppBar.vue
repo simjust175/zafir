@@ -16,16 +16,10 @@
         size="30"
         @click="pushMainRoute"
       />
-      <!-- <h1
-        class="ml-5 zafir-text-primary cursor-pointer"
-        @click.stop="pushMainRoute"
-      >
-        B<span class="zafir-text-secondary">illi</span>o
-      </h1> -->
       <img
         class="pl-0 ml-4 cursor-pointer"
         width="115"
-        height="35"
+        height="55"
         src="/logo.png"
         @click="pushLogoHome"
       >

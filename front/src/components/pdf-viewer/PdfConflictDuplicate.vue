@@ -1,55 +1,17 @@
 <template>
-  <div>
-    <!-- Action bar -->
-    <div class="sticky-action-bar pa-3">
-      <v-btn-toggle
-        v-model="selection"
-        mandatory
-        class="w-100 d-flex flex-wrap justify-space-around ga-2"
-        color="primary"
-        rounded="lg"
-      >
-        <v-btn
-          value="both"
-          variant="tonal"
-          color="success"
-          class="action-btn"
-          @click="$emit('keep-both')"
-        >
-          <v-icon size="24">
-            mdi-content-duplicate
-          </v-icon>
-          <span>Keep Both</span>
-        </v-btn>
-
-        <v-btn
-          value="this"
-          variant="tonal"
-          color="primary"
-          class="action-btn"
-          @click="$emit('keep-this')"
-        >
-          <v-icon size="24">
-            mdi-file-check
-          </v-icon>
-          <span>Keep This</span>
-        </v-btn>
-
-
-        <v-btn
-          value="none"
-          variant="tonal"
-          color="error"
-          class="action-btn"
-          @click="$emit('keep-none')"
-        >
-          <v-icon size="24">
-            mdi-delete
-          </v-icon>
-          <span>Delete Both</span>
-        </v-btn>
-      </v-btn-toggle>
-    </div>
+  <div class="duplicate-actions">
+    <button class="action-btn success" @click="handleKeepBoth">
+      <v-icon size="16">mdi-content-duplicate</v-icon>
+      Keep Both
+    </button>
+    <button class="action-btn primary" @click="handleKeepThis">
+      <v-icon size="16">mdi-file-check</v-icon>
+      Keep Current
+    </button>
+    <button class="action-btn danger" @click="handleKeepNone">
+      <v-icon size="16">mdi-delete</v-icon>
+      Delete Both
+    </button>
   </div>
 </template>
 
@@ -58,29 +20,78 @@ import { ref } from "vue";
 
 defineProps({
   fileA: String,
-  fileB: String
+  fileB: String,
+  pdfUrl: String,
+  duplicatePdfUrl: String
 });
 
-defineEmits(["keep-both", "keep-this", "keep-duplicate", "keep-none"]);
+const emit = defineEmits(["keep-both", "keep-this", "keep-duplicate", "keep-none"]);
 
 const selection = ref(null);
+
+const handleKeepBoth = () => {
+  selection.value = 'both';
+  emit('keep-both');
+};
+
+const handleKeepThis = () => {
+  selection.value = 'this';
+  emit('keep-this');
+};
+
+const handleKeepNone = () => {
+  selection.value = 'none';
+  emit('keep-none');
+};
 </script>
 
 <style scoped>
-.sticky-action-bar {
-  position: sticky;
-  top: 0;
-  background: inherit;
-  z-index: 5;
-  border-bottom: 1px solid var(--v-theme-surface-variant);
+.duplicate-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fafbfc;
+  border-bottom: 1px solid #e3e8ee;
 }
 
 .action-btn {
-  flex: 1 1 120px;
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 12px;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.action-btn.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.action-btn.success:hover {
+  background: #bbf7d0;
+}
+
+.action-btn.primary {
+  background: #635bff;
+  color: #fff;
+}
+
+.action-btn.primary:hover {
+  background: #5851ea;
+}
+
+.action-btn.danger {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.action-btn.danger:hover {
+  background: #fecaca;
 }
 </style>
