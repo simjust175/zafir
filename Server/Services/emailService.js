@@ -1,5 +1,7 @@
 import sendInvoiceByEmail from "../send-email/email.js";
 
+
+  
 class EmailService {
   static async SendEmailService(req, res) {
     console.log("testing email service");
@@ -15,6 +17,7 @@ class EmailService {
     res.status(200).json({ success: true, message: "Email queued" });
 
     // Send email asynchronously (fire-and-forget)
+
     sendInvoiceByEmail({ to, recipient, language, projectName, total, groupedInvoices, groupedPayments })
       .then(() => console.log("✅ Email sent successfully"))
       .catch(err => console.error("❌ Failed to send email:", err));
