@@ -1,24 +1,24 @@
 <template>
   <div class="projects-page">
-    <header class="page-header">
+    <!--<header class="page-header">
       <div class="header-content">
-        <div>
+         <div>
           <h1 class="page-title">
             Projects
           </h1>
           <p class="page-subtitle">
             Organize and track invoices by project
           </p>
-        </div>
-        <v-btn
+        </div> -->
+        <!-- <v-btn
           color="primary"
           prepend-icon="mdi-plus"
           @click="addProjectDialog = true"
-        >
+        > 
           New Project
         </v-btn>
       </div>
-    </header>
+    </header>-->
 
     <project-dash v-model:add-project-dialog="addProjectDialog" />
   </div>

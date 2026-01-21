@@ -1,45 +1,49 @@
 <template>
   <div class="projects-container">
-    <!-- Loading State -->
     <div v-if="isLoading" class="loading-state">
-      <v-progress-circular
-        indeterminate
-        color="primary"
-        size="48"
-      />
-      <p class="loading-text">Loading projects...</p>
+      <div class="loading-spinner">
+        <v-progress-circular
+          indeterminate
+          color="primary"
+          size="44"
+          width="4"
+        />
+      </div>
+      <p class="loading-text">Loading your projects...</p>
     </div>
 
-    <!-- Projects Grid -->
-    <div
-      v-else-if="projects.length"
-      class="projects-content"
-    >
-      <div class="projects-header">
-        <div class="header-text">
-          <h1 class="projects-title">Your Projects</h1>
-          <p class="projects-subtitle">{{ projects.length }} active {{ projects.length === 1 ? 'project' : 'projects' }}</p>
+    <div v-else-if="projects.length" class="projects-content">
+      <header class="page-header">
+        <div class="header-content">
+          <div class="header-icon">
+            <v-icon size="24" color="primary">mdi-folder-multiple-outline</v-icon>
+          </div>
+          <div class="header-text">
+            <h1 class="page-title">Projects</h1>
+            <p class="page-subtitle">
+              {{ projects.length }} active {{ projects.length === 1 ? 'project' : 'projects' }}
+            </p>
+          </div>
         </div>
         <v-btn
           color="primary"
           size="large"
           prepend-icon="mdi-plus"
-          rounded="xl"
-          elevation="2"
-          class="add-project-btn"
+          rounded="lg"
+          class="new-project-btn"
           @click="emit('update:addProjectDialog', true)"
         >
           New Project
         </v-btn>
-      </div>
+      </header>
 
       <div class="projects-grid">
-        <TransitionGroup name="project-fade">
+        <TransitionGroup name="project-card">
           <div
             v-for="(projectGroup, index) in groupedProjects"
             :key="projectGroup[0].project_name"
             :style="{ '--index': index }"
-            class="project-grid-item"
+            class="grid-item"
           >
             <project-card
               :project="projectGroup"
@@ -50,27 +54,23 @@
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div
-      v-else
-      class="empty-state"
-    >
-      <div class="empty-animation">
-        <div class="empty-icon-wrapper">
-          <v-icon
-            size="80"
-            color="primary"
-            class="empty-icon"
-          >
-            mdi-folder-star-outline
-          </v-icon>
+    <div v-else class="empty-state">
+      <div class="empty-visual">
+        <div class="visual-glow" />
+        <div class="visual-icon">
+          <v-icon size="48" color="white">mdi-folder-star-outline</v-icon>
+        </div>
+        <div class="visual-rings">
+          <div class="ring ring-1" />
+          <div class="ring ring-2" />
+          <div class="ring ring-3" />
         </div>
       </div>
       
       <div class="empty-content">
         <h2 class="empty-title">Welcome to Your Workspace</h2>
-        <p class="empty-text">
-          Create your first project to start tracking invoices, managing expenses, and staying organized
+        <p class="empty-description">
+          Create your first project to start tracking invoices, managing expenses, and staying organized.
         </p>
         
         <v-btn
@@ -78,7 +78,6 @@
           size="x-large"
           prepend-icon="mdi-plus"
           rounded="xl"
-          elevation="4"
           class="empty-cta"
           @click="emit('update:addProjectDialog', true)"
         >
@@ -86,30 +85,29 @@
         </v-btn>
 
         <div class="empty-features">
-          <div class="feature-item">
-            <v-icon color="primary" size="20">mdi-check-circle</v-icon>
+          <div class="feature-badge">
+            <v-icon size="18" color="success">mdi-check-circle</v-icon>
             <span>Track invoices</span>
           </div>
-          <div class="feature-item">
-            <v-icon color="primary" size="20">mdi-check-circle</v-icon>
-            <span>Manage expenses</span>
+          <div class="feature-badge">
+            <v-icon size="18" color="success">mdi-check-circle</v-icon>
+            <span>Manage payments</span>
           </div>
-          <div class="feature-item">
-            <v-icon color="primary" size="20">mdi-check-circle</v-icon>
+          <div class="feature-badge">
+            <v-icon size="18" color="success">mdi-check-circle</v-icon>
             <span>Stay organized</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Add Project Dialog -->
     <v-dialog
       :model-value="addProjectDialog"
-      max-width="600"
+      max-width="560"
       persistent
       @update:model-value="emit('update:addProjectDialog', $event)"
     >
-      <v-card rounded="xl" elevation="24">
+      <v-card rounded="xl" class="dialog-card">
         <AddNewProject
           @close="emit('update:addProjectDialog', false)"
           @new-project-added="addNewProject"
@@ -117,29 +115,30 @@
       </v-card>
     </v-dialog>
 
-    <!-- Undo Snackbar -->
     <v-snackbar
       v-model="undoSnackbar"
       location="bottom"
       timeout="5000"
-      color="surface-variant"
+      color="surface"
       elevation="8"
       rounded="xl"
+      class="undo-snackbar"
     >
       <div class="snackbar-content">
-        <v-icon color="warning" class="mr-3">
-          mdi-folder-remove-outline
-        </v-icon>
-        <span class="snackbar-text">Project removed</span>
+        <div class="snackbar-icon">
+          <v-icon size="20" color="warning">mdi-folder-remove-outline</v-icon>
+        </div>
+        <span class="snackbar-message">Project completed and archived</span>
       </div>
       <template #actions>
         <v-btn
           variant="text"
           color="primary"
           rounded="lg"
+          class="undo-btn"
           @click="undoRemove"
         >
-          <v-icon start size="20">mdi-undo</v-icon>
+          <v-icon start size="18">mdi-undo</v-icon>
           Undo
         </v-btn>
       </template>
@@ -184,12 +183,10 @@ const addNewProject = async (project) => {
     return
   }
 
-  // Immediate UI update with optimistic placeholder
   invoiceArray.addProjectOptimistic(project)
   
   emit("update:addProjectDialog", false)
 
-  // Fetch real data from backend after a brief delay
   setTimeout(async () => {
     console.log('[ProjectDash] Fetching updated invoice data...')
     await invoiceArray.refreshInvoices()
@@ -224,7 +221,6 @@ const undoRemove = () => {
 }
 
 onMounted(async () => {
-  // Load projects on mount
   await invoiceArray.refreshInvoices()
   isLoading.value = false
 })
@@ -232,118 +228,143 @@ onMounted(async () => {
 
 <style scoped>
 .projects-container {
-  min-height: calc(100vh - 200px);
-  padding: 24px;
+  min-height: calc(100vh - 180px);
+  padding: 32px;
 }
 
-/* Loading State */
 .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  gap: 24px;
+  gap: 20px;
+}
+
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .loading-text {
-  font-size: 1rem;
-  color: rgb(var(--v-theme-grey-600));
+  font-size: 0.9375rem;
+  color: rgb(var(--v-theme-grey-500));
   margin: 0;
 }
 
-/* Projects Content */
 .projects-content {
   max-width: 1400px;
   margin: 0 auto;
 }
 
-.projects-header {
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
-  padding: 0 8px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--v-theme-primary), 0.1);
+  border-radius: 12px;
 }
 
 .header-text {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.projects-title {
-  font-size: 2rem;
+.page-title {
+  font-size: 1.75rem;
   font-weight: 700;
   color: rgb(var(--v-theme-on-surface));
-  margin: 0 0 4px;
+  margin: 0;
   letter-spacing: -0.02em;
 }
 
-.projects-subtitle {
-  font-size: 0.9375rem;
-  color: rgb(var(--v-theme-grey-600));
+.page-subtitle {
+  font-size: 0.875rem;
+  color: rgb(var(--v-theme-grey-500));
   margin: 0;
 }
 
-.add-project-btn {
+.new-project-btn {
   font-weight: 600;
   letter-spacing: 0.01em;
+  text-transform: none;
   box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.25);
 }
 
-/* Projects Grid */
 .projects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 24px;
 }
 
-.project-grid-item {
+.grid-item {
   height: 100%;
 }
 
-/* Empty State */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 600px;
-  padding: 80px 24px;
-  background: linear-gradient(135deg, 
-    rgba(var(--v-theme-surface), 1) 0%, 
-    rgba(var(--v-theme-primary), 0.03) 100%
+  min-height: 560px;
+  padding: 64px 32px;
+  background: linear-gradient(180deg, 
+    rgba(var(--v-theme-primary), 0.02) 0%, 
+    transparent 50%
   );
-  border-radius: 32px;
-  border: 2px dashed rgba(var(--v-theme-primary), 0.2);
+  border-radius: 24px;
+  border: 2px dashed rgba(var(--v-theme-primary), 0.15);
   position: relative;
-  overflow: hidden;
 }
 
-.empty-state::before {
-  content: '';
+.empty-visual {
+  position: relative;
+  margin-bottom: 40px;
+  width: 160px;
+  height: 160px;
+}
+
+.visual-glow {
   position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
   background: radial-gradient(circle, 
-    rgba(var(--v-theme-primary), 0.05) 0%, 
+    rgba(var(--v-theme-primary), 0.15) 0%, 
     transparent 70%
   );
-  animation: pulse 8s ease-in-out infinite;
+  border-radius: 50%;
 }
 
-.empty-animation {
-  position: relative;
-  z-index: 1;
-  margin-bottom: 32px;
-}
-
-.empty-icon-wrapper {
-  width: 140px;
-  height: 140px;
-  margin: 0 auto;
+.visual-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 96px;
+  height: 96px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -351,137 +372,177 @@ onMounted(async () => {
     rgb(var(--v-theme-primary)) 0%, 
     rgb(var(--v-theme-secondary)) 100%
   );
-  border-radius: 32px;
-  box-shadow: 0 12px 40px rgba(var(--v-theme-primary), 0.3);
+  border-radius: 24px;
+  box-shadow: 0 12px 32px rgba(var(--v-theme-primary), 0.35);
+  z-index: 2;
   animation: float 3s ease-in-out infinite;
 }
 
-.empty-icon {
-  animation: rotate 4s ease-in-out infinite;
+.visual-rings {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+}
+
+.ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(var(--v-theme-primary), 0.1);
+  border-radius: 50%;
+  animation: ring-pulse 3s ease-in-out infinite;
+}
+
+.ring-1 {
+  width: 120px;
+  height: 120px;
+  animation-delay: 0s;
+}
+
+.ring-2 {
+  width: 140px;
+  height: 140px;
+  animation-delay: 0.5s;
+}
+
+.ring-3 {
+  width: 160px;
+  height: 160px;
+  animation-delay: 1s;
 }
 
 .empty-content {
   position: relative;
   z-index: 1;
-  max-width: 600px;
+  max-width: 480px;
 }
 
 .empty-title {
-  font-size: 2.25rem;
+  font-size: 2rem;
   font-weight: 700;
   color: rgb(var(--v-theme-on-surface));
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   letter-spacing: -0.02em;
 }
 
-.empty-text {
-  font-size: 1.0625rem;
-  color: rgb(var(--v-theme-grey-600));
-  margin: 0 0 40px;
+.empty-description {
+  font-size: 1rem;
+  color: rgb(var(--v-theme-grey-500));
+  margin: 0 0 36px;
   line-height: 1.6;
 }
 
 .empty-cta {
   font-weight: 600;
   letter-spacing: 0.01em;
-  padding: 24px 48px !important;
+  text-transform: none;
+  padding: 20px 40px !important;
   font-size: 1rem;
-  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.35);
-  margin-bottom: 48px;
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.3);
+  margin-bottom: 40px;
 }
 
 .empty-features {
   display: flex;
-  gap: 32px;
+  gap: 16px;
   justify-content: center;
   flex-wrap: wrap;
 }
 
-.feature-item {
+.feature-badge {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9375rem;
-  color: rgb(var(--v-theme-grey-700));
+  padding: 10px 18px;
+  background: rgba(var(--v-theme-success), 0.08);
+  border: 1px solid rgba(var(--v-theme-success), 0.15);
+  border-radius: 24px;
+  font-size: 0.875rem;
   font-weight: 500;
+  color: rgb(var(--v-theme-grey-700));
 }
 
-/* Snackbar */
+.dialog-card {
+  overflow: hidden;
+}
+
 .snackbar-content {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 
-.snackbar-text {
+.snackbar-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--v-theme-warning), 0.12);
+  border-radius: 10px;
+}
+
+.snackbar-message {
   font-weight: 500;
   font-size: 0.9375rem;
 }
 
-/* Animations */
-.project-fade-enter-active {
-  transition: all 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
-  transition-delay: calc(var(--index, 0) * 60ms);
+.undo-btn {
+  font-weight: 600;
+  text-transform: none;
 }
 
-.project-fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+.project-card-enter-active {
+  transition: all 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition-delay: calc(var(--index, 0) * 50ms);
 }
 
-.project-fade-enter-from {
+.project-card-leave-active {
+  transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.project-card-enter-from {
   opacity: 0;
-  transform: translateY(30px) scale(0.95);
+  transform: translateY(24px) scale(0.96);
 }
 
-.project-fade-leave-to {
+.project-card-leave-to {
   opacity: 0;
-  transform: translateY(-15px) scale(0.95);
+  transform: translateY(-12px) scale(0.96);
 }
 
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-15px) rotate(2deg);
-  }
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50% { transform: translate(-50%, -50%) translateY(-10px); }
 }
 
-@keyframes rotate {
-  0%, 100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(-5deg);
-  }
-  75% {
-    transform: rotate(5deg);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
+@keyframes ring-pulse {
+  0%, 100% { 
+    transform: translate(-50%, -50%) scale(1);
     opacity: 0.5;
   }
-  50% {
-    transform: translate(-5%, -5%) scale(1.1);
-    opacity: 0.3;
+  50% { 
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 0.2;
   }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .projects-container {
-    padding: 16px;
+    padding: 20px;
   }
 
-  .projects-header {
+  .page-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 20px;
   }
 
-  .add-project-btn {
+  .new-project-btn {
     width: 100%;
   }
 
@@ -489,22 +550,22 @@ onMounted(async () => {
     grid-template-columns: 1fr;
   }
 
-  .projects-title {
-    font-size: 1.75rem;
+  .page-title {
+    font-size: 1.5rem;
   }
 
   .empty-title {
-    font-size: 1.75rem;
+    font-size: 1.625rem;
   }
 
   .empty-features {
     flex-direction: column;
-    gap: 16px;
+    align-items: center;
   }
 
   .empty-state {
-    min-height: 500px;
-    padding: 60px 24px;
+    min-height: 480px;
+    padding: 48px 24px;
   }
 }
 </style>

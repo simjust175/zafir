@@ -1,118 +1,101 @@
 <template>
   <div class="project-card-wrapper">
-    <!-- <v-card v-for="inv in project" :key="inv.invoice_id">
-  {{ inv }}
-</v-card> -->
-
-
-    <v-card
-      class="project-card"
-      rounded="xl"
-    >
+    <v-card class="project-card" rounded="xl">
       <div class="card-header">
         <div class="project-info">
           <div class="project-avatar">
-            <v-icon
-              size="24"
-              color="primary"
-            >
-              mdi-folder-outline
-            </v-icon>
+            <v-icon size="22" color="primary">mdi-folder-outline</v-icon>
           </div>
           <div class="project-details">
-            <h3 class="project-name">
-              {{ projectName }}
-            </h3>
-            <div class="d-flex align-center">
-              <p class="project-email mr-2">
-                {{ projectEmailDisplay }}
-              </p>
-              <v-tooltip
-                :text="copied ? 'Copied!' : 'Copy email'"
-                location="top"
-              >
+            <h3 class="project-name">{{ projectName }}</h3>
+            <div class="email-row">
+              <span class="project-email">{{ projectEmailDisplay }}</span>
+              <v-tooltip :text="copied ? 'Copied!' : 'Copy email'" location="top">
                 <template #activator="{ props }">
-                  <v-icon
+                  <button
                     v-bind="props"
-                    :icon="copied ? 'mdi-check-circle' : 'mdi-content-copy'"
-                    :color="copied ? 'green-lighten-2' : 'grey-darken-1'"
-                    :size="copied ? 20 : 15"
-                    class="cursor-pointer copy-icon"
-                    :class="{ 'fade-icon': copied }"
+                    class="copy-btn"
+                    :class="{ 'copied': copied }"
                     @click="copyProjectEmail(projectEmailDisplay)"
-                  />
+                  >
+                    <v-icon
+                      :icon="copied ? 'mdi-check' : 'mdi-content-copy'"
+                      :size="copied ? 14 : 12"
+                    />
+                  </button>
                 </template>
               </v-tooltip>
             </div>
           </div>
         </div>
         <v-btn
-          icon="mdi-pencil-outline"
+          icon
           variant="text"
           size="small"
-          color="grey"
+          class="edit-btn"
           @click="editDialog = true"
-        />
+        >
+          <v-icon size="18" color="grey-darken-1">mdi-pencil-outline</v-icon>
+        </v-btn>
       </div>
 
       <div class="card-body">
-        <div class="progress-section">
-          <div class="progress-header">
-            <span class="progress-label">Payment Progress</span>
-            <span
-              class="progress-percent"
-              :class="progressColorClass"
-            >{{ percentPaid }}%</span>
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <div class="metric-icon invoices">
+              <v-icon size="18" color="primary">mdi-file-document-outline</v-icon>
+            </div>
+            <div class="metric-content">
+              <span class="metric-value">{{ invoiceCount }}</span>
+              <span class="metric-label">Invoices</span>
+            </div>
           </div>
-          <v-progress-linear
-            :model-value="percentPaid"
-            :color="progressColor"
-            height="8"
-            rounded
-            bg-color="grey-lighten-3"
-          />
-          <div class="progress-details">
-            <span>{{ formatCurrency(payments) }} received</span>
-            <span>{{ formatCurrency(invoicing) }} invoiced</span>
+          <div class="metric-item">
+            <div class="metric-icon paid">
+              <v-icon size="18" color="success">mdi-check-circle-outline</v-icon>
+            </div>
+            <div class="metric-content">
+              <span class="metric-value">{{ paidCount }}</span>
+              <span class="metric-label">Paid</span>
+            </div>
           </div>
         </div>
 
-        <div class="stats-row">
-          <div class="stat-item">
-            <v-icon
-              size="18"
-              color="primary"
-            >
-              mdi-file-document-outline
-            </v-icon>
-            <span>{{ invoiceLabel }}</span>
+        <div class="progress-section">
+          <div class="progress-header">
+            <span class="progress-label">Payment Progress</span>
+            <span class="progress-percent" :class="progressColorClass">{{ percentPaid }}%</span>
           </div>
-          <div class="stat-item">
-            <v-icon
-              size="18"
-              color="success"
-            >
-              mdi-check-circle-outline
-            </v-icon>
-            <span>{{ paidCount }} paid</span>
+          <div class="progress-track">
+            <div 
+              class="progress-fill" 
+              :class="progressColorClass"
+              :style="{ width: `${percentPaid}%` }"
+            />
+          </div>
+          <div class="progress-details">
+            <div class="detail-item">
+              <span class="detail-label">Received</span>
+              <span class="detail-value success">{{ formatCurrency(payments) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Invoiced</span>
+              <span class="detail-value">{{ formatCurrency(invoicing) }}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="card-actions">
+      <div class="card-footer">
         <v-btn
-          variant="tonal"
+          variant="flat"
           color="primary"
           block
           rounded="lg"
+          class="complete-btn"
           @click="dialogTrigger = true"
         >
-          <v-icon
-            start
-            size="18"
-          >
-            mdi-check
-          </v-icon>
+          <v-icon start size="18">mdi-check-circle</v-icon>
           Mark Complete
         </v-btn>
       </div>
@@ -262,42 +245,52 @@ const progressColorClass = computed(() => {
   display: flex;
   flex-direction: column;
   background: rgb(var(--v-theme-surface));
-  border: 1px solid rgb(var(--v-theme-grey-200));
-  transition: all 0.2s ease;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .project-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: rgba(var(--v-theme-primary), 0.2);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 20px -2px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(var(--v-theme-primary), 0.05);
   transform: translateY(-2px);
 }
 
 .card-header {
-  background: rgb(var(--v-theme-surface));
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 20px 20px 10px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
 .project-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
 }
 
 .project-avatar {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(var(--v-theme-primary), 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .project-details {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .project-name {
@@ -306,80 +299,209 @@ const progressColorClass = computed(() => {
   color: rgb(var(--v-theme-on-surface));
   margin: 0;
   text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.email-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .project-email {
-  font-size: 0.7125rem;
+  font-size: 0.75rem;
   color: rgb(var(--v-theme-grey-500));
-  margin: 2px 0 0;
-  text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: rgb(var(--v-theme-grey-400));
+  transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  color: rgb(var(--v-theme-grey-600));
+}
+
+.copy-btn.copied {
+  color: rgb(var(--v-theme-success));
+  background: rgba(var(--v-theme-success), 0.1);
+}
+
+.edit-btn {
+  margin: -4px -8px 0 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.project-card:hover .edit-btn {
+  opacity: 1;
 }
 
 .card-body {
   flex: 1;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.metric-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(var(--v-theme-on-surface), 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.04);
+}
+
+.metric-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metric-icon.invoices {
+  background: rgba(var(--v-theme-primary), 0.1);
+}
+
+.metric-icon.paid {
+  background: rgba(var(--v-theme-success), 0.1);
+}
+
+.metric-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metric-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: rgb(var(--v-theme-on-surface));
+  line-height: 1;
+}
+
+.metric-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgb(var(--v-theme-grey-500));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .progress-section {
-  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .progress-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
 }
 
 .progress-label {
   font-size: 0.8125rem;
+  font-weight: 500;
   color: rgb(var(--v-theme-grey-600));
 }
 
 .progress-percent {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
+  line-height: 1;
 }
 
 .progress-percent.success { color: #22C55E; }
 .progress-percent.amber { color: #F59E0B; }
 .progress-percent.warning { color: #EF4444; }
 
+.progress-track {
+  height: 8px;
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-fill.success { background: linear-gradient(90deg, #22C55E, #34D399); }
+.progress-fill.amber { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+.progress-fill.warning { background: linear-gradient(90deg, #EF4444, #F87171); }
+
 .progress-details {
   display: flex;
   justify-content: space-between;
-  margin-top: 8px;
-  font-size: 0.75rem;
-  color: rgb(var(--v-theme-grey-500));
 }
 
-.stats-row {
+.detail-item {
   display: flex;
-  gap: 16px;
-  padding: 12px 0;
-  border-top: 1px solid rgb(var(--v-theme-grey-100));
+  flex-direction: column;
+  gap: 2px;
 }
 
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8125rem;
-  color: rgb(var(--v-theme-grey-600));
+.detail-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgb(var(--v-theme-grey-400));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.card-actions {
-  padding: 0 20px 20px;
+.detail-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgb(var(--v-theme-grey-700));
 }
 
-.icon-bounce {
-  animation: bounce 0.4s ease;
+.detail-value.success {
+  color: #22C55E;
 }
 
-@keyframes bounce {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(1.3); }
-  60%  { transform: scale(0.9); }
-  100% { transform: scale(1); }
+.card-footer {
+  padding: 16px 20px 20px;
+  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.complete-btn {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+@media (max-width: 480px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
