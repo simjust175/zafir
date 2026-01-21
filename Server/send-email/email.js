@@ -10,19 +10,19 @@ config();
 function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPaid, language = "nl", invoiceNumber }) {
   const isDutch = language === "nl";
   const calc = new InvoiceCalculations();
-  
+
   const formattedDate = new Date().toLocaleDateString(isDutch ? "nl-BE" : "en-US", {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
-  
+
   const formattedTotal = calc.formatCurrency(total);
   const formattedBalance = calc.formatCurrency(balanceDue);
   const invNumber = invoiceNumber || `INV-${Date.now().toString().slice(-8)}`;
-  
+
   const statusColor = isPaid ? "#38a169" : parseFloat(balanceDue) > 0 ? "#d69e2e" : "#3182ce";
-  const statusText = isPaid 
+  const statusText = isPaid
     ? (isDutch ? "BETAALD" : "PAID")
     : (isDutch ? "OPENSTAAND" : "PENDING");
 
@@ -48,7 +48,7 @@ function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPa
   
   <!-- Preheader Text -->
   <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
-    ${isDutch 
+    ${isDutch
       ? `Uw factuuroverzicht voor ${projectName} - Totaal: ${formattedTotal}`
       : `Your invoice summary for ${projectName} - Total: ${formattedTotal}`
     }
@@ -100,10 +100,10 @@ function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPa
               </p>
               
               <p style="margin: 0 0 32px; color: #4a5568; font-size: 15px; line-height: 1.7;">
-                ${isDutch 
-                  ? 'Hierbij ontvangt u het factuuroverzicht voor uw project. Alle details vindt u in de bijlage.'
-                  : 'Please find attached the invoice summary for your project. All details are included in the attachment.'
-                }
+                ${isDutch
+      ? 'Hierbij ontvangt u het factuuroverzicht voor uw project. Alle details vindt u in de bijlage.'
+      : 'Please find attached the invoice summary for your project. All details are included in the attachment.'
+    }
               </p>
               
               <!-- Project Info Card -->
@@ -170,10 +170,10 @@ function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPa
               
               <!-- Contact Info -->
               <p style="margin: 0 0 8px; color: #4a5568; font-size: 14px; line-height: 1.6;">
-                ${isDutch 
-                  ? 'Heeft u vragen over deze factuur? Neem gerust contact met ons op.'
-                  : 'Have questions about this invoice? Feel free to reach out to us.'
-                }
+                ${isDutch
+      ? 'Heeft u vragen over deze factuur? Neem gerust contact met ons op.'
+      : 'Have questions about this invoice? Feel free to reach out to us.'
+    }
               </p>
               
               <!-- Signature -->
@@ -249,29 +249,31 @@ async function sendInvoiceByEmail({
 }) {
   const calc = new InvoiceCalculations();
   const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`;
-  
+
   const paymentSummary = calc.calculatePaymentSummary(total, groupedPayments);
   const balanceDue = paymentSummary.summary.balanceDue;
   const isPaid = paymentSummary.summary.isPaid;
 
   const outputPath = path.resolve(`invoices/invoice-${Date.now()}.pdf`);
-  
-  await createInvoicePdf({ 
-    projectName, 
-    groupedInvoices, 
-    groupedPayments, 
+
+  await createInvoicePdf({
+    projectName,
+    groupedInvoices,
+    groupedPayments,
     total,
-    invoiceNumber 
+    invoiceNumber
   }, outputPath);
 
   const transporter = nodemailer.createTransport({
-    host: "smtp.bookmyname.com",
-    port:  587,
-    secure: false,
+    host:  "smtp.bookmyname.com",
+    port:  465,  // Changed from 587
+    secure: true,  // Changed from false - use SSL
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
-    }
+    },
+    connectionTimeout: 10000,  // Add timeout
+    greetingTimeout: 5000
   });
 
   const htmlContent = generateEmailTemplate({
@@ -285,12 +287,12 @@ async function sendInvoiceByEmail({
   });
 
   const isDutch = language === "nl";
-  
+
   const mailOptions = {
     from: `"ZAFIR TOTAAL PROJECTEN" <${process.env.EMAIL_USER || "<test2@zafir-test.co.uk>"}>`,
     to,
-    subject: isDutch 
-      ? `Factuuroverzicht - ${projectName} [${invoiceNumber}]` 
+    subject: isDutch
+      ? `Factuuroverzicht - ${projectName} [${invoiceNumber}]`
       : `Invoice Summary - ${projectName} [${invoiceNumber}]`,
     html: htmlContent,
     attachments: [
@@ -307,26 +309,28 @@ async function sendInvoiceByEmail({
   };
 
   try {
-    console.log("TES TES TEST", {user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS});
-    
+    console.log("TES TES TEST", {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    });
+
     const info = await transporter.sendMail(mailOptions);
     console.log("Email sent successfully:", info.messageId);
 
     fs.unlink(outputPath, (err) => {
       if (err) console.warn("Could not delete temp PDF:", err.message);
     });
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       messageId: info.messageId,
-      invoiceNumber 
+      invoiceNumber
     };
   } catch (err) {
     console.error("Email sending failed:", err.message);
-    
-    fs.unlink(outputPath, () => {});
-    
+
+    fs.unlink(outputPath, () => { });
+
     throw err;
   }
 }
