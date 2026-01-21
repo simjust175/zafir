@@ -21,7 +21,7 @@ class RegisterControllers {
             if (!newToken) return res.status(401).json({ Error: "Auth failed." });
             res.status(200).json({ Success: "Auth successful", newToken });
         } catch (error) {
-            res.status(500).json({ message: `userService/userLoginService: Cannot login ${error.message}` });
+            res.status(500).json({ message: `Cannot login ${error.message}` });
         };
     };
     //log-out 
