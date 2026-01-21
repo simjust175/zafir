@@ -54,13 +54,14 @@
             :total="overallTotalWithMargin"
             :print="true"
           />
+          <!-- projectInvoicing NOT projectInvoices -->
           <SendInvoice
-            :grouped-invoices="groupedInvoices"
+            :grouped-invoices="projectInvoicing"
             :project-name="projectName"
             :current-project-id="project_id"
             :payments="projectPayments"
             :double-checked="allInvoicesChecked"
-            :total="overallTotalWithMargin"
+            :total="totalInvoicedAmount"
             @refresh-data="refreshComputedData"
           />
           <table-parent-toolbar-menu :project="invoiceArray" />
@@ -68,16 +69,130 @@
       </div>
     </div>
 
-    <div
-      v-if="expanded"
-      class="metrics-section"
+    <router-link
+      :to="`/billing/${project_id}/revenue`"
+      class="revenue-metrics-strip-link"
     >
-      <invoice-dash
-        :current-project-id="project_id"
-        :expanded="expanded"
-        :margin-adjusted-total="overallTotalWithMargin"
-      />
-    </div>
+      <div class="revenue-metrics-strip">
+        <div class="metric-item invoiced">
+          <!-- <div class="metric-icon-wrap">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line
+                x1="16"
+                y1="13"
+                x2="8"
+                y2="13"
+              />
+              <line
+                x1="16"
+                y1="17"
+                x2="8"
+                y2="17"
+              />
+            </svg>
+          </div> -->
+          <div class="metric-content">
+            <span class="metric-label">Total Invoiced</span>
+            <span class="metric-value">{{ formatCurrency(totalInvoicedAmount) }}</span>
+          </div>
+          <!-- <div class="metric-badge">
+            {{ projectInvoicing.length }}
+          </div> -->
+        </div>
+        <div class="metric-divider" />
+        <div class="metric-item paid">
+          <!-- <div class="metric-icon-wrap paid">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div> -->
+          <div class="metric-content">
+            <span class="metric-label">Total Paid</span>
+            <span class="metric-value success">{{ formatCurrency(totalPaidAmount) }}</span>
+          </div>
+          <!-- <div class="metric-badge success">
+            {{ projectPayments.length }}
+          </div> -->
+        </div>
+        <div class="metric-divider" />
+        <div
+          class="metric-item balance"
+          :class="{ positive: outstandingBalance <= 0 }"
+        >
+          <!-- <div
+            class="metric-icon-wrap balance"
+            :class="{ positive: outstandingBalance <= 0 }"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+              />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div> -->
+          <div class="metric-content">
+            <span class="metric-label">Outstanding</span>
+            <span
+              class="metric-value"
+              :class="{ positive: outstandingBalance <= 0 }"
+            >{{ formatCurrency(Math.abs(outstandingBalance)) }}</span>
+          </div>
+          <!-- <div
+            v-if="totalInvoicedAmount > 0"
+            class="collection-indicator"
+          >
+            <div class="collection-bar">
+              <div
+                class="collection-fill"
+                :style="{ width: `${collectionPercent}%` }"
+              />
+            </div>
+            <span class="collection-percent">{{ collectionPercent }}%</span>
+          </div> -->
+        </div>
+        <div class="revenue-cta">
+          <span class="cta-text">Manage Revenue</span>
+          <svg
+            class="cta-arrow"
+            color="primary"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </div>
+      </div>
+    </router-link>
 
     <div class="table-content">
       <table
@@ -234,23 +349,81 @@
 
       <div
         v-else
-        class="state-container empty"
+        class="empty-state-container"
       >
-        <div class="empty-icon">
-          <svg
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
+        <div class="empty-state-content">
+          <div class="empty-illustration">
+            <div class="illustration-wrapper">
+              <div class="illustration-glow" />
+              <div class="illustration-circle">
+                <svg
+                  class="illustration-icon"
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <path
+                    d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <polyline
+                    points="17 8 12 3 7 8"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <line
+                    x1="12"
+                    y1="3"
+                    x2="12"
+                    y2="15"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+        
+
+          <h3 class="empty-title">
+            No invoices yet
+          </h3>
+          <p class="empty-description">
+            Upload your first invoice to begin tracking costs and margins for this project.
+          </p>
+
+          <router-link
+            to="/upload"
+            class="empty-upload-btn"
           >
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-          </svg>
+            Upload invoice
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line
+                x1="5"
+                y1="12"
+                x2="19"
+                y2="12"
+              />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </router-link>
         </div>
-        <h3>No invoices yet</h3>
-        <p>Upload your first invoice to get started</p>
       </div>
     </div>
 
@@ -278,12 +451,10 @@
   </div>
 </template>
 
-<!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { invoices as invoiceStore } from '@/stores/invoiceState.js';
 import socket from '@/socket.js';
-import InvoiceDash from "@/components/Invoicing-dash/InvoiceDash.vue";
 
 const props = defineProps({
   invoices: { type: Array, default: () => [] },
@@ -372,13 +543,35 @@ const projectPayments = computed(() => {
   return invoiceArray.payments?.filter(p => p.project === props.project_id) || [];
 });
 
+const projectInvoicing = computed(() => {
+  return invoiceArray.invoicing?.filter(i => i.project === props.project_id) || [];
+});
+
+const totalInvoicedAmount = computed(() => {
+  return projectInvoicing.value.reduce((sum, i) => sum + Number(i.amount || 0), 0);
+});
+
+const totalPaidAmount = computed(() => {
+  return projectPayments.value.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+});
+
+const outstandingBalance = computed(() => {
+  return totalInvoicedAmount.value - totalPaidAmount.value;
+});
+
+const collectionPercent = computed(() => {
+  if (totalInvoicedAmount.value === 0) return 0;
+  return Math.min(100, Math.round((totalPaidAmount.value / totalInvoicedAmount.value) * 100));
+});
+
 const allInvoicesChecked = computed(() => {
   const projInv = projectInvoices.value;
-  return projInv.length > 0 && projInv.every(i => i.double_checked === true);
+  
+  return projInv.length > 0 && projInv.every(i => i.double_checked !== null);
 });
 
 // --- UTILITY FUNCTIONS ---
-const formatCurrency = (value) => new Intl.NumberFormat('en-EN', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(Number(value) || 0);
+const formatCurrency = (value) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(Number(value) || 0);
 
 const getInitials = (name) => {
   if (!name) return '?';
@@ -409,7 +602,6 @@ const refreshComputedData = () => {
 };
 
 const handleNewInvoice = (invoice) => {
-  console.log("new emaik entered", invoice)
   if (!invoice) return;
   if (!invoice.invoice_id) return;
   // Inject safely into store, deduplicated
@@ -519,6 +711,320 @@ watch(() => props.refreshing, () => { loading.value = false; });
 
 .metrics-section {
   border-bottom: 1px solid #eaeaea;
+}
+
+.revenue-metrics-strip-link {
+  display: block;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.revenue-metrics-strip-link:hover .revenue-metrics-strip {
+  background: linear-gradient(180deg, #f5f5f5 0%, #fafafa 100%);
+  border-bottom-color: #d4d4d4;
+}
+
+.revenue-metrics-strip-link:hover .revenue-cta {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.revenue-metrics-strip-link:hover .cta-arrow {
+  transform: translateX(4px);
+}
+
+/* .revenue-metrics-strip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 16px 24px;
+  background: linear-gradient(180deg, #fafafa 0%, #fff 100%);
+  border-bottom: 1px solid #eaeaea;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+} */
+
+.revenue-metrics-strip {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  background: #fafafa;
+  border-bottom: 1px solid #eaeaea;
+  gap: 0;
+}
+
+.metric-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 20px;
+}
+
+.metric-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #171717;
+}
+
+.metric-value.success {
+  color: #059669;
+}
+
+.metric-value.positive {
+  color: #059669;
+}
+
+.metric-divider {
+  width: 1px;
+  height: 36px;
+  background: #e5e5e5;
+}
+
+/* ad kan older design */
+
+.revenue-cta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 8px 16px 8px 20px;
+  background: linear-gradient(135deg, #171717 0%, #262626 100%);
+  border-radius: 100px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0.85;
+  transform: translateX(8px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cta-text {
+  letter-spacing: -0.01em;
+}
+
+.cta-arrow {
+  transition: transform 0.2s ease;
+  opacity: 0.8;
+}
+
+/* .metric-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px;
+  flex: 1;
+} */
+
+.metric-divider {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(180deg, transparent 0%, #e5e5e5 50%, transparent 100%);
+}
+
+.metric-icon-wrap {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border-radius: 10px;
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.metric-icon-wrap.paid {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #10b981;
+}
+
+.metric-icon-wrap.balance {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  color: #f59e0b;
+}
+
+.metric-icon-wrap.balance.positive {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #10b981;
+}
+
+.metric-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* .metric-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #737373;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #171717;
+  letter-spacing: -0.02em;
+} */
+
+.metric-value.success {
+  color: #10b981;
+}
+
+.metric-value.positive {
+  color: #10b981;
+}
+
+.metric-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6366f1;
+  background: #eef2ff;
+  border-radius: 6px;
+}
+
+.metric-badge.success {
+  color: #10b981;
+  background: #ecfdf5;
+}
+
+.collection-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.collection-bar {
+  width: 60px;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.collection-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.collection-percent {
+  font-size: 12px;
+  font-weight: 600;
+  color: #10b981;
+  min-width: 32px;
+}
+
+@media (max-width: 1024px) {
+  .revenue-metrics-strip {
+    padding: 12px 16px;
+    gap: 0;
+  }
+  
+  .metric-item {
+    padding: 6px 12px;
+  }
+  
+  .metric-value {
+    font-size: 16px;
+  }
+  
+  .collection-indicator {
+    display: none;
+  }
+  
+  .revenue-cta {
+    padding: 6px 12px 6px 16px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .revenue-metrics-strip {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .metric-divider {
+    display: none;
+  }
+  
+  .metric-item {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 140px;
+    padding: 10px 12px;
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #f0f0f0;
+  }
+  
+  .metric-item.balance {
+    flex: 1 1 100%;
+  }
+  
+  .revenue-cta {
+    flex: 1 1 100%;
+    justify-content: center;
+    margin-top: 4px;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .revenue-metrics-strip {
+    padding: 10px 12px;
+  }
+  
+  .metric-item {
+    flex: 1 1 100%;
+    gap: 10px;
+  }
+  
+  .metric-icon-wrap {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .metric-icon-wrap svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .metric-value {
+    font-size: 15px;
+  }
+  
+  .metric-badge {
+    display: none;
+  }
+  
+  .revenue-cta {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
 }
 
 .table-content {
@@ -842,5 +1348,152 @@ watch(() => props.refreshing, () => { loading.value = false; });
   .invoice-meta {
     font-size: 11px;
   }
+}
+
+.revenue-link {
+  text-decoration: none;
+}
+
+.revenue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.revenue-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.revenue-btn svg {
+  stroke: currentColor;
+}
+
+.empty-state-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+}
+
+.empty-state-content {
+  text-align: center;
+  max-width: 380px;
+}
+
+.empty-state-content .empty-illustration {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+
+.empty-state-content .illustration-wrapper {
+  position: relative;
+}
+
+.empty-state-content .illustration-glow {
+  position: absolute;
+  inset: -16px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: subtle-glow 4s ease-in-out infinite;
+}
+
+@keyframes subtle-glow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.03); }
+}
+
+.empty-state-content .illustration-circle {
+  width: 88px;
+  height: 88px;
+  background: rgb(236 236 253);
+  border: 1px solid rgba(99, 101, 241, 0.37);
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.02),
+    0 4px 16px rgba(14, 165, 233, 0.05);
+}
+
+.empty-state-content .illustration-icon {
+  color: rgb(99, 101, 241);
+}
+
+.empty-state-content .empty-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0ea5e9;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 100px;
+  margin-bottom: 14px;
+}
+
+.empty-state-content .empty-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f0f0f;
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.empty-state-content .empty-description {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.7;
+  margin: 0 0 28px;
+}
+
+.empty-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: #0f0f0f;
+  border: none;
+  border-radius: 10px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.empty-upload-btn:hover {
+  background: #171717;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: #fff;
+}
+
+.empty-upload-btn:active {
+  transform: translateY(0);
+}
+
+.empty-upload-btn svg {
+  stroke: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.empty-upload-btn:hover svg {
+  transform: translateX(3px);
 }
 </style>

@@ -249,6 +249,15 @@ const topProjects = computed(() => {
     .slice(0, 5)
 })
 
+const formatDate = (date) => {
+  if (!date) return 'N/A'
+  return new Date(date).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
 const recentTransactions = computed(() => {
   const transactions = []
   invoiceStore.payments?.slice(0, 5).forEach((p, i) => {
@@ -257,7 +266,7 @@ const recentTransactions = computed(() => {
       type: 'payment',
       description: `Payment received`,
       amount: Number(p.amount || 0),
-      date: p.created_on || 'Recently'
+      date: formatDate(p.created_on) || 'Recently'
     })
   })
   invoiceStore.invoicing?.slice(0, 3).forEach((inv, i) => {
@@ -266,7 +275,7 @@ const recentTransactions = computed(() => {
       type: 'invoice',
       description: `Invoice #${inv.supplier || inv.id || i + 1}`,
       amount: Number(inv.amount || 0),
-      date: inv.created_on || 'Recently'
+      date: formatDate(inv.created_on) || 'Recently'
     })
   })
   return transactions.slice(0, 6)
@@ -374,8 +383,14 @@ const statusSeries = computed(() => {
   const paid = totalPayments.value
   const pending = Math.max(0, outstanding.value * 0.7)
   const overdue = Math.max(0, outstanding.value * 0.3)
-  return [paid || 1, pending || 1, overdue || 1]
+
+  return [
+    Number((paid || 1).toFixed(2)),
+    Number((pending || 1).toFixed(2)),
+    Number((overdue || 1).toFixed(2))
+  ]
 })
+
 </script>
 
 <style scoped>

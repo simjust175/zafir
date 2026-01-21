@@ -9,17 +9,36 @@
       @open-dialog="openInvoiceDialog"
     />
 
-    <!-- Shared Dialog for Paid + Invoiced -->
+    <div class="entries-container">
+      <EntriesList
+        title="Invoices Sent"
+        type="invoicing"
+        :entries="invoicingEntries"
+        :loading="entriesLoading"
+        @edit="editEntry('invoiced', $event)"
+        @delete="deleteEntry('invoicing', $event)"
+      />
+      
+      <EntriesList
+        title="Payments Received"
+        type="payments"
+        :entries="paymentEntries"
+        :loading="entriesLoading"
+        @edit="editEntry('paid', $event)"
+        @delete="deleteEntry('payments', $event)"
+      />
+    </div>
+
     <invoice-dash-dialog
       :show="showInvoiceDialog"
       :dialog-type="dialogType"
       :initial-amount="originalAmount"
       :is-edit="isEditMode"
+      :edit-entry-id="editEntryId"
       @close="closeInvoiceDash"
-      @update="updateInvoicing"
+      @update="handleUpdate"
     />
 
-    <!-- Snackbar Notification -->
     <v-snackbar
       v-model="snack.show"
       :color="snack.color"
@@ -43,29 +62,28 @@
 <script setup>
 import { computed, watch, ref } from 'vue'
 import InvoiceSummary from './InvoiceSummary.vue'
-import { invoices } from '@/stores/invoiceState.js'
+import EntriesList from './EntriesList.vue'
+import InvoiceDashDialog from './InvoiceDashDialog.vue'
+import { invoices as useInvoiceStore } from '@/stores/invoiceState.js'
 import { globalFunctions } from '@/stores/globalFunctions.js'
 
-// eslint-disable-next-line vue/require-default-prop
-const props = defineProps({ 
-  currentProjectId: Number, 
-  expanded: Boolean, 
-  addInvoicing: String,
-  marginAdjustedTotal: { type: Number, default: null }
+const props = defineProps({
+  currentProjectId: Number,
+  expanded: Boolean,
+  marginAdjustedTotal: Number
 })
 
-const invoiceStore = invoices()
+const invoiceStore = useInvoiceStore()
 const functions = globalFunctions()
-const payments = computed(() => invoiceStore.payments)
-const invoicing = computed(() => invoiceStore.invoicing)
-// const localInvoices = ref([])
 
-const showInvoiceDialog = ref(false)
-const invoicedLoading = ref(false)
-const paidLoading = ref(false)
-const dialogType = ref(null)
+/* -----------------------
+   Local UI state
+------------------------ */
+const showDialog = ref(false)
+const dialogType = ref(null) // 'invoicing' | 'payments'
 const isEditMode = ref(false)
-const originalAmount = ref('')
+const editEntryId = ref(null)
+const originalAmount = ref(0)
 
 const snack = ref({
   show: false,
@@ -73,119 +91,139 @@ const snack = ref({
   message: ''
 })
 
+/* -----------------------
+   SOURCE OF TRUTH (STORE)
+------------------------ */
+const invoicingEntries = computed(() =>
+  invoiceStore.invoicing.filter(
+    i => i.project === props.currentProjectId
+  )
+)
 
-const totalPaid = computed(() => {
-  const entries = payments.value.filter(p => p.project === props.currentProjectId)
-  return entries.reduce((acc, curr) => acc + curr.amount, 0)
-})
+const paymentEntries = computed(() =>
+  invoiceStore.payments.filter(
+    p => p.project === props.currentProjectId
+  )
+)
 
-const baseInvoiced = computed(() => {
-  const entries = invoicing.value.filter(p => p.project === props.currentProjectId)
-  return entries.reduce((acc, curr) => acc + curr.amount, 0)
-})
+/* -----------------------
+   Derived totals
+------------------------ */
+const totalPaid = computed(() =>
+  paymentEntries.value.reduce((sum, p) => sum + p.amount, 0)
+)
 
 const totalInvoiced = computed(() => {
-  // console.log('marginAdjustedTotal:', props.marginAdjustedTotal)
-  // return props.marginAdjustedTotal != null ? props.marginAdjustedTotal : baseInvoiced.value
-    return baseInvoiced.value
-})
-
-const percentPaid = computed(() => {
-  const invoiced = totalInvoiced.value
-  const paid = totalPaid.value
-  return invoiced === 0 ? 0 : Math.round((paid / invoiced) * 100)
-})
-
-const openInvoiceDialog = (type, edit = false) => {
-  dialogType.value = type
-  isEditMode.value = edit
-
-  if (edit) {
-    originalAmount.value = type === 'invoiced' ? totalInvoiced.value : totalPaid.value
-  } else {
-    originalAmount.value = 0
+  if (props.marginAdjustedTotal != null) {
+    return props.marginAdjustedTotal
   }
+  return invoicingEntries.value.reduce((sum, i) => sum + i.amount, 0)
+})
 
-  showInvoiceDialog.value = true
+const percentPaid = computed(() =>
+  totalInvoiced.value === 0
+    ? 0
+    : Math.round((totalPaid.value / totalInvoiced.value) * 100)
+)
+
+/* -----------------------
+   Dialog control
+------------------------ */
+const openDialog = (type, entry = null) => {
+  dialogType.value = type
+  isEditMode.value = !!entry
+  editEntryId.value = entry?.id ?? null
+  originalAmount.value = entry?.amount ?? 0
+  showDialog.value = true
 }
 
-const updateInvoicing = async (newAmount) => {
-  const isInvoiced = dialogType.value === 'invoiced'
-  const project = props.currentProjectId
+const closeDialog = () => {
+  showDialog.value = false
+  isEditMode.value = false
+  editEntryId.value = null
+  functions.add = null
+}
 
-  if (!project) {
-    console.error("No project ID found")
-    return
-  }
-
-  const endpoint = isInvoiced
-    ? '/invoice/post-general/invoicing'
-    : '/invoice/post-general/payments'
-
-  const payload = { project, amount: newAmount }
-  if (isInvoiced) invoicedLoading.value = true
-  else paidLoading.value = true
-
+/* -----------------------
+   CRUD actions (store-only)
+------------------------ */
+const handleUpdate = async (amount) => {
   try {
-    const res = await fetch(`${import.meta.env.VITE_BASE_URL}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-
-    if (!res.ok) throw new Error('Failed to update')
-
-    // Optimistically push new entry into store
-    const entry = {
-      project,
-      amount: Number(newAmount),
-      project_name: '' // you can optionally pull this from local context if needed
+    if (isEditMode.value) {
+      if (dialogType.value === 'invoicing') {
+        await invoiceStore.updateInvoicing(editEntryId.value, amount)
+      } else {
+        await invoiceStore.updatePayment(editEntryId.value, amount)
+      }
+    } else {
+      if (dialogType.value === 'invoicing') {
+        await invoiceStore.createInvoicing(props.currentProjectId, amount)
+      } else {
+        await invoiceStore.createPayment(props.currentProjectId, amount)
+      }
     }
-
-    if (isInvoiced) invoiceStore.invoicing.push(entry)
-    else invoiceStore.payments.push(entry)
 
     snack.value = {
       show: true,
       color: 'success',
-      message: isInvoiced ? 'Invoice amount added successfully' : 'Payment recorded successfully'
+      message: 'Saved successfully'
     }
-
-    showInvoiceDialog.value = false
-  } catch (err) {
-    console.error(err)
+    closeDialog()
+  } catch {
     snack.value = {
       show: true,
       color: 'error',
-      message: 'Unable to save. Please try again.'
+      message: 'Failed to save'
     }
-  } finally {
-    setTimeout(() => {
-      if (isInvoiced) invoicedLoading.value = false
-      else paidLoading.value = false
-    }, 1500)
   }
 }
 
-const closeInvoiceDash = ()=>{
-  showInvoiceDialog.value = false;
-  functions.add = null;
+const deleteEntry = async (type, entry) => {
+  try {
+    if (type === 'invoicing') {
+      await invoiceStore.deleteInvoicing(entry.id)
+    } else {
+      await invoiceStore.deletePayment(entry.id)
+    }
+
+    snack.value = {
+      show: true,
+      color: 'success',
+      message: 'Deleted successfully'
+    }
+  } catch {
+    snack.value = {
+      show: true,
+      color: 'error',
+      message: 'Delete failed'
+    }
+  }
 }
-watch(()=> functions.add, (newVal)=> {if(newVal) openInvoiceDialog(newVal)})
+
+/* -----------------------
+   External triggers
+------------------------ */
+watch(() => functions.add, (val) => {
+  if (val) openDialog(val)
+})
 </script>
 
 <style scoped>
-.position-relative {
-  position: relative;
+.invoice-dash {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
-.position-absolute {
-  position: absolute;
-  z-index: 999 !important;
+
+.entries-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
-.top-0 {
-  top: 0;
-}
-.right-0 {
-  right: 0;
+
+@media (max-width: 900px) {
+  .entries-container {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

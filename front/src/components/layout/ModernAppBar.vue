@@ -47,7 +47,7 @@
         class="action-btn"
         @click="$emit('toggle-right-panel')"
       >
-        <v-icon>mdi-view-sidebar-right</v-icon>
+        <v-icon>mdi-widgets-outline</v-icon>
         <v-tooltip
           activator="parent"
           location="bottom"

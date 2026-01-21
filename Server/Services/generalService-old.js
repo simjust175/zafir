@@ -1,42 +1,21 @@
 import General from "../Database/Models/general.js";
 
 class GeneralService {
-  // static async postService(table, body, eventSystem = null) {
-  //   if (!table || !body) throw new Error("Database and body must be provided");
-  //   const result = await General.post(table, body);
-
-  //   // Emit real-time event for successful creation
-  //   if (eventSystem && result) {
-  //     if (table === 'invoices') {
-  //       eventSystem.emitInvoice('create', result);
-  //     } else if (table === 'projects') {
-  //       eventSystem.emitProject('create', result);
-  //     } else if (table === 'payments') {
-  //       eventSystem.emitPayment('create', result);
-  //     }
-  //   }
-
-  //   return result;
-  // }
-
   static async postService(table, body, eventSystem = null) {
     if (!table || !body) throw new Error("Database and body must be provided");
-    console.log("body in generalService/postService", body);
-
-    // Normalize project field for revenue tables
-    // if ((table === "payments" || table === "invoicing") && body.project_id) {
-    //   body.project = body.project_id;
-    //   delete body.project_id;
-    // }
-
     const result = await General.post(table, body);
-
+    
+    // Emit real-time event for successful creation
     if (eventSystem && result) {
-      if (table === "invoices") eventSystem.emitInvoice("create", result);
-      if (table === "projects") eventSystem.emitProject("create", result);
-      if (table === "payments") eventSystem.emitPayment("create", result);
+      if (table === 'invoices') {
+        eventSystem.emitInvoice('create', result);
+      } else if (table === 'projects') {
+        eventSystem.emitProject('create', result);
+      } else if (table === 'payments') {
+        eventSystem.emitPayment('create', result);
+      }
     }
-
+    
     return result;
   }
 
@@ -49,7 +28,7 @@ class GeneralService {
     const columns = query.what || "*";
     let whereClause = "";
     let values = [];
-
+  
     // Safety check: require filterField and filterValue for filtering
     if (query.filterField && query.filterValue !== undefined) {
       // Validate column name: only letters, numbers, underscores allowed
@@ -57,11 +36,11 @@ class GeneralService {
       if (!isValidColumn) {
         throw new Error(`Invalid filterField: ${query.filterField}`);
       }
-
+  
       whereClause = `\`${query.filterField}\` = ?`;
       values = [query.filterValue];
     }
-
+  
     try {
       return await General.getWithFilter(params.db, columns, whereClause, values);
     } catch (err) {
@@ -113,9 +92,7 @@ class GeneralService {
     let params = [];
 
     if (query.id) {
-      const idColumn = table === 'invoicing' ? 'invoicing_id' :
-        table === 'payments' ? 'payment_id' : 'invoice_id';
-      whereClause = `${idColumn} = ?`;
+      whereClause = "invoice_id = ?";
       params = [query.id];
     } else if (query.user) {
       whereClause = "user_id = ?";
@@ -134,12 +111,12 @@ class GeneralService {
     }
 
     const result = await General.patch(table, body, whereClause, params);
-
+    
     // Emit real-time event for successful update
     if (eventSystem && result) {
       const operation = body.deleted_at ? 'delete' : 'update';
       const entityData = { ...body, ...query };
-
+      
       if (table === 'invoices') {
         eventSystem.emitInvoice(operation, entityData);
       } else if (table === 'projects') {
@@ -148,7 +125,7 @@ class GeneralService {
         eventSystem.emitPayment(operation, entityData);
       }
     }
-
+    
     return result;
   }
 }

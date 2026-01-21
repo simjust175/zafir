@@ -1,4 +1,5 @@
 import GeneralService from "../Services/generalService.js";
+import General from "../Database/Models/general.js";
 
 class GeneralControllers {
     static async postGeneral({ body, params, app }, res) {
@@ -56,6 +57,48 @@ class GeneralControllers {
         }
     }
 
+    static async getByProject(req, res) {
+        const { db } = req.params;
+        const { projectId } = req.query;
+        
+        if (!projectId) {
+            return res.status(400).json({ message: 'projectId is required' });
+        }
+        
+        try {
+            const entries = await General.getByProject(db, parseInt(projectId));
+            res.status(200).json({ entries });
+        } catch (error) {
+            res.status(500).json({ message: `Error fetching entries: ${error.message}` });
+        }
+    }
+
+    static async deleteEntry({ params, app }, res) {
+        const { db, id } = params;
+        
+        try {
+            const eventSystem = app.get('eventSystem');
+            const deleted = await General.softDelete(db, parseInt(id));
+            
+            if (!deleted) {
+                return res.status(404).json({ message: 'Entry not found' });
+            }
+            
+            if (eventSystem) {
+                if (db === 'invoices') {
+                    eventSystem.emitInvoice('delete', deleted);
+                } else if (db === 'payments') {
+                    eventSystem.emitPayment('delete', deleted);
+                } else if (db === 'projects') {
+                    eventSystem.emitProject('delete', deleted);
+                }
+            }
+            
+            res.status(200).json({ message: 'Entry deleted successfully', deleted });
+        } catch (error) {
+            res.status(500).json({ message: `Error deleting entry: ${error.message}` });
+        }
+    }
 }
 
 export default GeneralControllers;

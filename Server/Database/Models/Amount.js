@@ -62,20 +62,29 @@ class Amount {
   }
 
   static async getPayments(table) {
-    const allowedTables = ["payments", "invoicing"];
-    if (!allowedTables.includes(table)) {
-      throw new Error(`Invalid table name: ${table}`);
-    }
-    
-    const sql = `
-      SELECT t.amount, t.project, t.created_on, p.project_name
-      FROM \`${table}\` t
-      INNER JOIN projects p ON t.project = p.project_id
-      WHERE p.completed_on IS NULL;
-    `;
-    const [rows] = await db.query(sql);
-    return rows;
+  const allowedTables = ["payments", "invoicing"];
+  if (!allowedTables.includes(table)) {
+    throw new Error(`Invalid table name: ${table}`);
   }
+
+  // Map table → correct ID column
+  const idColumn = table === "payments" ? "payment_id" : "invoicing_id";
+
+  const sql = `
+    SELECT 
+      t.${idColumn} AS id,
+      t.amount,
+      t.project,
+      t.created_on,
+      p.project_name
+    FROM \`${table}\` t
+    INNER JOIN projects p ON t.project = p.project_id
+    WHERE p.completed_on IS NULL AND t.deleted_at IS NULL;
+  `;
+
+  const [rows] = await db.query(sql);
+  return rows;
+}
 }
 
 export default Amount;

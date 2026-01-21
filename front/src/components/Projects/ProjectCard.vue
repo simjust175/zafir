@@ -1,5 +1,10 @@
 <template>
   <div class="project-card-wrapper">
+    <!-- <v-card v-for="inv in project" :key="inv.invoice_id">
+  {{ inv }}
+</v-card> -->
+
+
     <v-card
       class="project-card"
       rounded="xl"
@@ -80,7 +85,7 @@
             >
               mdi-file-document-outline
             </v-icon>
-            <span>{{ invoiceCount }} invoices</span>
+            <span>{{ invoiceLabel }}</span>
           </div>
           <div class="stat-item">
             <v-icon
@@ -185,7 +190,18 @@ const copyProjectEmail = async (emailAddress) => {
     console.error("Copy failed", err)
   }
 }
-const invoiceCount = computed(() => props.project?.length || 0)
+const invoiceCount = computed(() => {
+  if (!Array.isArray(props.project)) return 0
+
+  return props.project.filter(
+    invoice => invoice.invoice_id !== null
+  ).length
+})
+const invoiceLabel = computed(() => {
+  if (invoiceCount.value === 0) return 'No invoices'
+  if (invoiceCount.value === 1) return '1 invoice'
+  return `${invoiceCount.value} invoices`
+})
 const paidCount = computed(() => props.project?.filter(inv => inv.paid)?.length || 0)
 
 const reduceTotal = (array) => {

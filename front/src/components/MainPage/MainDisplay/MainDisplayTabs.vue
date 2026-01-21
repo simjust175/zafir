@@ -26,7 +26,7 @@
             v-if="filteredProjects.length === 0"
             class="empty-projects"
           >
-            <p>No projects</p>
+            <p>No projects yet</p>
           </div>
         </div>
         
@@ -82,21 +82,39 @@
           class="empty-state"
         >
           <div class="empty-content">
-            <div class="empty-icon">
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
+            <div class="empty-illustration">
+              <div class="illustration-wrapper">
+                <div class="illustration-glow"></div>
+                <div class="illustration-bg">
+                  <svg class="illustration-icon" width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </div>
+              </div>
             </div>
-            <h3>No project selected</h3>
-            <p>Select a project from the sidebar to view invoices</p>
+
+            <div class="empty-badge" v-if="filteredProjects.length === 0">Get Started</div>
+
+            <h2 v-if="filteredProjects.length === 0" class="empty-title">Track invoices effortlessly</h2>
+            <h2 v-else class="empty-title">Select a project</h2>
+            
+            <p v-if="filteredProjects.length === 0" class="empty-description">
+              Organize supplier invoices, apply margins, and keep your project costs under control — all in one place.
+            </p>
+            <p v-else class="empty-description">
+              Choose a project from the sidebar to view its invoices.
+            </p>
+
+            <button v-if="filteredProjects.length === 0" class="empty-cta-btn" @click="addProjectDialog = true">
+              Create your first project
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </button>
           </div>
         </div>
       </main>
@@ -392,5 +410,117 @@ const fetchFromSessionStorage = () => {
   .sidebar-footer {
     display: none;
   }
+}
+
+.empty-content {
+  text-align: center;
+  max-width: 420px;
+  padding: 48px 32px;
+}
+
+.empty-illustration {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 28px;
+}
+
+.illustration-wrapper {
+  position: relative;
+}
+
+.illustration-glow {
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: glow 4s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.illustration-bg {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(145deg, #fafbff 0%, #f0f2ff 100%);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.02),
+    0 4px 16px rgba(99, 102, 241, 0.06);
+}
+
+.illustration-icon {
+  color: #6366f1;
+}
+
+.empty-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6366f1;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border-radius: 100px;
+  margin-bottom: 16px;
+}
+
+.empty-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f0f0f;
+  margin: 0 0 12px;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.empty-description {
+  font-size: 15px;
+  color: #6b7280;
+  line-height: 1.7;
+  margin: 0 0 32px;
+}
+
+.empty-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: #0f0f0f;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.empty-cta-btn:hover {
+  background: #171717;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.empty-cta-btn:active {
+  transform: translateY(0);
+}
+
+.empty-cta-btn svg {
+  stroke: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.empty-cta-btn:hover svg {
+  transform: translateX(3px);
 }
 </style>

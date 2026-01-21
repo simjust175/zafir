@@ -19,7 +19,10 @@
             color="red"
             overlap
           >
-            <v-icon icon="mdi-bell-outline" />
+            <v-icon
+              icon="mdi-bell-outline"
+              size="sm"
+            />
           </v-badge>
           <v-icon
             v-else

@@ -153,7 +153,7 @@
                   </div>
                   <div class="invoice-info">
                     <span class="invoice-issuer">{{ invoice.issuer || 'Unknown Supplier' }}</span>
-                    <span class="invoice-meta">{{ invoice.project_name || 'No Project' }} • {{ formatDate(invoice.created_on) }}</span>
+                    <span class="invoice-meta">{{ invoice.project_name || 'No Project' }} • {{ formatDate(invoice.created_at) }}</span>
                   </div>
                   <div class="invoice-amount">
                     <span class="amount-value">{{ formatCurrency(invoice.amount) }}</span>
@@ -310,7 +310,7 @@ const activeProjects = computed(() => {
 
 const recentInvoices = computed(() => 
   [...invoiceData.value]
-    .sort((a, b) => new Date(b.created_on) - new Date(a.created_on))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 8)
 )
 
@@ -376,6 +376,8 @@ const openUploadDialog = () => {
 }
 
 const openInvoice = (invoice) => {
+ // TODO: add option to selected selected invoice 
+  
   router.push('/table')
 }
 

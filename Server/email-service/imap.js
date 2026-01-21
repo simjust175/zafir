@@ -111,7 +111,8 @@ function handleNewEmails(imap) {
                       const senderEmail = parsed.from?.value?.[0]?.address;
                       const extracted = await analyze(pdfData.text, senderEmail);
 
-                      if (extracted && saved) {
+                      //if (extracted && saved) {
+                      if (extracted && saved?.stored_filename) {
                         results.push({
                           ...extracted,
                           pdf_file: saved.stored_filename,

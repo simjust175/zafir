@@ -8,7 +8,7 @@
     <div class="dialog-container">
       <div class="dialog-header">
         <h2 class="dialog-title">
-          {{ dialogType === 'invoiced' ? 'Add Invoice' : 'Record Payment' }}
+          {{ getDialogTitle }}
         </h2>
         <button
           class="close-button"
@@ -40,9 +40,7 @@
       
       <div class="dialog-body">
         <p class="dialog-description">
-          {{ dialogType === 'invoiced' 
-            ? 'Enter the invoice amount for this project.' 
-            : 'Enter the payment amount received.' }}
+          {{ getDialogDescription }}
         </p>
         
         <div class="input-field">
@@ -74,7 +72,7 @@
           :disabled="!localAmount || localAmount <= 0"
           @click="handleSave"
         >
-          {{ dialogType === 'invoiced' ? 'Add Invoice' : 'Record Payment' }}
+          {{ getButtonText }}
         </button>
       </div>
     </div>
@@ -82,13 +80,14 @@
 </template>
   
 <script setup>
-import { ref, watch } from "vue"
+import { ref, watch, computed } from "vue"
 
 const props = defineProps({
   show: Boolean,
   dialogType: String,
   initialAmount: { type: [Number, String], default: 0 },
-  isEdit: Boolean
+  isEdit: Boolean,
+  editEntryId: { type: [Number, String], default: null }
 })
 
 const emit = defineEmits(['close', 'update'])
@@ -101,20 +100,44 @@ const handleDialogChange = (value) => {
 
 const localAmount = ref(Number(props.initialAmount) || 0)
 
+const getDialogTitle = computed(() => {
+  if (props.isEdit) {
+    return props.dialogType === 'invoiced' ? 'Edit Invoice' : 'Edit Payment'
+  }
+  return props.dialogType === 'invoiced' ? 'Add Invoice' : 'Record Payment'
+})
+
+const getDialogDescription = computed(() => {
+  if (props.isEdit) {
+    return props.dialogType === 'invoiced' 
+      ? 'Update the invoice amount.' 
+      : 'Update the payment amount.'
+  }
+  return props.dialogType === 'invoiced' 
+    ? 'Enter the invoice amount for this project.' 
+    : 'Enter the payment amount received.'
+})
+
+const getButtonText = computed(() => {
+  if (props.isEdit) {
+    return 'Save Changes'
+  }
+  return props.dialogType === 'invoiced' ? 'Add Invoice' : 'Record Payment'
+})
+
 watch(() => props.initialAmount, (val) => {
-  if (props.dialogType === 'add') return
   localAmount.value = Number(val) || 0
 })
 
 watch(() => props.show, (val) => {
-  if (val && !props.isEdit) {
-    localAmount.value = 0
+  if (val) {
+    localAmount.value = props.isEdit ? Number(props.initialAmount) || 0 : 0
   }
 })
 
 const handleSave = () => { 
   if (localAmount.value > 0) {
-    emit('update', localAmount.value)
+    emit('update', localAmount.value, props.editEntryId)
   }
 }
 </script>

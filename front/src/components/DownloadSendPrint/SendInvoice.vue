@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- <h5>{{ props.payments }}</h5> -->
     <button 
       class="action-btn send"
       :class="{ loading: loading }"
@@ -279,7 +280,7 @@
 
 <!-- eslint-disable vue/require-default-prop -->
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { invoices } from "@/stores/invoiceState";
 const invoiceStore = invoices()
 const emit = defineEmits(["email-sent", "refresh-data"]);
@@ -338,9 +339,6 @@ const forceSend = () => {
 const handleSend = async () => {
   loading.value = true;
   
-  invoiceStore.setPaymentsData()
-  await invoiceStore.getAmounts()
-  
   emit("refresh-data");
   
   try {
@@ -369,6 +367,12 @@ const handleSend = async () => {
     loading.value = false;
   }
 };
+watch(
+  () => props.payments,
+  (v) => console.log('SendInvoice payments changed:', v.map(p => p.project)),
+  { deep: true }
+);
+
 </script>
 
 <style scoped>

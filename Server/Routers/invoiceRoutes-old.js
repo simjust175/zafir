@@ -42,11 +42,5 @@ route.get("/payments", AmountControllers.getPayments);
 //Patch
 route.patch("/patch/:db", GeneralControllers.patch)
 
-//Get entries by project (invoicing or payments)
-route.get("/entries/:db", GeneralControllers.getByProject)
-
-//Delete entry (soft delete)
-route.delete("/delete/:db/:id", GeneralControllers.deleteEntry)
-
 //~ES5~ module.exports = route
 export default route;

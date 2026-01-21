@@ -122,7 +122,7 @@ const outstanding = computed(() => {
 })
 
 const formatCurrency = (val) =>
-  new Intl.NumberFormat('en-EN', {
+  new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 0,
@@ -205,7 +205,7 @@ const formatCurrency = (val) =>
 }
 
 .metric-action:hover {
-  background: #6366F1;
+  background: #171717;
   border-color: #171717;
   color: #fff;
 }
@@ -251,11 +251,54 @@ const formatCurrency = (val) =>
   color: #171717;
 }
 
-@media (max-width: 900px) {
+/* Tablet Layout (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
   .metrics-bar {
-    flex-wrap: wrap;
-    gap: 16px;
-    padding: 16px;
+    padding: 14px 16px;
+    gap: 0;
+  }
+  
+  .metric-item {
+    padding: 0 16px;
+    gap: 12px;
+  }
+  
+  .metric-value {
+    font-size: 20px;
+  }
+  
+  .metric-label {
+    font-size: 11px;
+  }
+  
+  .progress-ring {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .progress-text {
+    font-size: 9px;
+  }
+  
+  .metric-action {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .metric-action svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Small Tablet Layout (601px - 768px) */
+@media (max-width: 768px) and (min-width: 601px) {
+  .metrics-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 12px;
+    background: #f5f5f5;
   }
   
   .metric-divider {
@@ -263,37 +306,171 @@ const formatCurrency = (val) =>
   }
   
   .metric-item {
-    padding: 0;
-    flex: 1 1 auto;
-    min-width: 140px;
+    padding: 14px;
+    background: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 10px;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+  
+  .metric-item:first-child {
+    padding-left: 14px;
+  }
+  
+  .metric-item:last-child {
+    padding-right: 14px;
+    grid-column: span 2;
+    justify-content: center;
+  }
+  
+  .metric-item.paid {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  .metric-content {
+    flex: 1;
+    min-width: 100px;
+  }
+  
+  .metric-value {
+    font-size: 22px;
+  }
+  
+  .metric-label {
+    font-size: 11px;
+  }
+  
+  .progress-ring {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .progress-text {
+    font-size: 9px;
+  }
+  
+  .metric-action {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* Mobile Layout (600px and below) */
+@media (max-width: 600px) {
+  .metrics-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background: #f5f5f5;
+  }
+  
+  .metric-divider {
+    display: none;
+  }
+  
+  .metric-item {
+    width: 100%;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+  
+  .metric-item:first-child,
+  .metric-item:last-child {
+    padding: 14px 16px;
+  }
+  
+  .metric-item.paid {
+    flex-wrap: wrap;
+  }
+  
+  .metric-item.paid .metric-content {
+    order: 1;
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .metric-item.paid .progress-indicator {
+    order: 2;
+  }
+  
+  .metric-item.paid .metric-action {
+    order: 3;
+  }
+  
+  .metric-content {
+    gap: 4px;
   }
   
   .metric-value {
     font-size: 20px;
   }
+  
+  .metric-label {
+    font-size: 11px;
+  }
+  
+  .progress-ring {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .progress-text {
+    font-size: 8px;
+  }
+  
+  .metric-action {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
 }
 
-@media (max-width: 600px) {
+/* Extra Small Mobile (480px and below) */
+@media (max-width: 480px) {
   .metrics-bar {
-    flex-direction: column;
-    gap: 12px;
+    padding: 10px;
+    gap: 8px;
   }
   
   .metric-item {
-    width: 100%;
-    padding: 12px;
-    background: #fff;
-    border: 1px solid #eaeaea;
-    border-radius: 8px;
+    padding: 12px 14px;
   }
   
-  .metric-item.paid {
-    flex-direction: column;
-    align-items: flex-start;
+  .metric-value {
+    font-size: 18px;
   }
   
-  .progress-indicator {
-    margin-top: 12px;
+  .metric-label {
+    font-size: 10px;
+  }
+  
+  .progress-ring {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .progress-text {
+    font-size: 7px;
+  }
+  
+  .metric-action {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .metric-action svg {
+    width: 12px;
+    height: 12px;
   }
 }
 </style>
