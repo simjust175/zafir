@@ -287,7 +287,7 @@ async function sendInvoiceByEmail({
   const isDutch = language === "nl";
   
   const mailOptions = {
-    from: `"ZAFIR TOTAAL PROJECTEN" <${process.env.EMAIL_USER || "info@zafir.be"}>`,
+    from: `"ZAFIR TOTAAL PROJECTEN" <${process.env.EMAIL_USER || "<test2@zafir-test.co.uk>"}>`,
     to,
     subject: isDutch 
       ? `Factuuroverzicht - ${projectName} [${invoiceNumber}]` 
@@ -307,6 +307,9 @@ async function sendInvoiceByEmail({
   };
 
   try {
+    console.log("TES TES TEST", {user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS});
+    
     const info = await transporter.sendMail(mailOptions);
     console.log("Email sent successfully:", info.messageId);
 
