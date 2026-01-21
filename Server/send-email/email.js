@@ -265,8 +265,8 @@ async function sendInvoiceByEmail({
   }, outputPath);
 
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.bookmyname.com",
-    port: parseInt(process.env.SMTP_PORT) || 587,
+    host: "smtp.bookmyname.com",
+    port:  587,
     secure: false,
     auth: {
       user: process.env.EMAIL_USER,
