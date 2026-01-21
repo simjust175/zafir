@@ -1,3 +1,5 @@
+import sendInvoiceByEmail from "../send-email/email.js";
+
 class EmailService {
   static async SendEmailService(req, res) {
     console.log("testing email service");
@@ -18,3 +20,5 @@ class EmailService {
       .catch(err => console.error("❌ Failed to send email:", err));
   }
 }
+
+export default EmailService;
