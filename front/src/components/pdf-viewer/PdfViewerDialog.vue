@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="dialog" max-width="700" scrollable>
+  <v-dialog v-model="dialog" scrollable>
     <div v-if="url" class="pdf-dialog">
       <!-- Header -->
       <div class="dialog-header">
