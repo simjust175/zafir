@@ -11,12 +11,7 @@
           </p>
         </div>
         <div class="header-actions">
-          <v-btn
-            color="primary"
-            variant="flat"
-            prepend-icon="mdi-plus"
-            @click="openUploadDialog"
-          >
+          <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="openUploadDialog">
             New Invoice
           </v-btn>
         </div>
@@ -25,72 +20,28 @@
 
     <section class="stats-section">
       <v-row>
-        <v-col
-          cols="12"
-          sm="6"
-          lg="3"
-        >
-          <StatCard
-            label="Total Invoices"
-            :value="totalInvoices"
-            icon="mdi-file-document-multiple"
-            color="primary"
-            subtitle="all invoices"
-            elevated
-          />
+        <v-col cols="12" sm="6" lg="3">
+          <StatCard label="Total Invoices" :value="totalInvoices" icon="mdi-file-document-multiple" color="primary"
+            subtitle="all invoices" elevated />
         </v-col>
-        <v-col
-          cols="12"
-          sm="6"
-          lg="3"
-        >
-          <StatCard
-            label="Total Amount"
-            :value="totalAmount"
-            icon="mdi-currency-eur"
-            color="success"
-            format="currency"
-            subtitle="combined value"
-            elevated
-          />
+        <v-col cols="12" sm="6" lg="3">
+          <StatCard label="Total Amount" :value="totalAmount" icon="mdi-currency-eur" color="success" format="currency"
+            subtitle="combined value" elevated />
         </v-col>
-        <v-col
-          cols="12"
-          sm="6"
-          lg="3"
-        >
-          <StatCard
-            label="Pending Review"
-            :value="pendingReview"
-            icon="mdi-alert-circle-outline"
-            color="warning"
-            subtitle="needs attention"
-            elevated
-          />
+        <v-col cols="12" sm="6" lg="3">
+          <StatCard label="Pending Review" :value="pendingReview" icon="mdi-alert-circle-outline" color="warning"
+            subtitle="needs attention" elevated />
         </v-col>
-        <v-col
-          cols="12"
-          sm="6"
-          lg="3"
-        >
-          <StatCard
-            label="Active Projects"
-            :value="activeProjects"
-            icon="mdi-folder-outline"
-            color="info"
-            subtitle="with invoices"
-            elevated
-          />
+        <v-col cols="12" sm="6" lg="3">
+          <StatCard label="Active Projects" :value="activeProjects" icon="mdi-folder-outline" color="info"
+            subtitle="with invoices" elevated />
         </v-col>
       </v-row>
     </section>
 
     <section class="main-content-section">
       <v-row>
-        <v-col
-          cols="12"
-          lg="8"
-        >
+        <v-col cols="12" lg="8">
           <v-card class="content-card">
             <div class="card-header">
               <div>
@@ -101,33 +52,17 @@
                   Latest invoice activity
                 </p>
               </div>
-              <v-btn
-                variant="text"
-                color="primary"
-                append-icon="mdi-arrow-right"
-                @click="$router.push('/table')"
-              >
+              <v-btn variant="text" color="primary" append-icon="mdi-arrow-right" @click="$router.push('/table')">
                 View All
               </v-btn>
             </div>
             <v-divider />
             <div class="card-body">
-              <LoadingState
-                v-if="loading"
-                message="Loading invoices..."
-                inline
-              />
-              <EmptyState
-                v-else-if="recentInvoices.length === 0"
-                icon="mdi-file-document-outline"
-                title="No invoices yet"
-                description="Upload your first invoice to get started"
-              >
+              <LoadingState v-if="loading" message="Loading invoices..." inline />
+              <EmptyState v-else-if="recentInvoices.length === 0" icon="mdi-file-document-outline"
+                title="No invoices yet" description="Upload your first invoice to get started">
                 <template #action>
-                  <v-btn
-                    color="primary"
-                    @click="openUploadDialog"
-                  >
+                  <v-btn color="primary" @click="openUploadDialog">
                     <v-icon class="mr-2">
                       mdi-upload
                     </v-icon>
@@ -135,33 +70,21 @@
                   </v-btn>
                 </template>
               </EmptyState>
-              <div
-                v-else
-                class="invoice-list"
-              >
-                <div
-                  v-for="invoice in recentInvoices"
-                  :key="invoice.invoice_id"
-                  class="invoice-item"
-                  @click="openInvoice(invoice)"
-                >
+              <div v-else class="invoice-list">
+                <div v-for="invoice in recentInvoices" :key="invoice.invoice_id" class="invoice-item"
+                  @click="openInvoice(invoice)">
                   <div class="invoice-icon">
-                    <v-icon
-                      icon="mdi-file-document"
-                      size="20"
-                    />
+                    <v-icon icon="mdi-file-document" size="20" />
                   </div>
                   <div class="invoice-info">
                     <span class="invoice-issuer">{{ invoice.issuer || 'Unknown Supplier' }}</span>
-                    <span class="invoice-meta">{{ invoice.project_name || 'No Project' }} • {{ formatDate(invoice.created_at) }}</span>
+                    <span class="invoice-meta">{{ invoice.project_name || 'No Project' }} • {{
+                      formatDate(invoice.created_at)
+                      }}</span>
                   </div>
                   <div class="invoice-amount">
                     <span class="amount-value">{{ formatCurrency(invoice.amount) }}</span>
-                    <v-chip
-                      :color="getStatusColor(invoice)"
-                      size="x-small"
-                      variant="tonal"
-                    >
+                    <v-chip :color="getStatusColor(invoice)" size="x-small" variant="tonal">
                       {{ getStatus(invoice) }}
                     </v-chip>
                   </div>
@@ -171,10 +94,7 @@
           </v-card>
         </v-col>
 
-        <v-col
-          cols="12"
-          lg="4"
-        >
+        <v-col cols="12" lg="4">
           <v-card class="content-card mb-4">
             <div class="card-header">
               <div>
@@ -188,28 +108,12 @@
             </div>
             <v-divider />
             <div class="card-body">
-              <EmptyState
-                v-if="warnings.length === 0"
-                icon="mdi-check-circle-outline"
-                icon-color="success"
-                title="All clear!"
-                description="No issues requiring your attention"
-              />
-              <div
-                v-else
-                class="alert-list"
-              >
-                <div
-                  v-for="(warning, idx) in warnings.slice(0, 5)"
-                  :key="idx"
-                  class="alert-item"
-                  :class="`alert-item--${warning.title}`"
-                >
-                  <v-icon
-                    :icon="getWarningIcon(warning.title)"
-                    size="18"
-                    class="alert-icon"
-                  />
+              <EmptyState v-if="warnings.length === 0" icon="mdi-check-circle-outline" icon-color="success"
+                title="All clear!" description="No issues requiring your attention" />
+              <div v-else class="alert-list">
+                <div v-for="(warning, idx) in warnings.slice(0, 5)" :key="idx" class="alert-item"
+                  :class="`alert-item--${warning.title}`">
+                  <v-icon :icon="getWarningIcon(warning.title)" size="18" class="alert-icon" />
                   <div class="alert-content">
                     <span class="alert-title">{{ getWarningTitle(warning.title) }}</span>
                     <span class="alert-body">{{ warning.body }}</span>
@@ -232,31 +136,15 @@
             </div>
             <v-divider />
             <div class="card-body">
-              <EmptyState
-                v-if="projectStats.length === 0"
-                icon="mdi-folder-outline"
-                title="No projects"
-                description="Create a project to organize invoices"
-              />
-              <div
-                v-else
-                class="project-list"
-              >
-                <div
-                  v-for="project in projectStats.slice(0, 5)"
-                  :key="project.id"
-                  class="project-item"
-                >
+              <EmptyState v-if="projectStats.length === 0" icon="mdi-folder-outline" title="No projects"
+                description="Create a project to organize invoices" />
+              <div v-else class="project-list">
+                <div v-for="project in projectStats.slice(0, 5)" :key="project.id" class="project-item">
                   <div class="project-info">
                     <span class="project-name">{{ project.name }}</span>
                     <span class="project-count">{{ project.count }} invoices</span>
                   </div>
-                  <v-progress-linear
-                    :model-value="project.percentage"
-                    color="primary"
-                    height="6"
-                    rounded
-                  />
+                  <v-progress-linear :model-value="project.percentage" color="primary" height="6" rounded />
                 </div>
               </div>
             </div>
@@ -265,10 +153,7 @@
       </v-row>
     </section>
 
-    <InvoiceUploadMain
-      :active="showUploadDialog"
-      @close="showUploadDialog = false"
-    />
+    <InvoiceUploadMain :active="showUploadDialog" @close="showUploadDialog = false" />
   </div>
 </template>
 
@@ -299,7 +184,7 @@ const invoiceData = computed(() => invoiceStore.dbResponse || [])
 const warnings = computed(() => invoiceStore.warnings || [])
 
 const totalInvoices = computed(() => invoiceData.value.length)
-const totalAmount = computed(() => 
+const totalAmount = computed(() =>
   invoiceData.value.reduce((sum, inv) => sum + (parseFloat(inv.amount) || 0), 0)
 )
 const pendingReview = computed(() => warnings.value.length)
@@ -308,10 +193,14 @@ const activeProjects = computed(() => {
   return projects.size
 })
 
-const recentInvoices = computed(() => 
-  [...invoiceData.value]
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 8)
+const recentInvoices = computed(() => {
+  if (invoiceData.value.length < 1) { return }
+  else {
+    return [...invoiceData.value]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 8)
+  }
+}
 )
 
 const projectStats = computed(() => {
@@ -376,8 +265,8 @@ const openUploadDialog = () => {
 }
 
 const openInvoice = (invoice) => {
- // TODO: add option to selected selected invoice 
-  
+  // TODO: add option to selected selected invoice 
+
   router.push('/table')
 }
 
