@@ -5,10 +5,12 @@
       :class="{ confirmed: confirmed }"
       @click="$emit('toggle')"
     >
-      <v-icon size="14">
-        {{ confirmed ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}
-      </v-icon>
-      <span v-if="confirmed">Confirmed</span>
+      <span class="chip-icon">
+        <v-icon size="14">
+          {{ confirmed ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}
+        </v-icon>
+      </span>
+      <span class="chip-label">{{ confirmed ? 'Confirmed' : 'Verify' }}</span>
     </button>
     
     <button
@@ -17,7 +19,7 @@
       title="Edit this field"
       @click="$emit('edit')"
     >
-      <v-icon size="14">mdi-pencil</v-icon>
+      <v-icon size="14">mdi-pencil-outline</v-icon>
     </button>
   </div>
 </template>
@@ -31,55 +33,89 @@ defineEmits(['toggle', 'edit'])
 
 <style scoped>
 .double-check-chip {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-weight: 500;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   border: none;
-  border-radius: 4px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: all 0.15s ease;
-  background: #fef3c7;
-  color: #92400e;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  color: #92400E;
+  box-shadow: 
+    0 1px 2px rgba(146, 64, 14, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .chip:hover {
-  background: #fcd34d;
+  background: linear-gradient(135deg, #FDE68A 0%, #FCD34D 100%);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 8px rgba(146, 64, 14, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.chip:active {
+  transform: translateY(0);
 }
 
 .chip.confirmed {
-  background: #dcfce7;
-  color: #166534;
+  background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+  color: #065F46;
+  box-shadow: 
+    0 1px 2px rgba(6, 95, 70, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .chip.confirmed:hover {
-  background: #bbf7d0;
+  background: linear-gradient(135deg, #A7F3D0 0%, #6EE7B7 100%);
+  box-shadow: 
+    0 4px 8px rgba(6, 95, 70, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.chip-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chip-label {
+  white-space: nowrap;
 }
 
 .edit-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border: none;
-  background: transparent;
-  border-radius: 4px;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  border-radius: 8px;
   cursor: pointer;
-  color: #697386;
-  transition: all 0.15s ease;
+  color: rgb(var(--v-theme-grey-500));
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .edit-btn:hover {
-  background: #f0f2f5;
-  color: #1a1f36;
+  background: rgba(var(--v-theme-primary), 0.1);
+  color: rgb(var(--v-theme-primary));
+  transform: translateY(-1px);
+}
+
+.edit-btn:active {
+  transform: translateY(0);
 }
 </style>

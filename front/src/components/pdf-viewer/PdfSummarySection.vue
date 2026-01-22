@@ -1,6 +1,5 @@
 <template>
   <div class="summary-section">
-    <!-- Unknown Supplier Mode -->
     <div v-if="mode === 'conflict' && conflictType === 'unknown-supplier'" class="unknown-supplier">
       <unknown-supplier-summary
         :issuer="fileDetails?.issuer"
@@ -9,69 +8,109 @@
       />
     </div>
 
-    <!-- Normal/Double-check Summary -->
-    <div v-else class="summary-grid">
-      <div class="summary-item">
-        <span class="item-label">Supplier</span>
-        <div class="item-value-row">
-          <span class="item-value">{{ fileDetails?.issuer || 'Unknown' }}</span>
-          <DoubleCheckChip
-            v-if="mode === 'double-check'"
-            :confirmed="confirmed?.issuer"
-            @edit="editItem(fileDetails, 'issuer')"
-            @toggle="$emit('toggle-confirm', 'issuer')"
-          />
+    <div v-else class="summary-content">
+      <div class="summary-header">
+        <span class="summary-title">Invoice Details</span>
+        <span v-if="mode === 'double-check'" class="verification-badge">
+          <v-icon size="14">mdi-shield-check-outline</v-icon>
+          Verification Required
+        </span>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="card-icon supplier">
+            <v-icon size="20" color="primary">mdi-domain</v-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Supplier</span>
+            <div class="card-value-row">
+              <span class="card-value">{{ fileDetails?.issuer || 'Unknown' }}</span>
+              <DoubleCheckChip
+                v-if="mode === 'double-check'"
+                :confirmed="confirmed?.issuer"
+                @edit="editItem(fileDetails, 'issuer')"
+                @toggle="$emit('toggle-confirm', 'issuer')"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon date">
+            <v-icon size="20" color="info">mdi-calendar-outline</v-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Invoice Date</span>
+            <span class="card-value">{{ formatDate(fileDetails?.invoice_date) }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon vat">
+            <v-icon size="20" color="warning">mdi-percent-outline</v-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">VAT Rate</span>
+            <div class="card-value-row">
+              <span class="card-value">{{ fileDetails?.btwPercent || 0 }}%</span>
+              <DoubleCheckChip
+                v-if="mode === 'double-check'"
+                :confirmed="confirmed?.btw"
+                @edit="editItem(fileDetails, 'btwPercent')"
+                @toggle="$emit('toggle-confirm', 'btw')"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-card highlight">
+          <div class="card-icon amount">
+            <v-icon size="20" color="success">mdi-currency-eur</v-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Total Amount</span>
+            <div class="card-value-row">
+              <span class="card-value large">€{{ formattedAmount }}</span>
+              <DoubleCheckChip
+                v-if="mode === 'double-check'"
+                :confirmed="confirmed?.amount"
+                @edit="editItem(fileDetails, 'amount')"
+                @toggle="$emit('toggle-confirm', 'amount')"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="summary-item">
-        <span class="item-label">Invoice Date</span>
-        <span class="item-value">{{ formatDate(fileDetails?.invoice_date) }}</span>
-      </div>
-
-      <div class="summary-item">
-        <span class="item-label">VAT Rate</span>
-        <div class="item-value-row">
-          <span class="item-value">{{ fileDetails?.btwPercent || 0 }}%</span>
-          <DoubleCheckChip
-            v-if="mode === 'double-check'"
-            :confirmed="confirmed?.btw"
-            @edit="editItem(fileDetails, 'btwPercent')"
-            @toggle="$emit('toggle-confirm', 'btw')"
-          />
+      <div v-if="mode === 'double-check'" class="confirm-section">
+        <div class="confirm-progress">
+          <div class="progress-info">
+            <span class="progress-label">Verification Progress</span>
+            <span class="progress-count">{{ confirmedCount }} of 3 verified</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: `${(confirmedCount / 3) * 100}%` }" />
+          </div>
         </div>
-      </div>
 
-      <div class="summary-item">
-        <span class="item-label">Total Amount</span>
-        <div class="item-value-row">
-          <span class="item-value amount">€{{ formattedAmount }}</span>
-          <DoubleCheckChip
-            v-if="mode === 'double-check'"
-            :confirmed="confirmed?.amount"
-            @edit="editItem(fileDetails, 'amount')"
-            @toggle="$emit('toggle-confirm', 'amount')"
-          />
-        </div>
+        <button
+          class="confirm-btn"
+          :class="{ ready: allConfirmed }"
+          :disabled="!allConfirmed"
+          @click="$emit('confirm')"
+        >
+          <v-icon size="18" class="mr-2">{{ allConfirmed ? 'mdi-check-circle' : 'mdi-shield-alert-outline' }}</v-icon>
+          {{ allConfirmed ? 'Confirm & Continue' : 'Verify All Fields' }}
+        </button>
+        
+        <p v-if="!allConfirmed" class="confirm-hint">
+          <v-icon size="14">mdi-information-outline</v-icon>
+          Click on each field above to verify before continuing
+        </p>
       </div>
     </div>
 
-    <!-- Double-check Confirm Button -->
-    <div v-if="mode === 'double-check'" class="confirm-section">
-      <button
-        class="btn btn-primary"
-        :disabled="!allConfirmed"
-        @click="$emit('confirm')"
-      >
-        <v-icon size="18" class="mr-2">mdi-check-bold</v-icon>
-        Confirm & Continue
-      </button>
-      <p v-if="!allConfirmed" class="confirm-hint">
-        Please confirm all fields before continuing
-      </p>
-    </div>
-
-    <!-- Edit Dialog -->
     <dialog-component
       :dialog-prop="triggerDialog"
       :edited-item="editedItem"
@@ -104,6 +143,11 @@ defineEmits([
   'toggle-confirm',
   'confirm'
 ])
+
+const confirmedCount = computed(() => {
+  if (!props.confirmed) return 0
+  return Object.values(props.confirmed).filter(Boolean).length
+})
 
 const formatDate = (dateStr) => {
   if (!dateStr) return 'N/A'
@@ -174,94 +218,230 @@ async function patchChanges({ id, body }) {
 
 <style scoped>
 .summary-section {
-  padding: 20px;
-  background: #fafbfc;
-  border-bottom: 1px solid #e3e8ee;
+  background: linear-gradient(180deg, 
+    rgba(var(--v-theme-on-surface), 0.02) 0%, 
+    rgba(var(--v-theme-on-surface), 0.04) 100%
+  );
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.summary-content {
+  padding: 20px 24px;
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.summary-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgb(var(--v-theme-grey-600));
+}
+
+.verification-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  color: #92400E;
+  border-radius: 20px;
 }
 
 .summary-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
 }
 
-.summary-item {
+.summary-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  border-radius: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.summary-card:hover {
+  border-color: rgba(var(--v-theme-on-surface), 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.summary-card.highlight {
+  background: linear-gradient(135deg, 
+    rgba(var(--v-theme-success), 0.04) 0%, 
+    rgba(var(--v-theme-success), 0.08) 100%
+  );
+  border-color: rgba(var(--v-theme-success), 0.15);
+}
+
+.card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.card-icon.supplier { background: rgba(var(--v-theme-primary), 0.1); }
+.card-icon.date { background: rgba(33, 150, 243, 0.1); }
+.card-icon.vat { background: rgba(255, 152, 0, 0.1); }
+.card-icon.amount { background: rgba(76, 175, 80, 0.12); }
+
+.card-content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
 }
 
-.item-label {
+.card-label {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #697386;
+  letter-spacing: 0.05em;
+  color: rgb(var(--v-theme-grey-500));
 }
 
-.item-value-row {
+.card-value-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.item-value {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1a1f36;
-}
-
-.item-value.amount {
-  font-size: 16px;
+.card-value {
+  font-size: 15px;
   font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.card-value.large {
+  font-size: 20px;
+  font-weight: 700;
+  color: #16A34A;
 }
 
 .confirm-section {
-  margin-top: 20px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.08);
   text-align: center;
 }
 
-.btn {
+.confirm-progress {
+  max-width: 320px;
+  margin: 0 auto 20px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.progress-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(var(--v-theme-grey-600));
+}
+
+.progress-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.progress-bar {
+  height: 6px;
+  background: rgba(var(--v-theme-on-surface), 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgb(var(--v-theme-primary)) 0%, #22C55E 100%);
+  border-radius: 3px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.confirm-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
-  padding: 0 24px;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 6px;
+  height: 48px;
+  padding: 0 32px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
+  background: rgba(var(--v-theme-on-surface), 0.1);
+  color: rgb(var(--v-theme-grey-600));
 }
 
-.btn-primary {
-  background: #635bff;
-  color: #fff;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #5851ea;
-}
-
-.btn-primary:disabled {
-  background: #c4c9d4;
+.confirm-btn:disabled {
   cursor: not-allowed;
 }
 
+.confirm-btn.ready {
+  background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, #5851EA 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(var(--v-theme-primary), 0.35);
+}
+
+.confirm-btn.ready:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.4);
+}
+
+.confirm-btn.ready:active {
+  transform: translateY(0);
+}
+
 .confirm-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #ef4444;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: rgb(var(--v-theme-grey-500));
 }
 
 .unknown-supplier {
-  padding: 0;
+  padding: 24px;
 }
 
 @media (max-width: 600px) {
   .summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .summary-content {
+    padding: 16px;
+  }
+
+  .summary-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 }
 </style>

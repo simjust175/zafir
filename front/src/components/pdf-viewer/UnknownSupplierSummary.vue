@@ -1,52 +1,78 @@
 <template>
   <div class="unknown-supplier-form">
-    <div class="input-row">
-      <div class="input-wrapper">
-        <v-autocomplete
-          v-if="!addNewSupplier"
-          v-model="localIssuer"
-          autofocus
-          :items="suppliersInDb"
-          label="Select or enter supplier"
-          variant="outlined"
-          density="compact"
-          no-data-text="Not found - click + to add new"
-          hide-details 
-          placeholder="Type or select supplier..."
-          class="supplier-input"
-        />
-        <input
-          v-else
-          v-model="localIssuer"
-          type="text"
-          class="text-input"
-          placeholder="Enter new supplier name..."
-        >
+    <div class="form-header">
+      <div class="header-icon">
+        <v-icon size="24" color="primary">mdi-account-question-outline</v-icon>
       </div>
-      <button
-        class="toggle-btn"
-        :title="addNewSupplier ? 'Select existing' : 'Add new supplier'"
-        @click="addNewSupplier = !addNewSupplier"
-      >
-        <v-icon size="18">{{ addNewSupplier ? 'mdi-arrow-u-left-top' : 'mdi-plus' }}</v-icon>
-      </button>
+      <div class="header-content">
+        <h3 class="header-title">Identify Supplier</h3>
+        <p class="header-subtitle">Enter or select the supplier name for this invoice</p>
+      </div>
+    </div>
+
+    <div class="input-section">
+      <label class="input-label">Supplier Name</label>
+      <div class="input-row">
+        <div class="input-wrapper">
+          <v-autocomplete
+            v-if="!addNewSupplier"
+            v-model="localIssuer"
+            autofocus
+            :items="suppliersInDb"
+            label="Select or search supplier"
+            variant="outlined"
+            density="comfortable"
+            no-data-text="Not found — click + to add new"
+            hide-details 
+            placeholder="Start typing to search..."
+            class="supplier-autocomplete"
+            rounded="lg"
+          >
+            <template #prepend-inner>
+              <v-icon size="18" color="grey">mdi-magnify</v-icon>
+            </template>
+          </v-autocomplete>
+          <input
+            v-else
+            v-model="localIssuer"
+            type="text"
+            class="text-input"
+            placeholder="Enter new supplier name..."
+            autofocus
+          >
+        </div>
+        <button
+          class="toggle-btn"
+          :class="{ active: addNewSupplier }"
+          :title="addNewSupplier ? 'Select existing supplier' : 'Add new supplier'"
+          @click="addNewSupplier = !addNewSupplier"
+        >
+          <v-icon size="20">{{ addNewSupplier ? 'mdi-format-list-bulleted' : 'mdi-plus' }}</v-icon>
+        </button>
+      </div>
     </div>
     
-    <div v-if="localIssuer" class="status-badge" :class="isNewSupplier ? 'new' : 'existing'">
-      <v-icon size="14">{{ isNewSupplier ? 'mdi-plus-circle' : 'mdi-check-circle' }}</v-icon>
-      {{ isNewSupplier ? 'New supplier will be added' : 'Existing supplier recognized' }}
-    </div>
+    <transition name="status-fade">
+      <div v-if="localIssuer" class="status-badge" :class="isNewSupplier ? 'new' : 'existing'">
+        <span class="status-icon">
+          <v-icon size="16">{{ isNewSupplier ? 'mdi-plus-circle-outline' : 'mdi-check-circle-outline' }}</v-icon>
+        </span>
+        <span class="status-text">{{ isNewSupplier ? 'New supplier will be created' : 'Existing supplier recognized' }}</span>
+      </div>
+    </transition>
     
     <div class="action-buttons">
+      <button class="btn btn-secondary" @click="$emit('keep-unknown')">
+        <v-icon size="18">mdi-account-off-outline</v-icon>
+        Keep as Unknown
+      </button>
       <button
         class="btn btn-primary"
         :disabled="!localIssuer"
         @click="$emit('save-supplier', localIssuer)"
       >
+        <v-icon size="18">mdi-check</v-icon>
         Save Supplier
-      </button>
-      <button class="btn btn-secondary" @click="$emit('keep-unknown')">
-        Keep as Unknown
       </button>
     </div>
   </div>
@@ -82,122 +108,224 @@ const addNewSupplier = ref(false)
 
 <style scoped>
 .unknown-supplier-form {
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: rgba(var(--v-theme-primary), 0.1);
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: rgb(var(--v-theme-on-surface));
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.header-subtitle {
+  font-size: 14px;
+  color: rgb(var(--v-theme-grey-500));
+  margin: 0;
+  line-height: 1.5;
+}
+
+.input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+  margin-left: 2px;
 }
 
 .input-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: stretch;
+  gap: 10px;
 }
 
 .input-wrapper {
   flex: 1;
 }
 
-.supplier-input {
+.supplier-autocomplete {
   width: 100%;
 }
 
 .text-input {
   width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  font-size: 14px;
-  color: #1a1f36;
-  background: #fff;
-  border: 1px solid #e3e8ee;
-  border-radius: 6px;
-  transition: all 0.15s ease;
+  height: 48px;
+  padding: 0 16px;
+  font-size: 15px;
+  color: rgb(var(--v-theme-on-surface));
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.15);
+  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .text-input:focus {
   outline: none;
-  border-color: #635bff;
-  box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+  border-color: rgb(var(--v-theme-primary));
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.12);
+}
+
+.text-input::placeholder {
+  color: rgb(var(--v-theme-grey-400));
 }
 
 .toggle-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid #e3e8ee;
-  background: #fff;
-  border-radius: 6px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.15);
+  background: rgb(var(--v-theme-surface));
+  border-radius: 12px;
   cursor: pointer;
-  color: #635bff;
-  transition: all 0.15s ease;
+  color: rgb(var(--v-theme-primary));
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .toggle-btn:hover {
-  background: #f6f8fa;
+  background: rgba(var(--v-theme-primary), 0.08);
+  border-color: rgba(var(--v-theme-primary), 0.3);
+}
+
+.toggle-btn.active {
+  background: rgba(var(--v-theme-primary), 0.1);
+  border-color: rgba(var(--v-theme-primary), 0.3);
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 12px;
-  padding: 6px 12px;
-  font-size: 12px;
+  gap: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .status-badge.new {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+  color: #1D4ED8;
+  border-color: rgba(29, 78, 216, 0.15);
 }
 
 .status-badge.existing {
-  background: #dcfce7;
+  background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
   color: #166534;
+  border-color: rgba(22, 101, 52, 0.15);
 }
 
 .action-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 20px;
+  gap: 12px;
+  padding-top: 8px;
 }
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
-  padding: 0 20px;
+  gap: 8px;
+  height: 44px;
+  padding: 0 24px;
   font-size: 14px;
-  font-weight: 500;
-  border-radius: 6px;
+  font-weight: 600;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
 }
 
 .btn-primary {
-  background: #635bff;
+  background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, #5851EA 100%);
   color: #fff;
+  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #5851ea;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(var(--v-theme-primary), 0.4);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn-primary:disabled {
-  background: #c4c9d4;
+  background: rgba(var(--v-theme-on-surface), 0.12);
+  color: rgb(var(--v-theme-grey-400));
+  box-shadow: none;
   cursor: not-allowed;
 }
 
 .btn-secondary {
-  background: #fff;
-  color: #1a1f36;
-  border: 1px solid #e3e8ee;
+  background: rgb(var(--v-theme-surface));
+  color: rgb(var(--v-theme-on-surface));
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.15);
 }
 
 .btn-secondary:hover {
-  background: #f6f8fa;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  border-color: rgba(var(--v-theme-on-surface), 0.2);
+}
+
+.status-fade-enter-active,
+.status-fade-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.status-fade-enter-from,
+.status-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+@media (max-width: 480px) {
+  .action-buttons {
+    flex-direction: column-reverse;
+  }
+
+  .btn {
+    width: 100%;
+  }
 }
 </style>
