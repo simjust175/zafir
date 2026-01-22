@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 3001;
 app.use(
   cors({
     origin: ["https://billio.me", "https://billio.live"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
   })
