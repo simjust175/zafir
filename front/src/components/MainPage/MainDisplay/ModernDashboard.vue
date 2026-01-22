@@ -4,7 +4,8 @@
       <div class="header-content">
         <div class="header-text">
           <h1 class="dashboard-title">
-            Welcome back{{ userName ? ', ' + userName : '' }}
+            <!-- Welcome back{{ userName ? ', ' + userName : '' }} -->
+           {{ invoiceData.filter(i => i.invoice_id) }}
           </h1>
           <p class="dashboard-subtitle">
             Here's an overview of your invoices and financials
@@ -311,25 +312,31 @@ const activeProjects = computed(() => {
 })
 
 const recentInvoices = computed(() => {
-  if (invoiceData.value.length < 1) { return }
-  else {
-    return [...invoiceData.value]
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 8)
-  }
-}
-)
+  // Filter for real invoices first
+  const realInvoices = invoiceData.value.filter(inv => inv.invoice_id)
+  
+  if (realInvoices.length < 1) return []
+  
+  return [...realInvoices]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 8)
+})
 
 const projectStats = computed(() => {
   const projectMap = new Map()
-  invoiceData.value.forEach(inv => {
+  
+  // Only process rows that have a valid invoice ID
+  invoiceData.value.filter(inv => inv.invoice_id).forEach(inv => {
     if (inv.project_name) {
       const current = projectMap.get(inv.project_id) || { name: inv.project_name, id: inv.project_id, count: 0 }
       current.count++
       projectMap.set(inv.project_id, current)
     }
   })
+
   const stats = Array.from(projectMap.values())
+  if (stats.length === 0) return [] // Handle empty state
+  
   const maxCount = Math.max(...stats.map(p => p.count), 1)
   return stats
     .map(p => ({ ...p, percentage: (p.count / maxCount) * 100 }))
