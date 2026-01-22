@@ -4,8 +4,7 @@
       <div class="header-content">
         <div class="header-text">
           <h1 class="dashboard-title">
-            <!-- Welcome back{{ userName ? ', ' + userName : '' }} -->
-           {{ invoiceData.filter(i => i.invoice_id) }}
+            Welcome back{{ userName ? ', ' + userName : '' }}
           </h1>
           <p class="dashboard-subtitle">
             Here's an overview of your invoices and financials
