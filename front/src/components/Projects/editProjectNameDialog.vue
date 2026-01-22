@@ -54,7 +54,7 @@
           @click="saveProjectName"
         >
           <v-icon start size="18">mdi-check</v-icon>
-          Save Changes
+          Save
         </v-btn>
       </div>
     </v-card>
