@@ -11,7 +11,7 @@
     <template v-else>
       <AppShell>
         <OverlayComponent v-if="loading" :overlay-trigger="loading" />
-        <SessionBanner v-if="!loading" />
+        <!-- <SessionBanner v-if="!loading" /> -->
         <router-view v-if="!loading" v-slot="{ Component }">
           <component :is="Component" />
         </router-view>
@@ -32,7 +32,7 @@ import { setupAutoLogout } from "@/stores/loginState"
 import AppShell from "@/components/layout/AppShell.vue"
 import GlobalToast from "@/components/ui/GlobalToast.vue"
 import OverlayComponent from "@/components/Utilities/OverlayComponent.vue"
-import SessionBanner from "@/components/Utilities/SessionBanner.vue"
+// import SessionBanner from "@/components/Utilities/SessionBanner.vue"
 
 const route = useRoute()
 const router = useRouter()
