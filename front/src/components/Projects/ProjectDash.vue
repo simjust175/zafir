@@ -1,6 +1,9 @@
 <template>
   <div class="projects-container">
-    <div v-if="isLoading" class="loading-state">
+    <div
+      v-if="isLoading"
+      class="loading-state"
+    >
       <div class="loading-spinner">
         <v-progress-circular
           indeterminate
@@ -9,17 +12,29 @@
           width="4"
         />
       </div>
-      <p class="loading-text">Loading your projects...</p>
+      <p class="loading-text">
+        Loading your projects...
+      </p>
     </div>
 
-    <div v-else-if="projects.length" class="projects-content">
+    <div
+      v-else-if="projects.length"
+      class="projects-content"
+    >
       <header class="page-header">
         <div class="header-content">
           <div class="header-icon">
-            <v-icon size="24" color="primary">mdi-folder-multiple-outline</v-icon>
+            <v-icon
+              size="24"
+              color="primary"
+            >
+              mdi-folder-multiple-outline
+            </v-icon>
           </div>
           <div class="header-text">
-            <h1 class="page-title">Projects</h1>
+            <h1 class="page-title">
+              Projects
+            </h1>
             <p class="page-subtitle">
               {{ projects.length }} active {{ projects.length === 1 ? 'project' : 'projects' }}
             </p>
@@ -54,11 +69,19 @@
       </div>
     </div>
 
-    <div v-else class="empty-state">
+    <div
+      v-else
+      class="empty-state"
+    >
       <div class="empty-visual">
         <div class="visual-glow" />
         <div class="visual-icon">
-          <v-icon size="48" color="white">mdi-folder-star-outline</v-icon>
+          <v-icon
+            size="48"
+            color="white"
+          >
+            mdi-folder-star-outline
+          </v-icon>
         </div>
         <div class="visual-rings">
           <div class="ring ring-1" />
@@ -68,7 +91,9 @@
       </div>
       
       <div class="empty-content">
-        <h2 class="empty-title">Welcome to Your Workspace</h2>
+        <h2 class="empty-title">
+          Welcome to Your Workspace
+        </h2>
         <p class="empty-description">
           Create your first project to start tracking invoices, managing expenses, and staying organized.
         </p>
@@ -86,15 +111,30 @@
 
         <div class="empty-features">
           <div class="feature-badge">
-            <v-icon size="18" color="success">mdi-check-circle</v-icon>
+            <v-icon
+              size="18"
+              color="success"
+            >
+              mdi-check-circle
+            </v-icon>
             <span>Track invoices</span>
           </div>
           <div class="feature-badge">
-            <v-icon size="18" color="success">mdi-check-circle</v-icon>
+            <v-icon
+              size="18"
+              color="success"
+            >
+              mdi-check-circle
+            </v-icon>
             <span>Manage payments</span>
           </div>
           <div class="feature-badge">
-            <v-icon size="18" color="success">mdi-check-circle</v-icon>
+            <v-icon
+              size="18"
+              color="success"
+            >
+              mdi-check-circle
+            </v-icon>
             <span>Stay organized</span>
           </div>
         </div>
@@ -107,7 +147,10 @@
       persistent
       @update:model-value="emit('update:addProjectDialog', $event)"
     >
-      <v-card rounded="xl" class="dialog-card">
+      <v-card
+        rounded="xl"
+        class="dialog-card"
+      >
         <AddNewProject
           @close="emit('update:addProjectDialog', false)"
           @new-project-added="addNewProject"
@@ -126,7 +169,12 @@
     >
       <div class="snackbar-content">
         <div class="snackbar-icon">
-          <v-icon size="20" color="warning">mdi-folder-remove-outline</v-icon>
+          <v-icon
+            size="20"
+            color="warning"
+          >
+            mdi-folder-remove-outline
+          </v-icon>
         </div>
         <span class="snackbar-message">Project completed and archived</span>
       </div>
@@ -138,7 +186,12 @@
           class="undo-btn"
           @click="undoRemove"
         >
-          <v-icon start size="18">mdi-undo</v-icon>
+          <v-icon
+            start
+            size="18"
+          >
+            mdi-undo
+          </v-icon>
           Undo
         </v-btn>
       </template>

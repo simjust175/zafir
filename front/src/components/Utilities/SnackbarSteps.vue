@@ -1,247 +1,145 @@
 <template>
-  <div>
-    <!-- Regular Progress Snackbars -->
-    <v-snackbar
-      v-model="show"
-      :color="snack.color"
-      location="top right"
-      multi-line
-      :timeout="snack.color === 'success' && isComplete ? 6000 : 3500"
-      rounded="xl"
-      elevation="8"
-      class="custom-snackbar"
-    >
-      <div class="d-flex align-center">
-        <!-- Progress Circle for loading states -->
+  <div class="notification-system">
+    <Teleport to="body">
+      <transition-group name="notification-list" tag="div" class="notification-container">
         <div
-          v-if="snack.color === 'progress' && !isComplete"
-          class="mr-3"
+          v-for="notification in activeNotifications"
+          :key="notification.id"
+          class="notification-toast"
+          :class="[`notification-${notification.type}`, { 'is-progress': notification.type === 'progress' }]"
         >
-          <v-progress-circular
-            :size="24"
-            :width="3"
-            color="primary"
-            indeterminate
-          />
-        </div>
-        
-        <!-- Success Icon -->
-        <div
-          v-else-if="snack.color === 'success'"
-          class="mr-3"
-        >
-          <v-icon
-            color="white"
-            size="24"
-          >
-            mdi-check-circle
-          </v-icon>
-        </div>
-        
-        <!-- Error Icon -->
-        <div
-          v-else-if="snack.color === 'error'"
-          class="mr-3"
-        >
-          <v-icon
-            color="white"
-            size="24"
-          >
-            mdi-alert-circle
-          </v-icon>
-        </div>
-        
-        <!-- Warning Icon -->
-        <div
-          v-else-if="snack.color === 'warning'"
-          class="mr-3"
-        >
-          <v-icon
-            color="white"
-            size="24"
-          >
-            mdi-alert
-          </v-icon>
-        </div>
-        
-        <!-- Default Info Icon -->
-        <div
-          v-else
-          class="mr-3"
-        >
-          <v-icon
-            color="white"
-            size="24"
-          >
-            mdi-information
-          </v-icon>
-        </div>
-        
-        <div class="flex-grow-1">
-          <div class="font-weight-medium">
-            {{ snack.message }}
-          </div>
-          <!-- Progress bar for loading states -->
-          <v-progress-linear
-            v-if="snack.color === 'progress' && !isComplete"
-            :model-value="progressValue"
-            color="white"
-            height="2"
-            class="mt-2"
-            rounded
-            bg-opacity="0.3"
-          />
-        </div>
-      </div>
-      
-      <!-- <template #actions>
-        <v-btn
-          icon="mdi-close"
-          size="small"
-          variant="text"
-          color="white"
-          @click="show = false"
-        />
-      </template> -->
-    </v-snackbar>
-
-    <!-- Success Completion Modal -->
-    <v-dialog
-      v-model="showSuccessModal"
-      max-width="500"
-      persistent
-      transition="dialog-transition"
-    >
-      <v-card
-        rounded="xl"
-        elevation="16"
-        class="text-center success-card"
-      >
-        <v-card-text class="pa-8">
-          <!-- Animated Success Icon with SVG -->
-          <div class="success-icon-container mb-6">
-            <div class="success-circle">
-              <svg
-                class="success-svg"
-                viewBox="0 0 100 100"
-                width="80"
-                height="80"
-              >
-                <!-- Animated Circle -->
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="#4CAF50"
-                  stroke-width="4"
-                  stroke-dasharray="283"
-                  stroke-dashoffset="283"
-                  class="success-circle-path"
-                />
-                <path
-                  d="M30 55 L45 70 L70 35"
-                  fill="none"
-                  stroke="#4CAF50"
-                  stroke-width="6"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-dasharray="120"
-                  stroke-dashoffset="120"
-                  class="success-checkmark"
-                />
-
-              </svg>
+          <div class="notification-content">
+            <div class="notification-icon-wrapper" :class="`icon-${notification.type}`">
+              <div v-if="notification.type === 'progress'" class="progress-spinner">
+                <svg class="spinner-svg" viewBox="0 0 24 24">
+                  <circle class="spinner-track" cx="12" cy="12" r="10" />
+                  <circle class="spinner-progress" cx="12" cy="12" r="10" />
+                </svg>
+              </div>
+              <v-icon v-else-if="notification.type === 'success'" size="18">mdi-check</v-icon>
+              <v-icon v-else-if="notification.type === 'error'" size="18">mdi-close</v-icon>
+              <v-icon v-else-if="notification.type === 'warning'" size="18">mdi-alert</v-icon>
+              <v-icon v-else size="18">mdi-information-variant</v-icon>
             </div>
-            
-            <!-- Floating particles animation -->
-            <!-- <div class="particles">
-              <div
-                v-for="i in 6"
-                :key="i"
-                class="particle"
-                :style="`--i: ${i}`"
-              />
-            </div> -->
+
+            <div class="notification-body">
+              <span class="notification-message">{{ notification.message }}</span>
+              <div v-if="notification.type === 'progress'" class="progress-bar-container">
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: `${notification.progress}%` }" />
+                </div>
+              </div>
+            </div>
+
+            <button v-if="notification.type !== 'progress'" class="notification-close" @click="dismissNotification(notification.id)">
+              <v-icon size="16">mdi-close</v-icon>
+            </button>
           </div>
-          
-          <!-- Success Title -->
-          <h2 class="text-h4 font-weight-bold text-success mb-3">
-            <v-icon
-              size="28"
-              color="success"
-              class="mr-2"
-            >
-              mdi-rocket-launch
-            </v-icon>
-            Project Successfully Added!
-          </h2>
-          
-          <!-- Success Message -->
-          <p class="text-h6 text-grey-darken-1 mb-6">
-            Your project has been created and is ready to go!
-          </p>
-        </v-card-text>
-        
-        <v-card-actions class="justify-center pb-8">
-          <v-btn
-            color="success"
-            variant="elevated"
-            class="px-8"
-            size="large"
-            rounded="xl"
-            prepend-icon="mdi-check"
-            @click="closeSuccessModal"
-          >
-            Awesome!
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+        </div>
+      </transition-group>
+
+      <transition name="success-modal">
+        <div v-if="showSuccessModal" class="success-modal-overlay" @click.self="closeSuccessModal">
+          <div class="success-modal">
+            <div class="success-animation">
+              <div class="success-circle">
+                <svg class="success-svg" viewBox="0 0 52 52">
+                  <circle class="success-circle-bg" cx="26" cy="26" r="24" />
+                  <circle class="success-circle-stroke" cx="26" cy="26" r="24" />
+                  <path class="success-check" d="M14 27l8 8 16-16" />
+                </svg>
+              </div>
+              <div class="success-particles">
+                <span v-for="i in 8" :key="i" class="particle" :style="`--delay: ${i * 0.1}s; --angle: ${i * 45}deg`" />
+              </div>
+            </div>
+
+            <h2 class="success-title">Project Created!</h2>
+            <p class="success-description">Your project has been set up successfully and is ready to use.</p>
+
+            <button class="success-btn" @click="closeSuccessModal">
+              <span>Continue</span>
+              <v-icon size="18">mdi-arrow-right</v-icon>
+            </button>
+          </div>
+        </div>
+      </transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 
-const show = ref(false)
+const activeNotifications = ref([])
 const showSuccessModal = ref(false)
-const snack = ref({ message: '', color: 'success' })
-const progressValue = ref(0)
 const isComplete = ref(false)
-let progressInterval = null
+let notificationId = 0
+let progressIntervals = {}
 
-const showSnack = (message, color = 'success') => {
-  snack.value = { message, color }
-  show.value = true
-  isComplete.value = false
+const addNotification = (message, type) => {
+  const id = ++notificationId
+  const notification = reactive({
+    id,
+    message,
+    type,
+    progress: 0
+  })
 
-  if (color === 'progress') {
-    progressValue.value = 0
-    progressInterval = setInterval(() => {
-      progressValue.value += 2
-      if (progressValue.value >= 100) {
-        clearInterval(progressInterval)
-        progressValue.value = 100
+  activeNotifications.value.push(notification)
+
+  if (type === 'progress') {
+    progressIntervals[id] = setInterval(() => {
+      notification.progress += 3
+      if (notification.progress >= 100) {
+        clearInterval(progressIntervals[id])
+        delete progressIntervals[id]
       }
     }, 50)
   }
 
-  // ⏱ Trigger modal early if it's a success
-  if (color === 'success' && message.includes('successfully')) {
+  return id
+}
+
+const removeNotification = (id) => {
+  if (progressIntervals[id]) {
+    clearInterval(progressIntervals[id])
+    delete progressIntervals[id]
+  }
+  const index = activeNotifications.value.findIndex(n => n.id === id)
+  if (index > -1) {
+    activeNotifications.value.splice(index, 1)
+  }
+}
+
+const dismissNotification = (id) => {
+  removeNotification(id)
+}
+
+const showSnack = (message, color = 'success') => {
+  const type = color === 'progress' ? 'progress' : color
+  isComplete.value = false
+
+  activeNotifications.value.forEach(n => {
+    if (progressIntervals[n.id]) {
+      clearInterval(progressIntervals[n.id])
+      delete progressIntervals[n.id]
+    }
+  })
+  activeNotifications.value = []
+
+  const id = addNotification(message, type)
+
+  if (type === 'success' && message.toLowerCase().includes('successfully')) {
     isComplete.value = true
     showSuccessModal.value = true
   }
 
   return new Promise(resolve => {
-    const timeout = color === 'success' && message.includes('successfully') ? 6000 : 3500
+    const timeout = type === 'success' && message.toLowerCase().includes('successfully') ? 6000 : 3500
 
     setTimeout(() => {
-      show.value = false
-      if (progressInterval) {
-        clearInterval(progressInterval)
-        progressInterval = null
-      }
+      removeNotification(id)
       resolve()
     }, timeout)
   })
@@ -250,31 +148,228 @@ const showSnack = (message, color = 'success') => {
 const closeSuccessModal = () => {
   showSuccessModal.value = false
   isComplete.value = false
-  if (progressInterval) {
-    clearInterval(progressInterval)
-    progressInterval = null
-  }
 }
 
 defineExpose({ showSnack })
 </script>
 
 <style scoped>
-/* Custom Snackbar Styling */
-/* .custom-snackbar {
-  backdrop-filter: blur(10px);
-} */
-
-/* Success Modal Styling */
-.success-card {
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-  border: 2px solid #e8f2ff;
+.notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
 }
 
-/* Success Icon Container */
-.success-icon-container {
+.notification-toast {
+  pointer-events: auto;
+  background: rgb(var(--v-theme-surface));
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  min-width: 320px;
+  max-width: 420px;
+}
+
+.notification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.notification-icon-wrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-progress {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.icon-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.icon-error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.icon-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.icon-info {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.progress-spinner {
+  width: 20px;
+  height: 20px;
+}
+
+.spinner-svg {
+  width: 100%;
+  height: 100%;
+  animation: rotate 1.4s linear infinite;
+}
+
+.spinner-track {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  opacity: 0.2;
+}
+
+.spinner-progress {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-dasharray: 63;
+  stroke-dashoffset: 50;
+  stroke-linecap: round;
+  animation: dash 1.4s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dashoffset: 63;
+  }
+  50% {
+    stroke-dashoffset: 16;
+  }
+  100% {
+    stroke-dashoffset: 63;
+  }
+}
+
+.notification-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 5px;
+}
+
+.notification-message {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(var(--v-theme-on-surface));
+  line-height: 1.4;
+}
+
+.progress-bar-container {
+  width: 100%;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 4px;
+  transition: width 0.15s ease-out;
+}
+
+.notification-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: rgb(var(--v-theme-grey-400));
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.notification-close:hover {
+  background: rgb(var(--v-theme-grey-100));
+  color: rgb(var(--v-theme-grey-600));
+}
+
+.notification-list-enter-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notification-list-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.notification-list-enter-from {
+  opacity: 0;
+  transform: translateX(40px) scale(0.95);
+}
+
+.notification-list-leave-to {
+  opacity: 0;
+  transform: translateX(40px) scale(0.95);
+}
+
+.notification-list-move {
+  transition: transform 0.3s ease;
+}
+
+.success-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.success-modal {
+  background: rgb(var(--v-theme-surface));
+  border-radius: 24px;
+  padding: 48px 40px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.12),
+    0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.success-animation {
   position: relative;
-  display: inline-block;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 28px;
 }
 
 .success-circle {
@@ -282,150 +377,146 @@ defineExpose({ showSnack })
   z-index: 2;
 }
 
-/* SVG Animations */
 .success-svg {
-  transform: none;
-  filter: drop-shadow(0 4px 8px rgba(76, 175, 80, 0.3));
+  width: 88px;
+  height: 88px;
 }
 
-.success-circle-path {
-  animation: drawCircle 1s ease-in-out forwards;
+.success-circle-bg {
+  fill: rgba(16, 185, 129, 0.1);
 }
 
-.success-checkmark {
-  animation: drawCheckmark 0.5s ease-in-out 0.5s forwards;
+.success-circle-stroke {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 2;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: circle-draw 0.6s ease forwards;
 }
 
-@keyframes drawCheckmark {
-  0% {
-    stroke-dashoffset: 60;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
+.success-check {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: check-draw 0.4s ease forwards 0.4s;
 }
 
-
-@keyframes drawCheckmark {
-  0% {
-    stroke-dashoffset: 50;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
+@keyframes circle-draw {
+  to { stroke-dashoffset: 0; }
 }
 
-/* Floating Particles */
-.particles {
+@keyframes check-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+.success-particles {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 120px;
-  height: 120px;
-  pointer-events: none;
+  inset: 0;
+  z-index: 1;
 }
 
 .particle {
   position: absolute;
   width: 6px;
   height: 6px;
-  background: linear-gradient(45deg, #4CAF50, #81C784);
   border-radius: 50%;
-  animation: float 3s ease-in-out infinite;
-  animation-delay: calc(var(--i) * 0.2s);
+  background: #10b981;
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  animation: particle-burst 0.8s ease forwards;
+  animation-delay: var(--delay);
 }
 
-.particle:nth-child(1) { top: 10%; left: 20%; }
-.particle:nth-child(2) { top: 20%; right: 10%; }
-.particle:nth-child(3) { bottom: 20%; left: 10%; }
-.particle:nth-child(4) { bottom: 10%; right: 20%; }
-.particle:nth-child(5) { top: 50%; left: 5%; }
-.particle:nth-child(6) { top: 50%; right: 5%; }
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translateY(-20px) scale(1.2);
-    opacity: 1;
-  }
-}
-
-/* Celebration Icons Animation */
-.celebration-icons {
-  animation: fadeInUp 0.8s ease-out 1.5s both;
-}
-
-.celebration-icon {
-  animation: bounce 2s ease-in-out infinite;
-}
-
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-8px);
-  }
-  60% {
-    transform: translateY(-4px);
-  }
-}
-
-@keyframes fadeInUp {
+@keyframes particle-burst {
   0% {
-    opacity: 0;
-    transform: translateY(20px);
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0);
   }
   100% {
-    opacity: 1;
-    transform: translateY(0);
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-50px);
   }
 }
 
-/* Dialog Transition Enhancement */
-:deep(.v-dialog-transition-enter-active),
-:deep(.v-dialog-transition-leave-active) {
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+.success-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgb(var(--v-theme-on-surface));
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
 }
 
-:deep(.v-dialog-transition-enter-from) {
+.success-description {
+  font-size: 0.9375rem;
+  color: rgb(var(--v-theme-grey-500));
+  margin: 0 0 32px;
+  line-height: 1.5;
+}
+
+.success-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border: none;
+  background: #10b981;
+  color: white;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.success-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.success-btn:active {
+  transform: translateY(0);
+}
+
+.success-modal-enter-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.success-modal-leave-active {
+  transition: all 0.25s ease;
+}
+
+.success-modal-enter-from {
   opacity: 0;
-  transform: scale(0.9) translateY(20px);
 }
 
-:deep(.v-dialog-transition-leave-to) {
+.success-modal-leave-to {
   opacity: 0;
-  transform: scale(1.05) translateY(-20px);
 }
 
-/* Enhanced Snackbar Positioning */
-:deep(.v-snackbar) {
-  margin: 16px;
+.success-modal-enter-from .success-modal,
+.success-modal-leave-to .success-modal {
+  transform: scale(0.95);
 }
 
-:deep(.v-snackbar__wrapper) {
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
+@media (max-width: 480px) {
+  .notification-container {
+    left: 12px;
+    right: 12px;
+  }
 
-/* Color Theme Enhancements */
-:deep(.v-snackbar.v-theme--light.text-info) {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%) !important;
-}
+  .notification-toast {
+    min-width: auto;
+  }
 
-:deep(.v-snackbar.v-theme--light.text-success) {
-  background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%) !important;
-}
-
-:deep(.v-snackbar.v-theme--light.text-error) {
-  background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%) !important;
-}
-
-:deep(.v-snackbar.v-theme--light.text-warning) {
-  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%) !important;
+  .success-modal {
+    padding: 40px 28px;
+  }
 }
 </style>
