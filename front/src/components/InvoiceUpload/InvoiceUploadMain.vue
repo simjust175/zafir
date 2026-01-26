@@ -20,13 +20,34 @@
           </h2>
         </div>
         <div class="mode-switcher">
-          <v-btn-toggle v-model="activeMode" mandatory density="compact" rounded="lg">
-            <v-btn value="form" size="small">
-              <v-icon size="18" class="mr-1">mdi-form-select</v-icon>
+          <v-btn-toggle
+            v-model="activeMode"
+            mandatory
+            density="compact"
+            rounded="lg"
+          >
+            <v-btn
+              value="form"
+              size="small"
+            >
+              <v-icon
+                size="18"
+                class="mr-1"
+              >
+                mdi-form-select
+              </v-icon>
               Manual
             </v-btn>
-            <v-btn value="upload" size="small">
-              <v-icon size="18" class="mr-1">mdi-upload</v-icon>
+            <v-btn
+              value="upload"
+              size="small"
+            >
+              <v-icon
+                size="18"
+                class="mr-1"
+              >
+                mdi-upload
+              </v-icon>
               Upload
             </v-btn>
           </v-btn-toggle>
@@ -37,8 +58,16 @@
 
       <div class="dialog-body">
         <v-fade-transition mode="out-in">
-          <div v-if="showForm" key="form" class="form-section">
-            <v-form ref="formRef" v-model="valid" lazy-validation>
+          <div
+            v-if="showForm"
+            key="form"
+            class="form-section"
+          >
+            <v-form
+              ref="formRef"
+              v-model="valid"
+              lazy-validation
+            >
               <div class="form-group">
                 <label class="form-label">Amount</label>
                 <v-text-field
@@ -100,7 +129,11 @@
                   />
                 </div>
                 <v-slide-x-transition>
-                  <div v-if="btwIncluded" class="form-group" style="width: 120px;">
+                  <div
+                    v-if="btwIncluded"
+                    class="form-group"
+                    style="width: 120px;"
+                  >
                     <v-text-field
                       v-model="btwPercent"
                       type="number"
@@ -115,7 +148,11 @@
             </v-form>
           </div>
 
-          <div v-else key="upload" class="upload-section">
+          <div
+            v-else
+            key="upload"
+            class="upload-section"
+          >
             <div
               class="upload-dropzone"
               :class="{ 'dropzone-active': isDragging, 'dropzone-has-file': file }"
@@ -132,17 +169,35 @@
                 @change="handleFileSelect"
               >
               
-              <div v-if="!file" class="dropzone-content">
+              <div
+                v-if="!file"
+                class="dropzone-content"
+              >
                 <div class="dropzone-icon">
-                  <v-icon icon="mdi-cloud-upload-outline" size="48" color="primary" />
+                  <v-icon
+                    icon="mdi-cloud-upload-outline"
+                    size="48"
+                    color="primary"
+                  />
                 </div>
-                <p class="dropzone-title">Drop files here or click to upload</p>
-                <p class="dropzone-hint">Supports PDF, JPG, PNG up to 10MB</p>
+                <p class="dropzone-title">
+                  Drop files here or click to upload
+                </p>
+                <p class="dropzone-hint">
+                  Supports PDF, JPG, PNG up to 10MB
+                </p>
               </div>
 
-              <div v-else class="file-preview">
+              <div
+                v-else
+                class="file-preview"
+              >
                 <div class="file-icon">
-                  <v-icon :icon="getFileIcon(file)" size="32" color="primary" />
+                  <v-icon
+                    :icon="getFileIcon(file)"
+                    size="32"
+                    color="primary"
+                  />
                 </div>
                 <div class="file-info">
                   <span class="file-name">{{ file.name }}</span>
@@ -161,7 +216,10 @@
             </div>
 
             <v-expand-transition>
-              <div v-if="extractionStatus" class="extraction-status">
+              <div
+                v-if="extractionStatus"
+                class="extraction-status"
+              >
                 <v-progress-linear
                   v-if="extractionStatus === 'processing'"
                   indeterminate
@@ -169,28 +227,52 @@
                   height="4"
                   class="mb-3"
                 />
-                <div class="status-content" :class="`status-${extractionStatus}`">
-                  <v-icon :icon="getStatusIcon()" size="20" class="mr-2" />
+                <div
+                  class="status-content"
+                  :class="`status-${extractionStatus}`"
+                >
+                  <v-icon
+                    :icon="getStatusIcon()"
+                    size="20"
+                    class="mr-2"
+                  />
                   <span>{{ getStatusMessage() }}</span>
                 </div>
               </div>
             </v-expand-transition>
 
-            <div v-if="extractedData" class="extracted-data mt-4">
+            <div
+              v-if="extractedData"
+              class="extracted-data mt-4"
+            >
               <div class="extracted-header">
-                <v-icon icon="mdi-check-circle" color="success" size="18" class="mr-2" />
+                <v-icon
+                  icon="mdi-check-circle"
+                  color="success"
+                  size="18"
+                  class="mr-2"
+                />
                 <span class="extracted-title">Extracted Information</span>
               </div>
               <div class="extracted-fields">
-                <div v-if="extractedData.amount" class="extracted-field">
+                <div
+                  v-if="extractedData.amount"
+                  class="extracted-field"
+                >
                   <span class="field-label">Amount</span>
                   <span class="field-value">€{{ extractedData.amount }}</span>
                 </div>
-                <div v-if="extractedData.supplier" class="extracted-field">
+                <div
+                  v-if="extractedData.supplier"
+                  class="extracted-field"
+                >
                   <span class="field-label">Supplier</span>
                   <span class="field-value">{{ extractedData.supplier }}</span>
                 </div>
-                <div v-if="extractedData.date" class="extracted-field">
+                <div
+                  v-if="extractedData.date"
+                  class="extracted-field"
+                >
                   <span class="field-label">Date</span>
                   <span class="field-value">{{ extractedData.date }}</span>
                 </div>
@@ -203,7 +285,12 @@
       <v-divider />
 
       <div class="dialog-footer">
-        <v-btn variant="text" @click="closeDialog">Cancel</v-btn>
+        <v-btn
+          variant="text"
+          @click="closeDialog"
+        >
+          Cancel
+        </v-btn>
         <v-btn
           color="primary"
           variant="flat"
@@ -216,9 +303,14 @@
       </div>
     </v-card>
 
-    <v-dialog v-model="supplierDialog" max-width="360">
+    <v-dialog
+      v-model="supplierDialog"
+      max-width="360"
+    >
       <v-card class="pa-4">
-        <v-card-title class="text-h6 pb-2">Add New Supplier</v-card-title>
+        <v-card-title class="text-h6 pb-2">
+          Add New Supplier
+        </v-card-title>
         <v-card-text>
           <v-text-field
             v-model="newSupplier"
@@ -228,8 +320,19 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="supplierDialog = false">Cancel</v-btn>
-          <v-btn color="primary" :disabled="!newSupplier" @click="addSupplier">Add</v-btn>
+          <v-btn
+            variant="text"
+            @click="supplierDialog = false"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            color="primary"
+            :disabled="!newSupplier"
+            @click="addSupplier"
+          >
+            Add
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
