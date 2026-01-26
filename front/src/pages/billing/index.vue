@@ -36,6 +36,7 @@ const addProjectDialog = ref(false)
   margin: 0 auto;
   min-height: 100%;
   padding-bottom: 32px;
+  
 }
 
 .page-header {

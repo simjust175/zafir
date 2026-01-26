@@ -24,6 +24,7 @@ app.set("eventSystem", eventSystem);
 const PORT = process.env.PORT || 3001;
 
 // ----------- Middleware -----------
+// app.use(cors());
 app.use(
   cors({
     origin: ["https://billio.me", "https://billio.live"],
@@ -32,7 +33,6 @@ app.use(
     credentials: true
   })
 );
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -68,6 +68,14 @@ try {
   console.log("✅ registerRoutes loaded");
 } catch (err) {
   console.error("❌ Failed to load registerRoutes:", err);
+}
+
+try {
+  const inviteRoutes = (await import("./Login_system/Router/inviteRoutes.js")).default;
+  app.use("/users", inviteRoutes);
+  console.log("✅ inviteRoutes loaded");
+} catch (err) {
+  console.error("❌ Failed to load inviteRoutes:", err);
 }
 
 try {

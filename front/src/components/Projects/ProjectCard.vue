@@ -1,16 +1,29 @@
 <template>
   <div class="project-card-wrapper">
-    <v-card class="project-card" rounded="xl">
+    <v-card
+      class="project-card"
+      rounded="xl"
+    >
       <div class="card-header">
         <div class="project-info">
           <div class="project-avatar">
-            <v-icon size="22" color="primary">mdi-folder-outline</v-icon>
+            <v-icon
+              size="22"
+              color="primary"
+            >
+              mdi-folder-outline
+            </v-icon>
           </div>
           <div class="project-details">
-            <h3 class="project-name">{{ projectName }}</h3>
+            <h3 class="project-name">
+              {{ projectName }}
+            </h3>
             <div class="email-row">
               <span class="project-email">{{ projectEmailDisplay }}</span>
-              <v-tooltip :text="copied ? 'Copied!' : 'Copy email'" location="top">
+              <v-tooltip
+                :text="copied ? 'Copied!' : 'Copy email'"
+                location="top"
+              >
                 <template #activator="{ props }">
                   <button
                     v-bind="props"
@@ -35,7 +48,12 @@
           class="edit-btn"
           @click="editDialog = true"
         >
-          <v-icon size="18" color="grey-darken-1">mdi-pencil-outline</v-icon>
+          <v-icon
+            size="18"
+            color="grey-darken-1"
+          >
+            mdi-pencil-outline
+          </v-icon>
         </v-btn>
       </div>
 
@@ -43,7 +61,12 @@
         <div class="metrics-grid">
           <div class="metric-item">
             <div class="metric-icon invoices">
-              <v-icon size="18" color="primary">mdi-file-document-outline</v-icon>
+              <v-icon
+                size="18"
+                color="primary"
+              >
+                mdi-file-document-outline
+              </v-icon>
             </div>
             <div class="metric-content">
               <span class="metric-value">{{ invoiceCount }}</span>
@@ -52,7 +75,12 @@
           </div>
           <div class="metric-item">
             <div class="metric-icon paid">
-              <v-icon size="18" color="success">mdi-check-circle-outline</v-icon>
+              <v-icon
+                size="18"
+                color="success"
+              >
+                mdi-check-circle-outline
+              </v-icon>
             </div>
             <div class="metric-content">
               <span class="metric-value">{{ paidCount }}</span>
@@ -64,7 +92,10 @@
         <div class="progress-section">
           <div class="progress-header">
             <span class="progress-label">Payment Progress</span>
-            <span class="progress-percent" :class="progressColorClass">{{ percentPaid }}%</span>
+            <span
+              class="progress-percent"
+              :class="progressColorClass"
+            >{{ percentPaid }}%</span>
           </div>
           <div class="progress-track">
             <div 
@@ -95,7 +126,12 @@
           class="complete-btn"
           @click="dialogTrigger = true"
         >
-          <v-icon start size="18">mdi-check-circle</v-icon>
+          <v-icon
+            start
+            size="18"
+          >
+            mdi-check-circle
+          </v-icon>
           Mark Complete
         </v-btn>
       </div>
@@ -264,6 +300,7 @@ const progressColorClass = computed(() => {
   justify-content: space-between;
   align-items: flex-start;
   padding: 20px 20px 16px;
+   background: rgb(var(--v-theme-surface));
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
@@ -490,6 +527,7 @@ const progressColorClass = computed(() => {
 
 .card-footer {
   padding: 16px 20px 20px;
+   background: rgb(var(--v-theme-surface));
   border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 

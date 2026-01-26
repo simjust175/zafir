@@ -1,6 +1,13 @@
 <template>
-  <v-dialog v-model="dialog" max-width="700" scrollable>
-    <div v-if="url" class="pdf-viewer-dialog">
+  <v-dialog
+    v-model="dialog"
+    max-width="700"
+    scrollable
+  >
+    <div
+      v-if="url"
+      class="pdf-viewer-dialog"
+    >
       <PdfDialogToolbar
         :issuer="fileDetails?.issuer"
         :pdf-url="pdfUrl"
@@ -9,9 +16,17 @@
       />
 
       <transition name="alert-slide">
-        <div v-if="mode === 'conflict'" class="conflict-alert">
+        <div
+          v-if="mode === 'conflict'"
+          class="conflict-alert"
+        >
           <div class="alert-icon">
-            <v-icon size="22" color="warning">mdi-alert-circle-outline</v-icon>
+            <v-icon
+              size="22"
+              color="warning"
+            >
+              mdi-alert-circle-outline
+            </v-icon>
           </div>
           <div class="alert-content">
             <span class="alert-title">{{ conflictTitle }}</span>
@@ -20,20 +35,32 @@
         </div>
       </transition>
 
-      <div v-if="mode === 'conflict' && conflictType === 'duplicate'" class="duplicate-actions">
-        <button class="action-btn success" @click="keepBoth">
+      <div
+        v-if="mode === 'conflict' && conflictType === 'duplicate'"
+        class="duplicate-actions"
+      >
+        <button
+          class="action-btn success"
+          @click="keepBoth"
+        >
           <span class="btn-icon">
             <v-icon size="18">mdi-content-duplicate</v-icon>
           </span>
           <span class="btn-text">Keep Both</span>
         </button>
-        <button class="action-btn warning" @click="keepDuplicate">
+        <button
+          class="action-btn warning"
+          @click="keepDuplicate"
+        >
           <span class="btn-icon">
             <v-icon size="18">mdi-file-replace-outline</v-icon>
           </span>
           <span class="btn-text">Keep Duplicate</span>
         </button>
-        <button class="action-btn danger" @click="keepNone">
+        <button
+          class="action-btn danger"
+          @click="keepNone"
+        >
           <span class="btn-icon">
             <v-icon size="18">mdi-trash-can-outline</v-icon>
           </span>
@@ -41,13 +68,23 @@
         </button>
       </div>
 
-      <div v-if="mode !== 'conflict' || conflictType === 'unknown-supplier'" class="summary-panel">
+      <div
+        v-if="mode !== 'conflict' || conflictType === 'unknown-supplier'"
+        class="summary-panel"
+      >
         <div class="summary-grid">
           <div class="summary-item">
             <div class="item-header">
               <span class="label">Supplier</span>
-              <div v-if="mode === 'double-check'" class="confirm-chip" :class="{ confirmed: confirmed.issuer }" @click="toggleConfirm('issuer')">
-                <v-icon size="14">{{ confirmed.issuer ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}</v-icon>
+              <div
+                v-if="mode === 'double-check'"
+                class="confirm-chip"
+                :class="{ confirmed: confirmed.issuer }"
+                @click="toggleConfirm('issuer')"
+              >
+                <v-icon size="14">
+                  {{ confirmed.issuer ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}
+                </v-icon>
                 {{ confirmed.issuer ? 'Verified' : 'Verify' }}
               </div>
             </div>
@@ -61,7 +98,10 @@
                 >
               </template>
               <template v-else>
-                <span v-if="!editing.issuer" class="value-text">{{ editableFields.issuer || fileDetails?.issuer }}</span>
+                <span
+                  v-if="!editing.issuer"
+                  class="value-text"
+                >{{ editableFields.issuer || fileDetails?.issuer }}</span>
                 <input
                   v-else
                   v-model="editableFields.issuer"
@@ -70,12 +110,21 @@
                   @keyup.enter="finishEdit('issuer')"
                 >
               </template>
-              <button v-if="mode === 'double-check' && !confirmed.issuer" class="edit-btn" @click="editing.issuer = true">
-                <v-icon size="14">mdi-pencil-outline</v-icon>
+              <button
+                v-if="mode === 'double-check' && !confirmed.issuer"
+                class="edit-btn"
+                @click="editing.issuer = true"
+              >
+                <v-icon size="14">
+                  mdi-pencil-outline
+                </v-icon>
               </button>
             </div>
             <span class="sub-value">
-              <v-icon size="12" class="mr-1">mdi-calendar-outline</v-icon>
+              <v-icon
+                size="12"
+                class="mr-1"
+              >mdi-calendar-outline</v-icon>
               Issued: {{ formatDate(fileDetails?.invoice_date) }}
             </span>
           </div>
@@ -83,8 +132,15 @@
           <div class="summary-item">
             <div class="item-header">
               <span class="label">VAT Rate</span>
-              <div v-if="mode === 'double-check'" class="confirm-chip" :class="{ confirmed: confirmed.btw }" @click="toggleConfirm('btw')">
-                <v-icon size="14">{{ confirmed.btw ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}</v-icon>
+              <div
+                v-if="mode === 'double-check'"
+                class="confirm-chip"
+                :class="{ confirmed: confirmed.btw }"
+                @click="toggleConfirm('btw')"
+              >
+                <v-icon size="14">
+                  {{ confirmed.btw ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}
+                </v-icon>
                 {{ confirmed.btw ? 'Verified' : 'Verify' }}
               </div>
             </div>
@@ -92,8 +148,15 @@
 
             <div class="item-header mt-4">
               <span class="label">Total Amount</span>
-              <div v-if="mode === 'double-check'" class="confirm-chip" :class="{ confirmed: confirmed.amount }" @click="toggleConfirm('amount')">
-                <v-icon size="14">{{ confirmed.amount ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}</v-icon>
+              <div
+                v-if="mode === 'double-check'"
+                class="confirm-chip"
+                :class="{ confirmed: confirmed.amount }"
+                @click="toggleConfirm('amount')"
+              >
+                <v-icon size="14">
+                  {{ confirmed.amount ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}
+                </v-icon>
                 {{ confirmed.amount ? 'Verified' : 'Verify' }}
               </div>
             </div>
@@ -101,26 +164,52 @@
           </div>
         </div>
 
-        <div v-if="mode === 'conflict' && conflictType === 'unknown-supplier'" class="unknown-actions">
-          <button class="btn btn-secondary" @click="keepUnknown">
-            <v-icon size="18">mdi-account-off-outline</v-icon>
+        <div
+          v-if="mode === 'conflict' && conflictType === 'unknown-supplier'"
+          class="unknown-actions"
+        >
+          <button
+            class="btn btn-secondary"
+            @click="keepUnknown"
+          >
+            <v-icon size="18">
+              mdi-account-off-outline
+            </v-icon>
             Keep as Unknown
           </button>
-          <button class="btn btn-primary" @click="saveSupplier">
-            <v-icon size="18">mdi-check</v-icon>
+          <button
+            class="btn btn-primary"
+            @click="saveSupplier"
+          >
+            <v-icon size="18">
+              mdi-check
+            </v-icon>
             Save Supplier
           </button>
         </div>
 
-        <div v-if="mode === 'double-check'" class="confirm-section">
+        <div
+          v-if="mode === 'double-check'"
+          class="confirm-section"
+        >
           <div class="confirm-progress">
             <span class="progress-text">{{ confirmedCount }} of 3 verified</span>
             <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: `${(confirmedCount / 3) * 100}%` }" />
+              <div
+                class="progress-fill"
+                :style="{ width: `${(confirmedCount / 3) * 100}%` }"
+              />
             </div>
           </div>
-          <button class="btn btn-primary" :class="{ ready: allConfirmed }" :disabled="!allConfirmed" @click="confirmDoubleCheck">
-            <v-icon size="18">{{ allConfirmed ? 'mdi-check-circle' : 'mdi-shield-alert-outline' }}</v-icon>
+          <button
+            class="btn btn-primary"
+            :class="{ ready: allConfirmed }"
+            :disabled="!allConfirmed"
+            @click="confirmDoubleCheck"
+          >
+            <v-icon size="18">
+              {{ allConfirmed ? 'mdi-check-circle' : 'mdi-shield-alert-outline' }}
+            </v-icon>
             {{ allConfirmed ? 'Confirm & Continue' : 'Verify All Fields' }}
           </button>
         </div>
@@ -134,29 +223,58 @@
                 <span class="panel-badge current">Current</span>
                 <h4>Original File</h4>
               </div>
-              <embed :src="pdfUrl" type="application/pdf" width="100%" height="100%">
+              <embed
+                :src="pdfUrl"
+                type="application/pdf"
+                width="100%"
+                height="100%"
+              >
             </div>
             <div class="pdf-panel">
               <div class="panel-header">
                 <span class="panel-badge duplicate">Duplicate</span>
                 <h4>Possible Duplicate</h4>
               </div>
-              <embed :src="duplicatePdfUrl" type="application/pdf" width="100%" height="100%">
+              <embed
+                :src="duplicatePdfUrl"
+                type="application/pdf"
+                width="100%"
+                height="100%"
+              >
             </div>
           </div>
         </template>
-        <embed v-else :src="`${pdfUrl}#toolbar=0&navpanes=0`" type="application/pdf" width="100%" height="100%">
+        <embed
+          v-else
+          :src="`${pdfUrl}#toolbar=0&navpanes=0`"
+          type="application/pdf"
+          width="100%"
+          height="100%"
+        >
       </div>
     </div>
 
-    <div v-else class="no-pdf">
+    <div
+      v-else
+      class="no-pdf"
+    >
       <div class="no-pdf-icon">
-        <v-icon size="56" color="grey-lighten-1">mdi-file-remove-outline</v-icon>
+        <v-icon
+          size="56"
+          color="grey-lighten-1"
+        >
+          mdi-file-remove-outline
+        </v-icon>
       </div>
       <h3>No PDF Available</h3>
       <p>There is no document to preview at this time.</p>
-      <button class="btn btn-primary" @click="handleClose">
-        <v-icon size="18">mdi-close</v-icon>
+      <button
+        class="btn btn-primary"
+        @click="handleClose"
+      >
+        <v-icon size="18">
+          mdi-close
+        </v-icon>
         Close
       </button>
     </div>

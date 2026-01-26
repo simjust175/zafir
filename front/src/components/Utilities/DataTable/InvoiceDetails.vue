@@ -8,34 +8,64 @@
       <!-- Header -->
       <div class="dialog-header">
         <div class="header-left">
-          <button class="back-btn" @click="$emit('close')">
-            <v-icon size="20">mdi-arrow-left</v-icon>
+          <button
+            class="back-btn"
+            @click="$emit('close')"
+          >
+            <v-icon size="20">
+              mdi-arrow-left
+            </v-icon>
           </button>
           <div class="header-info">
-            <h2 class="supplier-name">{{ supplierName }}</h2>
+            <h2 class="supplier-name">
+              {{ supplierName }}
+            </h2>
             <span class="invoice-count">{{ invoiceArray.length }} invoice{{ invoiceArray.length !== 1 ? 's' : '' }}</span>
           </div>
         </div>
         <div class="header-actions">
-          <button class="icon-btn" title="Print" @click="printInvoices">
-            <v-icon size="18">mdi-printer-outline</v-icon>
+          <button
+            class="icon-btn"
+            title="Print"
+            @click="printInvoices"
+          >
+            <v-icon size="18">
+              mdi-printer-outline
+            </v-icon>
           </button>
-          <button class="icon-btn" title="Download" @click="downloadInvoices">
-            <v-icon size="18">mdi-download-outline</v-icon>
+          <button
+            class="icon-btn"
+            title="Download"
+            @click="downloadInvoices"
+          >
+            <v-icon size="18">
+              mdi-download-outline
+            </v-icon>
           </button>
         </div>
       </div>
 
       <!-- Invoice Table -->
       <div class="dialog-content">
-        <table v-if="invoiceArray.length > 0" class="invoice-table">
+        <table
+          v-if="invoiceArray.length > 0"
+          class="invoice-table"
+        >
           <thead>
             <tr>
               <th>Date</th>
-              <th class="text-right">Amount</th>
-              <th class="text-center">VAT</th>
-              <th class="text-center">Status</th>
-              <th class="text-center">Actions</th>
+              <th class="text-right">
+                Amount
+              </th>
+              <th class="text-center">
+                VAT
+              </th>
+              <th class="text-center">
+                Status
+              </th>
+              <th class="text-center">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -46,7 +76,12 @@
             >
               <td>
                 <div class="date-cell">
-                  <v-icon size="16" color="grey">mdi-calendar</v-icon>
+                  <v-icon
+                    size="16"
+                    color="grey"
+                  >
+                    mdi-calendar
+                  </v-icon>
                   {{ formatDate(invoice.invoice_date) }}
                 </div>
               </td>
@@ -54,10 +89,16 @@
                 €{{ formatCurrency(invoice.amount) }}
               </td>
               <td class="text-center">
-                <span v-if="invoice.btwPercent" class="vat-badge">
+                <span
+                  v-if="invoice.btwPercent"
+                  class="vat-badge"
+                >
                   {{ invoice.btwPercent }}%
                 </span>
-                <span v-else class="vat-badge vat-none">N/A</span>
+                <span
+                  v-else
+                  class="vat-badge vat-none"
+                >N/A</span>
               </td>
               <td class="text-center">
                 <button
@@ -73,14 +114,32 @@
               </td>
               <td class="text-center">
                 <div class="action-buttons">
-                  <button class="action-btn view" title="View PDF" @click="previewPdf(invoice)">
-                    <v-icon size="16">mdi-file-eye-outline</v-icon>
+                  <button
+                    class="action-btn view"
+                    title="View PDF"
+                    @click="previewPdf(invoice)"
+                  >
+                    <v-icon size="16">
+                      mdi-file-eye-outline
+                    </v-icon>
                   </button>
-                  <button class="action-btn edit" title="Edit" @click="editItem(invoice)">
-                    <v-icon size="16">mdi-pencil-outline</v-icon>
+                  <button
+                    class="action-btn edit"
+                    title="Edit"
+                    @click="editItem(invoice)"
+                  >
+                    <v-icon size="16">
+                      mdi-pencil-outline
+                    </v-icon>
                   </button>
-                  <button class="action-btn delete" title="Delete" @click="deleteItem(invoice)">
-                    <v-icon size="16">mdi-delete-outline</v-icon>
+                  <button
+                    class="action-btn delete"
+                    title="Delete"
+                    @click="deleteItem(invoice)"
+                  >
+                    <v-icon size="16">
+                      mdi-delete-outline
+                    </v-icon>
                   </button>
                   <v-progress-circular
                     v-if="sendingId === invoice.id"
@@ -95,8 +154,16 @@
           </tbody>
         </table>
 
-        <div v-else class="empty-state">
-          <v-icon size="48" color="grey-lighten-1">mdi-file-document-outline</v-icon>
+        <div
+          v-else
+          class="empty-state"
+        >
+          <v-icon
+            size="48"
+            color="grey-lighten-1"
+          >
+            mdi-file-document-outline
+          </v-icon>
           <p>No invoices found</p>
         </div>
       </div>

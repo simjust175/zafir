@@ -24,7 +24,7 @@
         <div class="header-content">
           <div class="header-badge">
             <!-- Revenue Tracking -->
-             {{ project_name }}
+            {{ project_name }}
           </div>
           <h1 class="page-title">
             Project Revenue

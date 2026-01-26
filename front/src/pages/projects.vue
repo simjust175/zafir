@@ -10,7 +10,7 @@
             Organize and track invoices by project
           </p>
         </div> -->
-        <!-- <v-btn
+    <!-- <v-btn
           color="primary"
           prepend-icon="mdi-plus"
           @click="addProjectDialog = true"

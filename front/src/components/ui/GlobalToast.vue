@@ -9,14 +9,29 @@
     elevation="8"
   >
     <div class="d-flex align-center">
-      <v-icon v-if="toast.icon" :icon="toast.icon" class="mr-3" />
+      <v-icon
+        v-if="toast.icon"
+        :icon="toast.icon"
+        class="mr-3"
+      />
       <div>
-        <div v-if="toast.title" class="toast-title">{{ toast.title }}</div>
-        <div class="toast-message">{{ toast.message }}</div>
+        <div
+          v-if="toast.title"
+          class="toast-title"
+        >
+          {{ toast.title }}
+        </div>
+        <div class="toast-message">
+          {{ toast.message }}
+        </div>
       </div>
     </div>
     <template #actions>
-      <v-btn variant="text" size="small" @click="visible = false">
+      <v-btn
+        variant="text"
+        size="small"
+        @click="visible = false"
+      >
         Close
       </v-btn>
     </template>

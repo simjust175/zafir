@@ -3,7 +3,7 @@
     <div class="table-header">
       <div class="header-left">
         <h1 class="project-title">
-          {{ projectName }}
+          {{ capitalizeName(projectName) }}
         </h1>
         <span class="supplier-count">{{ groupedInvoices.length }} suppliers</span>
       </div>
@@ -467,6 +467,9 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['amountUpdate']);
+const capitalizeName = s =>
+  s ? s[0].toUpperCase() + s.slice(1) : "";
+
 const invoiceArray = invoiceStore();
 
 const search = ref('');
@@ -632,7 +635,8 @@ watch(() => props.refreshing, () => { loading.value = false; });
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+   background: rgb(var(--v-theme-background));
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .table-header {
@@ -640,6 +644,7 @@ watch(() => props.refreshing, () => { loading.value = false; });
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
+  background: rgb(var(--v-theme-surface));
   border-bottom: 1px solid #eaeaea;
 }
 
@@ -652,14 +657,16 @@ watch(() => props.refreshing, () => { loading.value = false; });
 .project-title {
   font-size: 20px;
   font-weight: 600;
-  color: #171717;
+  /* color: #171717; */
+  color: rgb(var(--v-theme-on-surface));
   margin: 0;
   letter-spacing: -0.02em;
 }
 
 .supplier-count {
   font-size: 13px;
-  color: #666;
+  /* color: #666; */
+  color: rgb(var(--v-theme-on-surface-variant));
 }
 
 .header-right {
@@ -678,6 +685,7 @@ watch(() => props.refreshing, () => { loading.value = false; });
   position: absolute;
   left: 10px;
   color: #999;
+  /* color: rgb(var(--v-theme-on-surface-variant)); */
   pointer-events: none;
 }
 
@@ -688,15 +696,20 @@ watch(() => props.refreshing, () => { loading.value = false; });
   border: 1px solid #eaeaea;
   border-radius: 8px;
   font-size: 14px;
-  color: #171717;
-  background: #fafafa;
+  /* color: #171717;
+  background: #fafafa; */
+  background: rgb(var(--v-theme-surface-variant));
+  color: rgb(var(--v-theme-on-surface));
   transition: all 0.2s ease;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #171717;
-  background: #fff;
+  /* border-color: #171717; */
+  border-color: rgb(var(--v-theme-primary));
+
+  /* background: #fff; */
+  background: rgb(var(--v-theme-surface));
 }
 
 .search-input::placeholder {
@@ -750,6 +763,9 @@ watch(() => props.refreshing, () => { loading.value = false; });
   align-items: center;
   padding: 16px 24px;
   background: #fafafa;
+  /* background: rgb(var(--v-theme-surface-variant)); */
+  /* background: linear-gradient(180deg, #fafafa 0%, #fff 100%); */
+
   border-bottom: 1px solid #eaeaea;
   gap: 0;
 }
@@ -1040,7 +1056,8 @@ watch(() => props.refreshing, () => { loading.value = false; });
 .invoice-table thead {
   position: sticky;
   top: 0;
-  background: #fafafa;
+  /* background: #fafafa; */
+   background: rgb(var(--v-theme-surface));
   z-index: 10;
 }
 

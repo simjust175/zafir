@@ -174,6 +174,7 @@ const emitForgot = () => {
 }
 
 .form-field {
+  color: #1f1f1f;
   margin-bottom: 20px;
 }
 

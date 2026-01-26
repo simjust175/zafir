@@ -409,6 +409,7 @@ onMounted(async () => {
 
 .dashboard-header {
   margin-bottom: 32px;
+  
 }
 
 .header-content {
@@ -443,6 +444,7 @@ onMounted(async () => {
 }
 
 .card-header {
+  background: rgb(var(--v-theme-surface));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -489,7 +491,7 @@ onMounted(async () => {
 }
 
 .invoice-item:hover {
-  background: rgb(var(--v-theme-grey-50));
+  background: rgb(var(--v-theme-surface-variant));
 }
 
 .invoice-icon {

@@ -17,7 +17,7 @@
             @click="tab = project"
           >
             <div class="project-content">
-              <span class="project-name">{{ project }}</span>
+              <span class="project-name">{{ capitalizeName(project) }}</span>
               <span class="invoice-count">{{ getProjectInvoiceCount(project) }}</span>
             </div>
           </div>
@@ -84,34 +84,105 @@
           <div class="empty-content">
             <div class="empty-illustration">
               <div class="illustration-wrapper">
-                <div class="illustration-glow"></div>
+                <div class="illustration-glow" />
                 <div class="illustration-bg">
-                  <svg class="illustration-icon" width="48" height="48" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <svg
+                    class="illustration-icon"
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <polyline
+                      points="14 2 14 8 20 8"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <line
+                      x1="16"
+                      y1="13"
+                      x2="8"
+                      y2="13"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                    <line
+                      x1="16"
+                      y1="17"
+                      x2="8"
+                      y2="17"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
                   </svg>
                 </div>
               </div>
             </div>
 
-            <div class="empty-badge" v-if="filteredProjects.length === 0">Get Started</div>
+            <div
+              v-if="filteredProjects.length === 0"
+              class="empty-badge"
+            >
+              Get Started
+            </div>
 
-            <h2 v-if="filteredProjects.length === 0" class="empty-title">Track invoices effortlessly</h2>
-            <h2 v-else class="empty-title">Select a project</h2>
+            <h2
+              v-if="filteredProjects.length === 0"
+              class="empty-title"
+            >
+              Track invoices effortlessly
+            </h2>
+            <h2
+              v-else
+              class="empty-title"
+            >
+              Select a project
+            </h2>
             
-            <p v-if="filteredProjects.length === 0" class="empty-description">
+            <p
+              v-if="filteredProjects.length === 0"
+              class="empty-description"
+            >
               Organize supplier invoices, apply margins, and keep your project costs under control — all in one place.
             </p>
-            <p v-else class="empty-description">
+            <p
+              v-else
+              class="empty-description"
+            >
               Choose a project from the sidebar to view its invoices.
             </p>
 
-            <button v-if="filteredProjects.length === 0" class="empty-cta-btn" @click="addProjectDialog = true">
+            <button
+              v-if="filteredProjects.length === 0"
+              class="empty-cta-btn"
+              @click="addProjectDialog = true"
+            >
               Create your first project
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="5" y1="12" x2="19" y2="12" />
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <line
+                  x1="5"
+                  y1="12"
+                  x2="19"
+                  y2="12"
+                />
                 <polyline points="12 5 19 12 12 19" />
               </svg>
             </button>
@@ -157,6 +228,10 @@ const projects = computed(() => {
   }
   return [...set]
 })
+
+const capitalizeName = s =>
+  s ? s[0].toUpperCase() + s.slice(1) : "";
+
 
 const filteredProjects = computed(() => {
   const q = (props.searchValue || '').trim().toLowerCase()
@@ -211,7 +286,7 @@ const fetchFromSessionStorage = () => {
   display: flex;
   flex: 1;
   min-height: 0;
-  background: #fff;
+  background: rgb(var(--v-theme-background));
 }
 
 .projects-sidebar {
@@ -251,20 +326,22 @@ const fetchFromSessionStorage = () => {
 }
 
 .project-item:hover {
-  background: #f0f0f0;
+ background: rgb(var(--v-theme-surface-variant));
 }
 
 .project-item.active {
-  background: #6366F1;
+  background: rgb(var(--v-theme-primary));
 }
 
 .project-item.active .project-name {
-  color: #fff;
+  color: rgb(var(--v-theme-on-primary));
 }
 
 .project-item.active .invoice-count {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  /* background: rgba(255, 255, 255, 0.2);
+  color: #fff; */
+   background: rgba(var(--v-theme-on-primary), 0.2);
+  color: rgb(var(--v-theme-on-primary));
 }
 
 .project-content {
@@ -277,7 +354,7 @@ const fetchFromSessionStorage = () => {
 .project-name {
   font-size: 14px;
   font-weight: 450;
-  color: #171717;
+  color: rgb(var(--v-theme-on-surface));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -286,8 +363,10 @@ const fetchFromSessionStorage = () => {
 .invoice-count {
   font-size: 12px;
   font-weight: 500;
-  color: #666;
-  background: #eaeaea;
+  /* color: #666;
+  background: #eaeaea; */
+  color: rgb(var(--v-theme-on-surface-variant));
+  background: rgb(var(--v-theme-surface-variant));
   padding: 2px 8px;
   border-radius: 10px;
   flex-shrink: 0;
@@ -476,7 +555,8 @@ const fetchFromSessionStorage = () => {
 .empty-title {
   font-size: 26px;
   font-weight: 700;
-  color: #0f0f0f;
+  /* color: #0f0f0f; */
+  color: rgb(var(--v-theme-on-surface));
   margin: 0 0 12px;
   letter-spacing: -0.03em;
   line-height: 1.2;
@@ -484,7 +564,8 @@ const fetchFromSessionStorage = () => {
 
 .empty-description {
   font-size: 15px;
-  color: #6b7280;
+  /* color: #6b7280; */
+  color: rgb(var(--v-theme-on-surface-variant));
   line-height: 1.7;
   margin: 0 0 32px;
 }

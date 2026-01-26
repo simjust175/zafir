@@ -368,12 +368,13 @@ onMounted(getUsers)
 }
 
 .search-section {
+  background: rgb(var(--v-theme-surface-variant));
   flex: 1;
   max-width: 320px;
 }
 
 .search-input {
-  background: rgb(var(--v-theme-grey-50));
+  background: rgb(var(--v-theme-surface-variant));
 }
 
 .table-container {
@@ -384,20 +385,38 @@ onMounted(getUsers)
   background: transparent !important;
 }
 
+
+/* Table header */
 :deep(.v-data-table__thead) {
-  background: rgb(var(--v-theme-grey-50));
+  background: rgb(var(--v-theme-surface-variant));
 }
 
+/* Table header text */
 :deep(.v-data-table__thead th) {
-  font-weight: 600 !important;
-  font-size: 0.75rem !important;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: rgb(var(--v-theme-grey-600)) !important;
+  color: rgb(var(--v-theme-on-surface-variant)) !important;
 }
 
+/* Row hover */
 :deep(.v-data-table__tr:hover) {
-  background: rgb(var(--v-theme-grey-50)) !important;
+  background: rgb(var(--v-theme-surface-variant)) !important;
+}
+
+/* Secondary text */
+.user-email,
+.empty-state {
+  color: rgb(var(--v-theme-on-surface-variant));
+}
+
+:deep(.v-field) {
+  background-color: rgb(var(--v-theme-surface-variant));
+}
+
+:deep(.v-field__outline) {
+  color: rgb(var(--v-theme-outline));
+}
+
+:deep(.v-field__input) {
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .user-cell {
