@@ -1145,7 +1145,7 @@ onMounted(async () => {
   justify-content: center;
   padding: 24px;
   z-index: 9999;
-  backdrop-filter: blur(4px);
+  /* backdrop-filter: blur(2px); */
 }
 
 .modal-container {
