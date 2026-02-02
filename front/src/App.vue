@@ -9,30 +9,55 @@
     </template>
 
     <template v-else>
-      <AppShell>
-        <OverlayComponent v-if="loading" :overlay-trigger="loading" />
-        <!-- <SessionBanner v-if="!loading" /> -->
-        <router-view v-if="!loading" v-slot="{ Component }">
-          <component :is="Component" />
-        </router-view>
-      </AppShell>
+      <!-- PERF: AppShell lazy loaded for non-auth pages -->
+      <Suspense>
+        <template #default>
+          <AppShell>
+            <OverlayComponent v-if="loading" :overlay-trigger="loading" />
+            <SessionBanner v-if="!loading" />
+            <router-view v-if="!loading" v-slot="{ Component }">
+              <component :is="Component" />
+            </router-view>
+          </AppShell>
+        </template>
+        <template #fallback>
+          <div class="app-loading">
+            <div class="loading-spinner"></div>
+          </div>
+        </template>
+      </Suspense>
     </template>
 
-    <GlobalToast />
+    <!-- PERF: GlobalToast lazy loaded - not needed for initial render -->
+    <Suspense>
+      <GlobalToast />
+    </Suspense>
   </v-app>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from "vue"
+/**
+ * PERFORMANCE OPTIMIZATIONS:
+ * - AppShell, GlobalToast lazy loaded via defineAsyncComponent
+ * - OverlayComponent and SessionBanner kept sync (needed immediately)
+ * - Data fetching deferred until after initial render
+ */
+import { ref, computed, onMounted, nextTick, watch, defineAsyncComponent } from "vue"
 import { useTheme } from "vuetify"
 import { useRoute, useRouter } from "vue-router"
 import { useLoginStore } from "@/stores/loginState.js"
 import { invoices } from "@/stores/invoiceState.js"
 import { setupAutoLogout } from "@/stores/loginState"
-import AppShell from "@/components/layout/AppShell.vue"
-import GlobalToast from "@/components/ui/GlobalToast.vue"
+
 import OverlayComponent from "@/components/Utilities/OverlayComponent.vue"
-// import SessionBanner from "@/components/Utilities/SessionBanner.vue"
+import SessionBanner from "@/components/Utilities/SessionBanner.vue"
+
+const AppShell = defineAsyncComponent(() => 
+  import("@/components/layout/AppShell.vue")
+)
+const GlobalToast = defineAsyncComponent(() => 
+  import("@/components/ui/GlobalToast.vue")
+)
 
 const route = useRoute()
 const router = useRouter()
@@ -121,5 +146,26 @@ onMounted(async () => {
 .auth-main {
   min-height: 100vh;
   background: linear-gradient(135deg, rgb(var(--v-theme-grey-100)) 0%, rgb(var(--v-theme-surface)) 100%);
+}
+
+.app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: rgb(var(--v-theme-background));
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(var(--v-theme-primary), 0.2);
+  border-top-color: rgb(var(--v-theme-primary));
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>
