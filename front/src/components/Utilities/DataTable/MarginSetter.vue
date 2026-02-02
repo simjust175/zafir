@@ -62,17 +62,17 @@ const props = defineProps({
 
 const emit = defineEmits(['marginUpdate']);
 
-const localMargin = ref(props.item?.totalMargin || 0);
+const localMargin = ref(props.item?.weightedMargin || 0);
 const marginChangedMap = ref({});
 const loading = ref(false);
 
 const onMarginChange = () => {
-  marginChangedMap.value[props.item.issuer] = localMargin.value !== props.item.totalMargin;
+  marginChangedMap.value[props.item.issuer] = localMargin.value !== props.item.weightedMargin;
 };
 
 watch(() => localMargin.value, () => onMarginChange());
 
-watch(() => props.item?.totalMargin, (newVal) => {
+watch(() => props.item?.weightedMargin, (newVal) => {
   localMargin.value = newVal || 0;
 });
 
@@ -111,7 +111,7 @@ const saveMargin = async (item) => {
 };
 
 const cancelMargin = (item) => {
-  localMargin.value = item.totalMargin || 0;
+  localMargin.value = item.weightedMargin || 0;
   marginChangedMap.value[item.issuer] = false;
 };
 </script>

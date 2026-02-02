@@ -81,6 +81,21 @@ class AmountControllers {
             res.status(500).json({ message: `Error in freeEmailServices/getFeeEmails: ${error.message}` });
         }
     }
+
+    static async postNewProjectNoEmail({ body }, res) {
+        if (!body || !body.project_name) {
+            return res.status(400).json({ message: 'Project name must be provided' });
+        }
+        try {
+            const newProject = await AmountService.postNewProjectNoEmailService(body);
+            if (!newProject) {
+                return res.status(404).json({ message: 'Error in AmountServices/postNewProjectNoEmailService()' });
+            }
+            res.status(200).json({ message: `New Project added successfully`, project: newProject });
+        } catch (error) {
+            res.status(500).json({ message: `Error in postNewProjectNoEmail: ${error.message}` });
+        }
+    }
 }
 
 export default AmountControllers;

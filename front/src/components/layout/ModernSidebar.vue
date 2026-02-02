@@ -10,9 +10,21 @@
   >
     <div class="sidebar-content">
       <div class="nav-section">
-        <div v-if="!rail" class="section-label">Main</div>
-        <v-list class="pa-2" nav density="compact">
-          <template v-for="item in mainNavItems" :key="item.value">
+        <div
+          v-if="!rail"
+          class="section-label"
+        >
+          Main
+        </div>
+        <v-list
+          class="pa-2"
+          nav
+          density="compact"
+        >
+          <template
+            v-for="item in mainNavItems"
+            :key="item.value"
+          >
             <v-list-item
               :value="item.value"
               :to="item.to"
@@ -22,10 +34,18 @@
               @click="item.action ? item.action() : null"
             >
               <template #prepend>
-                <v-icon :icon="item.icon" size="22" />
+                <v-icon
+                  :icon="item.icon"
+                  size="22"
+                />
               </template>
-              <v-list-item-title class="nav-title">{{ item.title }}</v-list-item-title>
-              <template v-if="item.badge" #append>
+              <v-list-item-title class="nav-title">
+                {{ item.title }}
+              </v-list-item-title>
+              <template
+                v-if="item.badge"
+                #append
+              >
                 <v-chip 
                   :color="item.badgeColor || 'primary'" 
                   size="x-small"
@@ -34,7 +54,11 @@
                   {{ item.badge }}
                 </v-chip>
               </template>
-              <v-tooltip v-if="rail" activator="parent" location="end">
+              <v-tooltip
+                v-if="rail"
+                activator="parent"
+                location="end"
+              >
                 {{ item.title }}
               </v-tooltip>
             </v-list-item>
@@ -45,18 +69,40 @@
       <v-divider class="my-2 mx-3" />
 
       <div class="nav-section">
-        <div v-if="!rail" class="section-label">Actions</div>
-        <v-list class="pa-2" nav density="compact">
+        <div
+          v-if="!rail"
+          class="section-label"
+        >
+          Actions
+        </div>
+        <v-list
+          class="pa-2"
+          nav
+          density="compact"
+        >
           <v-list-item
+            to="/upload"
+            :active="isActive('/upload')"
+            value="upload"
             class="nav-item action-item mb-1"
             rounded="lg"
-            @click="openUploadDialog"
           >
             <template #prepend>
-              <v-icon icon="mdi-upload" size="22" />
+              <v-icon
+                icon="mdi-upload"
+                size="22"
+              />
             </template>
-            <v-list-item-title class="nav-title">Upload Invoice</v-list-item-title>
-            <v-tooltip v-if="rail" activator="parent" location="end">Upload Invoice</v-tooltip>
+            <v-list-item-title class="nav-title">
+              Upload Invoice
+            </v-list-item-title>
+            <v-tooltip
+              v-if="rail"
+              activator="parent"
+              location="end"
+            >
+              Upload Invoice
+            </v-tooltip>
           </v-list-item>
 
           <v-list-item
@@ -65,13 +111,30 @@
             @click="openChatBot"
           >
             <template #prepend>
-              <v-icon icon="mdi-robot-outline" size="22" />
+              <v-icon
+                icon="mdi-robot-outline"
+                size="22"
+              />
             </template>
-            <v-list-item-title class="nav-title">AI Assistant</v-list-item-title>
+            <v-list-item-title class="nav-title">
+              AI Assistant
+            </v-list-item-title>
             <template #append>
-              <v-chip color="success" size="x-small" variant="tonal">Beta</v-chip>
+              <v-chip
+                color="success"
+                size="x-small"
+                variant="tonal"
+              >
+                Beta
+              </v-chip>
             </template>
-            <v-tooltip v-if="rail" activator="parent" location="end">AI Assistant</v-tooltip>
+            <v-tooltip
+              v-if="rail"
+              activator="parent"
+              location="end"
+            >
+              AI Assistant
+            </v-tooltip>
           </v-list-item>
         </v-list>
       </div>
@@ -87,19 +150,26 @@
           class="rail-toggle"
           @click="$emit('toggle-rail')"
         >
-          <v-tooltip activator="parent" location="end">
+          <v-tooltip
+            activator="parent"
+            location="end"
+          >
             {{ rail ? 'Expand' : 'Collapse' }}
           </v-tooltip>
         </v-btn>
       </div>
     </template>
 
-    <invoice-upload-main
+    <!-- <invoice-upload-main
       :active="showUploadDialog"
       @close="showUploadDialog = false"
-    />
+    /> -->
 
-    <v-dialog v-model="showChatBot" max-width="600" persistent>
+    <v-dialog
+      v-model="showChatBot"
+      max-width="600"
+      persistent
+    >
       <ChatBot @close="showChatBot = false" />
     </v-dialog>
   </v-navigation-drawer>
@@ -125,7 +195,7 @@ const display = useDisplay()
 const loginState = useLoginStore()
 const invoiceStore = invoices()
 
-const showUploadDialog = ref(false)
+//const showUploadDialog = ref(false)
 const showChatBot = ref(false)
 
 const isMobile = computed(() => display.smAndDown.value)
@@ -178,9 +248,9 @@ const isActive = (path) => {
   return route.path.startsWith(path)
 }
 
-const openUploadDialog = () => {
-  showUploadDialog.value = true
-}
+// const openUploadDialog = () => {
+//   showUploadDialog.value = true
+// }
 
 const openChatBot = () => {
   showChatBot.value = true

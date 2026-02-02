@@ -1,204 +1,137 @@
 <template>
-  <div class="invoice-dashboard">
-    <div class="dashboard-layout">
-      <aside class="projects-sidebar">
-        <div class="sidebar-header">
-          <h2 class="sidebar-title">
-            Projects
-          </h2>
-        </div>
-        
-        <div class="project-list">
-          <div
-            v-for="project in filteredProjects"
-            :key="project"
-            class="project-item"
-            :class="{ active: tab === project }"
-            @click="tab = project"
-          >
-            <div class="project-content">
-              <span class="project-name">{{ capitalizeName(project) }}</span>
-              <span class="invoice-count">{{ getProjectInvoiceCount(project) }}</span>
-            </div>
-          </div>
-          
-          <div
-            v-if="filteredProjects.length === 0"
-            class="empty-projects"
-          >
-            <p>No projects yet</p>
-          </div>
-        </div>
-        
-        <div class="sidebar-footer">
-          <button
-            class="new-project-btn"
-            @click="addProjectDialog = true"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <line
-                x1="12"
-                y1="5"
-                x2="12"
-                y2="19"
-              />
-              <line
-                x1="5"
-                y1="12"
-                x2="19"
-                y2="12"
-              />
-            </svg>
-            <span>New Project</span>
-          </button>
-        </div>
-      </aside>
-
-      <main class="main-content">
-        <div
-          v-if="tab"
-          class="content-wrapper"
+  <div class="invoice-workspace">
+    <aside class="workspace-sidebar">
+      <div class="sidebar-lead">
+        <span class="sidebar-label">Projects</span>
+      </div>
+      
+      <nav class="project-nav">
+        <button
+          v-for="project in filteredProjects"
+          :key="project"
+          class="project-nav-item"
+          :class="{ active: tab === project }"
+          @click="tab = project"
         >
-          <table-parent
-            :invoices="invoicesByProject[tab]?.invoices || []"
-            :project-name="tab"
-            :project_id="invoicesByProject[tab]?.projectId"
-            :expanded="expanded"
-            :refreshing="refresh"
-            :search-val="searchValue"
-            @table-update="fetchFromSessionStorage"
-          />
-        </div>
+          <span class="nav-item-name">{{ project }}</span>
+          <span class="nav-item-count">{{ getProjectInvoiceCount(project) }}</span>
+        </button>
         
         <div
-          v-else
-          class="empty-state"
+          v-if="filteredProjects.length === 0"
+          class="nav-empty"
         >
-          <div class="empty-content">
-            <div class="empty-illustration">
-              <div class="illustration-wrapper">
-                <div class="illustration-glow" />
-                <div class="illustration-bg">
-                  <svg
-                    class="illustration-icon"
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <path
-                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <polyline
-                      points="14 2 14 8 20 8"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <line
-                      x1="16"
-                      y1="13"
-                      x2="8"
-                      y2="13"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                    />
-                    <line
-                      x1="16"
-                      y1="17"
-                      x2="8"
-                      y2="17"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
+          <span>No projects</span>
+        </div>
+      </nav>
+      
+      <div class="sidebar-action">
+        <button
+          class="add-project-trigger"
+          @click="addProjectDialog = true"
+        >
+          <span class="trigger-icon">+</span>
+          <span class="trigger-text">New Project</span>
+        </button>
+      </div>
+    </aside>
 
-            <div
-              v-if="filteredProjects.length === 0"
-              class="empty-badge"
-            >
-              Get Started
-            </div>
-
-            <h2
-              v-if="filteredProjects.length === 0"
-              class="empty-title"
-            >
-              Track invoices effortlessly
-            </h2>
-            <h2
-              v-else
-              class="empty-title"
-            >
-              Select a project
-            </h2>
-            
-            <p
-              v-if="filteredProjects.length === 0"
-              class="empty-description"
-            >
-              Organize supplier invoices, apply margins, and keep your project costs under control — all in one place.
-            </p>
-            <p
-              v-else
-              class="empty-description"
-            >
-              Choose a project from the sidebar to view its invoices.
-            </p>
-
-            <button
-              v-if="filteredProjects.length === 0"
-              class="empty-cta-btn"
-              @click="addProjectDialog = true"
-            >
-              Create your first project
+    <main class="workspace-main">
+      <div
+        v-if="tab"
+        class="main-container"
+      >
+        <table-parent
+          :invoices="invoicesByProject[tab]?.invoices || []"
+          :project-name="tab"
+          :project_id="invoicesByProject[tab]?.projectId"
+          :expanded="expanded"
+          :refreshing="refresh"
+          :search-val="searchValue"
+          @table-update="fetchFromSessionStorage"
+        />
+      </div>
+      
+      <div
+        v-else
+        class="empty-workspace"
+      >
+        <div class="empty-container">
+          <div class="empty-visual">
+            <div class="visual-shape">
               <svg
-                width="16"
-                height="16"
+                width="32"
+                height="32"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="1.5"
               >
-                <line
-                  x1="5"
-                  y1="12"
-                  x2="19"
-                  y2="12"
+                <path
+                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 />
-                <polyline points="12 5 19 12 12 19" />
+                <polyline
+                  points="14 2 14 8 20 8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <line
+                  x1="16"
+                  y1="13"
+                  x2="8"
+                  y2="13"
+                  stroke-linecap="round"
+                />
+                <line
+                  x1="16"
+                  y1="17"
+                  x2="8"
+                  y2="17"
+                  stroke-linecap="round"
+                />
               </svg>
-            </button>
+            </div>
           </div>
+
+          <div class="empty-text">
+            <span
+              v-if="filteredProjects.length === 0"
+              class="empty-eyebrow"
+            >Get Started</span>
+            <h2 class="empty-heading">
+              {{ filteredProjects.length === 0 ? 'Track invoices effortlessly' : 'Select a project' }}
+            </h2>
+            <p class="empty-body">
+              {{ filteredProjects.length === 0 
+                ? 'Organize supplier invoices, apply margins, and keep your project costs under control.' 
+                : 'Choose a project from the sidebar to view its invoices.' 
+              }}
+            </p>
+          </div>
+
+          <button 
+            v-if="filteredProjects.length === 0" 
+            class="empty-action" 
+            @click="addProjectDialog = true"
+          >
+            Create your first project
+          </button>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
 
     <v-dialog
       v-model="addProjectDialog"
       max-width="480"
     >
-      <add-new-project
-        @close="addProjectDialog = false"
-        @new-project-added="handleProjectAdded"
-      />
+      <div class="dialog-surface">
+        <add-new-project
+          @close="addProjectDialog = false"
+          @new-project-added="handleProjectAdded"
+        />
+      </div>
     </v-dialog>
   </div>
 </template>
@@ -228,10 +161,6 @@ const projects = computed(() => {
   }
   return [...set]
 })
-
-const capitalizeName = s =>
-  s ? s[0].toUpperCase() + s.slice(1) : "";
-
 
 const filteredProjects = computed(() => {
   const q = (props.searchValue || '').trim().toLowerCase()
@@ -276,141 +205,136 @@ const fetchFromSessionStorage = () => {
 </script>
 
 <style scoped>
-.invoice-dashboard {
+.invoice-workspace {
+  display: flex;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.dashboard-layout {
-  display: flex;
-  flex: 1;
-  min-height: 0;
+  min-height: 100vh;
   background: rgb(var(--v-theme-background));
 }
 
-.projects-sidebar {
-  width: 240px;
-  min-width: 240px;
+.workspace-sidebar {
+  width: 260px;
+  min-width: 260px;
   display: flex;
   flex-direction: column;
   background: rgb(var(--v-theme-surface));
-  border-right: 1px solid #eaeaea;
+  border-right: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
-.sidebar-header {
-  padding: 24px 20px 16px;
+.sidebar-lead {
+  padding: 28px 24px 20px;
 }
 
-.sidebar-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: #666;
+.sidebar-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin: 0;
+  letter-spacing: 0.08em;
+  color: rgb(var(--v-theme-grey-400));
 }
 
-.project-list {
+.project-nav {
   flex: 1;
   overflow-y: auto;
-  padding: 0 8px;
+  padding: 0 12px;
 }
 
-.project-item {
-  padding: 0;
-  margin-bottom: 2px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.project-item:hover {
- background: rgb(var(--v-theme-surface-variant));
-}
-
-.project-item.active {
-  background: rgb(var(--v-theme-primary));
-}
-
-.project-item.active .project-name {
-  color: rgb(var(--v-theme-on-primary));
-}
-
-.project-item.active .invoice-count {
-  /* background: rgba(255, 255, 255, 0.2);
-  color: #fff; */
-   background: rgba(var(--v-theme-on-primary), 0.2);
-  color: rgb(var(--v-theme-on-primary));
-}
-
-.project-content {
+.project-nav-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 2px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  text-align: left;
 }
 
-.project-name {
-  font-size: 14px;
-  font-weight: 450;
+.project-nav-item:hover {
+  background: rgba(var(--v-theme-on-surface), 0.04);
+}
+
+.project-nav-item.active {
+  background: rgb(var(--v-theme-on-surface));
+}
+
+.project-nav-item.active .nav-item-name {
+  color: rgb(var(--v-theme-surface));
+}
+
+.project-nav-item.active .nav-item-count {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgb(var(--v-theme-surface));
+}
+
+.nav-item-name {
+  font-size: 0.875rem;
+  font-weight: 500;
   color: rgb(var(--v-theme-on-surface));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-transform: capitalize;
 }
 
-.invoice-count {
-  font-size: 12px;
+.nav-item-count {
+  font-size: 0.75rem;
   font-weight: 500;
-  /* color: #666;
-  background: #eaeaea; */
-  color: rgb(var(--v-theme-on-surface-variant));
-  background: rgb(var(--v-theme-surface-variant));
-  padding: 2px 8px;
-  border-radius: 10px;
+  color: rgb(var(--v-theme-grey-500));
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  padding: 3px 8px;
+  border-radius: 12px;
   flex-shrink: 0;
 }
 
-.empty-projects {
-  padding: 20px;
+.nav-empty {
+  padding: 24px 16px;
   text-align: center;
 }
 
-.empty-projects p {
-  font-size: 13px;
-  color: #999;
-  margin: 0;
+.nav-empty span {
+  font-size: 0.8125rem;
+  color: rgb(var(--v-theme-grey-400));
 }
 
-.sidebar-footer {
+.sidebar-action {
   padding: 16px 12px;
-  border-top: 1px solid #eaeaea;
+  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
-.new-project-btn {
+.add-project-trigger {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 10px 16px;
-  font-size: 13px;
+  padding: 12px 16px;
+  background: transparent;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  border-radius: 8px;
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: #171717;
-  background: #fff;
-  border: 1px solid #eaeaea;
-  border-radius: 6px;
+  color: rgb(var(--v-theme-on-surface));
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
 }
 
-.new-project-btn:hover {
-  background: #fafafa;
-  border-color: #d4d4d4;
+.add-project-trigger:hover {
+  background: rgba(var(--v-theme-on-surface), 0.03);
+  border-color: rgba(var(--v-theme-on-surface), 0.2);
 }
 
-.main-content {
+.trigger-icon {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.workspace-main {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -418,190 +342,136 @@ const fetchFromSessionStorage = () => {
   overflow: hidden;
 }
 
-.content-wrapper {
+.main-container {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-.empty-state {
+.empty-workspace {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 48px;
 }
 
-.empty-content {
+.empty-container {
+  max-width: 380px;
   text-align: center;
 }
 
-.empty-icon {
-  color: #d4d4d4;
-  margin-bottom: 16px;
-}
-
-.empty-content h3 {
-  font-size: 16px;
-  font-weight: 500;
-  color: #171717;
-  margin: 0 0 8px;
-}
-
-.empty-content p {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
-}
-
-@media (max-width: 1024px) {
-  .projects-sidebar {
-    width: 200px;
-    min-width: 200px;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-layout {
-    flex-direction: column;
-  }
-  
-  .projects-sidebar {
-    width: 100%;
-    min-width: 100%;
-    max-height: 200px;
-    border-right: none;
-    border-bottom: 1px solid #eaeaea;
-  }
-  
-  .project-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 12px;
-  }
-  
-  .project-item {
-    flex: 0 0 auto;
-    margin-bottom: 0;
-  }
-  
-  .sidebar-footer {
-    display: none;
-  }
-}
-
-.empty-content {
-  text-align: center;
-  max-width: 420px;
-  padding: 48px 32px;
-}
-
-.empty-illustration {
-  position: relative;
-  display: inline-block;
+.empty-visual {
   margin-bottom: 28px;
 }
 
-.illustration-wrapper {
-  position: relative;
-}
-
-.illustration-glow {
-  position: absolute;
-  inset: -20px;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: glow 4s ease-in-out infinite;
-}
-
-@keyframes glow {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-}
-
-.illustration-bg {
-  width: 100px;
-  height: 100px;
-  background: linear-gradient(145deg, #fafbff 0%, #f0f2ff 100%);
-  border: 1px solid rgba(99, 102, 241, 0.1);
-  border-radius: 24px;
-  display: flex;
+.visual-shape {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  box-shadow: 
-    0 1px 2px rgba(0, 0, 0, 0.02),
-    0 4px 16px rgba(99, 102, 241, 0.06);
+  width: 72px;
+  height: 72px;
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  border-radius: 16px;
+  color: rgb(var(--v-theme-grey-400));
 }
 
-.illustration-icon {
-  color: #6366f1;
+.empty-text {
+  margin-bottom: 32px;
 }
 
-.empty-badge {
+.empty-eyebrow {
   display: inline-block;
-  padding: 6px 14px;
-  font-size: 11px;
+  padding: 6px 12px;
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #6366f1;
-  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  letter-spacing: 0.06em;
+  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.08);
   border-radius: 100px;
   margin-bottom: 16px;
 }
 
-.empty-title {
-  font-size: 26px;
-  font-weight: 700;
-  /* color: #0f0f0f; */
+.empty-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
   color: rgb(var(--v-theme-on-surface));
   margin: 0 0 12px;
-  letter-spacing: -0.03em;
-  line-height: 1.2;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 
-.empty-description {
-  font-size: 15px;
-  /* color: #6b7280; */
-  color: rgb(var(--v-theme-on-surface-variant));
-  line-height: 1.7;
-  margin: 0 0 32px;
+.empty-body {
+  font-size: 0.9375rem;
+  color: rgb(var(--v-theme-grey-500));
+  line-height: 1.6;
+  margin: 0;
 }
 
-.empty-cta-btn {
+.empty-action {
   display: inline-flex;
-  align-items: center;
-  gap: 10px;
   padding: 14px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #0f0f0f;
+  background: rgb(var(--v-theme-on-surface));
+  color: rgb(var(--v-theme-surface));
   border: none;
   border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: opacity 0.12s ease;
 }
 
-.empty-cta-btn:hover {
-  background: #171717;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.empty-action:hover {
+  opacity: 0.88;
 }
 
-.empty-cta-btn:active {
-  transform: translateY(0);
+.dialog-surface {
+  background: rgb(var(--v-theme-surface));
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-.empty-cta-btn svg {
-  stroke: currentColor;
-  transition: transform 0.2s ease;
+@media (max-width: 1024px) {
+  .workspace-sidebar {
+    width: 220px;
+    min-width: 220px;
+  }
 }
 
-.empty-cta-btn:hover svg {
-  transform: translateX(3px);
+@media (max-width: 768px) {
+  .invoice-workspace {
+    flex-direction: column;
+  }
+  
+  .workspace-sidebar {
+    width: 100%;
+    min-width: 100%;
+    max-height: 180px;
+    border-right: none;
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  }
+  
+  .project-nav {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 0 16px 16px;
+  }
+  
+  .project-nav-item {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+  }
+  
+  .sidebar-action {
+    display: none;
+  }
+  
+  .sidebar-lead {
+    padding: 20px 16px 12px;
+  }
 }
 </style>

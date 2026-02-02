@@ -92,18 +92,31 @@
             </v-text-field>
           </div>
 
-          <!-- Email Guidance Card -->
-          <div class="email-info-card">
-            <div class="info-icon">
-              <v-icon size="18" color="primary">mdi-information-outline</v-icon>
-            </div>
-            <div class="info-content">
-              <span v-if="hasEmailSelected" class="info-text">
-                <strong>With email:</strong> Invoices sent to this email will be automatically captured and added to this project.
-              </span>
-              <span v-else class="info-text">
-                <strong>Without email:</strong> You can manually upload invoices or use AI upload. Automatic email ingestion will not be available.
-              </span>
+          <div class="form-section">
+            <label class="section-label">
+              Default Margin
+              <span class="optional-label">(optional)</span>
+            </label>
+            <div class="margin-input-wrapper">
+              <v-text-field
+                v-model.number="projectMargin"
+                label="Margin percentage"
+                type="number"
+                variant="outlined"
+                density="comfortable"
+                :rules="projectMargin ? [rules.marginRange] : []"
+                hide-details="auto"
+                rounded="lg"
+                min="0"
+                max="100"
+                step="0.1"
+                suffix="%"
+              >
+                <template #prepend-inner>
+                  <v-icon size="20" color="grey-darken-1">mdi-percent</v-icon>
+                </template>
+              </v-text-field>
+              <p class="field-hint">Applied to all invoices by default. Can be overridden per invoice.</p>
             </div>
           </div>
 
@@ -195,7 +208,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import SnackbarSteps from '@/components/Utilities/SnackbarSteps.vue'
 
 const snackbarRef = ref(null)
@@ -210,14 +223,10 @@ const selectedEmail = ref('')
 const email = ref('')
 const password = ref('')
 const project_name = ref('')
+const projectMargin = ref(null)
 const availableEmails = ref([])
 const formRef = ref(null)
 const isSubmitting = ref(false)
-
-const hasEmailSelected = computed(() => {
-  const emailToCheck = addingNewEmail.value ? email.value : selectedEmail.value
-  return emailToCheck && emailToCheck.trim().length > 0
-})
 
 watch(availableEmails, (update) => { 
   if (update.length < 1) addingNewEmail.value = true 
@@ -225,6 +234,7 @@ watch(availableEmails, (update) => {
 
 const rules = {
   required: value => !!value || 'This field is required',
+  marginRange: value => (!value || (value >= 0 && value <= 100)) || 'Margin must be between 0 and 100',
   email: value => /.+@.+\..+/.test(value) || 'Please enter a valid email'
 }
 
@@ -316,7 +326,8 @@ const submitForm = async () => {
     const payload = {
       email: hasEmail ? emailToUse : null,
       password: hasEmail ? pass : null,
-      project_name: project_name.value
+      project_name: project_name.value,
+      margin: projectMargin.value || null
     }
 
     // Use appropriate endpoint based on whether email is provided
@@ -357,6 +368,7 @@ const submitForm = async () => {
     password.value = ''
     selectedEmail.value = ''
     project_name.value = ''
+    projectMargin.value = null
     formRef.value?.resetValidation?.()
   } catch (err) {
     console.error('[submitForm] Error:', err)
@@ -440,33 +452,17 @@ const submitForm = async () => {
   color: rgb(var(--v-theme-grey-500));
 }
 
-.email-info-card {
+.margin-input-wrapper {
   display: flex;
-  gap: 12px;
-  padding: 14px 16px;
-  background: rgba(var(--v-theme-primary), 0.06);
-  border-radius: 10px;
-  border: 1px solid rgba(var(--v-theme-primary), 0.12);
+  flex-direction: column;
+  gap: 6px;
 }
 
-.email-info-card .info-icon {
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.email-info-card .info-content {
-  flex: 1;
-}
-
-.email-info-card .info-text {
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: rgb(var(--v-theme-on-surface));
-}
-
-.email-info-card .info-text strong {
-  font-weight: 600;
-  color: rgb(var(--v-theme-primary));
+.field-hint {
+  font-size: 0.75rem;
+  color: rgb(var(--v-theme-grey-400));
+  margin: 0;
+  padding-left: 4px;
 }
 
 .email-input-group {

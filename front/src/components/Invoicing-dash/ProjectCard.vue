@@ -15,27 +15,8 @@
           <span class="figure-value received">{{ formatCurrency(payments) }}</span>
           <span class="figure-label">Received</span>
         </div>
-        <div class="figure-block margin-block" @click="openMarginEdit">
-          <div v-if="!editingMargin" class="margin-display">
-            <span class="figure-value margin-value">{{ projectMargin ? `${projectMargin}%` : 'Set' }}</span>
-            <v-icon size="12" class="margin-edit-icon">mdi-pencil</v-icon>
-          </div>
-          <div v-else class="margin-edit-inline" @click.stop>
-            <input
-              ref="marginInputRef"
-              v-model.number="tempMargin"
-              type="number"
-              min="0"
-              max="100"
-              step="0.1"
-              class="margin-input"
-              placeholder="0"
-              @keyup.enter="saveMargin"
-              @keyup.escape="cancelMarginEdit"
-              @blur="saveMargin"
-            />
-            <span class="margin-suffix">%</span>
-          </div>
+        <div v-if="projectMargin" class="figure-block">
+          <span class="figure-value margin-value">{{ projectMargin }}%</span>
           <span class="figure-label">Margin</span>
         </div>
         <div class="figure-block progress-block">
@@ -103,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from "vue"
+import { ref, computed } from "vue"
 import { invoices } from '@/stores/invoiceState.js'
 
 const props = defineProps({
@@ -117,10 +98,6 @@ const emit = defineEmits(["project-removed"])
 
 const invoiceStore = invoices()
 const dialogTrigger = ref(false)
-const editingMargin = ref(false)
-const tempMargin = ref(null)
-const marginInputRef = ref(null)
-const savingMargin = ref(false)
 const editDialog = ref(false)
 const copied = ref(false)
 const hovered = ref(false)
@@ -200,57 +177,6 @@ const handleProjectNameSaved = (newName) => {
   invoiceStore.dbResponse?.filter(p => p.project === projectId.value)?.forEach(p => p.project_name = newName)
   props.project?.forEach(p => p.project_name = newName)
 }
-
-const openMarginEdit = async () => {
-  if (editingMargin.value || savingMargin.value) return
-  tempMargin.value = projectMargin.value || ''
-  editingMargin.value = true
-  await nextTick()
-  marginInputRef.value?.focus()
-  marginInputRef.value?.select()
-}
-
-const cancelMarginEdit = () => {
-  editingMargin.value = false
-  tempMargin.value = null
-}
-
-const saveMargin = async () => {
-  if (!editingMargin.value || savingMargin.value) return
-  
-  const newMargin = tempMargin.value
-  editingMargin.value = false
-  
-  if (newMargin === projectMargin.value) return
-  if (newMargin !== null && newMargin !== '' && (newMargin < 0 || newMargin > 100)) {
-    snackbarMessage.value = 'Margin must be between 0 and 100'
-    snackbar.value = true
-    return
-  }
-  
-  savingMargin.value = true
-  
-  try {
-    const baseUrl = import.meta.env.VITE_BASE_URL
-    const response = await fetch(`${baseUrl}/invoice/patch/projects?id=${projectId.value}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ margin: newMargin || null })
-    })
-    
-    if (response.ok) {
-      props.project.forEach(p => p.margin = newMargin || null)
-      snackbarMessage.value = 'Margin updated'
-      snackbar.value = true
-    }
-  } catch (err) {
-    console.error('Failed to update margin:', err)
-    snackbarMessage.value = 'Failed to update margin'
-    snackbar.value = true
-  } finally {
-    savingMargin.value = false
-  }
-}
 </script>
 
 <style scoped>
@@ -318,64 +244,6 @@ const saveMargin = async () => {
 }
 
 .figure-value.margin-value {
-  color: rgb(var(--v-theme-info));
-}
-
-.margin-block {
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.margin-block:hover {
-  background: rgba(var(--v-theme-info), 0.06);
-  margin: -6px -10px;
-  padding: 6px 10px;
-  border-radius: 8px;
-}
-
-.margin-display {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.margin-edit-icon {
-  opacity: 0;
-  color: rgb(var(--v-theme-grey-400));
-  transition: opacity 0.15s ease;
-}
-
-.margin-block:hover .margin-edit-icon {
-  opacity: 1;
-}
-
-.margin-edit-inline {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.margin-input {
-  width: 48px;
-  padding: 4px 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: rgb(var(--v-theme-info));
-  background: rgba(var(--v-theme-info), 0.08);
-  border: 1px solid rgb(var(--v-theme-info));
-  border-radius: 6px;
-  outline: none;
-  text-align: right;
-}
-
-.margin-input:focus {
-  background: rgba(var(--v-theme-info), 0.12);
-  box-shadow: 0 0 0 3px rgba(var(--v-theme-info), 0.15);
-}
-
-.margin-suffix {
-  font-size: 0.875rem;
-  font-weight: 600;
   color: rgb(var(--v-theme-info));
 }
 
