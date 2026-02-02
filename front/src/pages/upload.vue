@@ -3,437 +3,728 @@
     <div class="upload-container">
       <div class="page-header">
         <h1 class="page-title">
-          Upload Invoice
+          AI Document Upload
         </h1>
         <p class="page-subtitle">
-          Upload and process invoices with automatic data extraction
+          Intelligent invoice processing with automatic data extraction
         </p>
       </div>
 
-      <div class="steps-indicator">
-        <div 
-          v-for="(step, index) in steps" 
-          :key="step.id"
-          class="step-item"
-          :class="{ 
-            'step-active': currentStep === index, 
-            'step-completed': currentStep > index 
-          }"
+      <transition
+        name="fade-slide"
+        mode="out-in"
+      >
+        <div
+          v-if="stage === 'setup'"
+          key="setup"
+          class="stage-content"
         >
-          <div class="step-circle">
-            <v-icon
-              v-if="currentStep > index"
-              size="16"
-            >
-              mdi-check
-            </v-icon>
-            <span v-else>{{ index + 1 }}</span>
-          </div>
-          <span class="step-label">{{ step.label }}</span>
-        </div>
-      </div>
-
-      <div class="upload-card">
-        <transition
-          name="fade-slide"
-          mode="out-in"
-        >
-          <div
-            v-if="currentStep === 0"
-            key="upload"
-            class="step-content"
-          >
-            <div 
-              class="dropzone"
-              :class="{ 
-                'dropzone-active': isDragging, 
-                'dropzone-has-file': selectedFile 
-              }"
-              @dragover.prevent="isDragging = true"
-              @dragleave.prevent="isDragging = false"
-              @drop.prevent="handleDrop"
-              @click="openFilePicker"
-            >
-              <input
-                ref="fileInput"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                hidden
-                @change="handleFileSelect"
-              >
-
-              <div
-                v-if="!selectedFile"
-                class="dropzone-empty"
-              >
-                <div class="dropzone-icon">
+          <div class="setup-panel">
+            <div class="setup-section project-section">
+              <div class="section-header">
+                <div class="section-icon">
                   <v-icon
-                    size="48"
+                    size="20"
                     color="primary"
                   >
-                    mdi-cloud-upload-outline
+                    mdi-folder-outline
                   </v-icon>
                 </div>
-                <h3 class="dropzone-title">
-                  Drop your invoice here
-                </h3>
-                <p class="dropzone-hint">
-                  or click to browse files
-                </p>
-                <div class="file-types">
-                  <span class="file-type">PDF</span>
-                  <span class="file-type">JPG</span>
-                  <span class="file-type">PNG</span>
+                <div class="section-info">
+                  <h3 class="section-title">
+                    Target Project
+                  </h3>
+                  <p class="section-hint">
+                    All documents will be assigned to this project
+                  </p>
                 </div>
-                <p class="size-limit">
-                  Maximum file size: 10MB
-                </p>
               </div>
-
-              <div
-                v-else
-                class="file-selected"
+              <select 
+                v-model="selectedProject" 
+                class="project-select"
+                :class="{ 'has-error': projectError }"
+                :disabled="isProjectLocked"
               >
-                <div class="file-preview-icon">
-                  <v-icon
-                    :icon="getFileIcon(selectedFile)"
-                    size="32"
-                    color="primary"
-                  />
-                </div>
-                <div class="file-details">
-                  <span class="file-name">{{ selectedFile.name }}</span>
-                  <span class="file-size">{{ formatFileSize(selectedFile.size) }}</span>
-                </div>
-                <v-btn
-                  icon
-                  variant="text"
-                  size="small"
-                  color="error"
-                  @click.stop="removeFile"
+                <option
+                  :value="null"
+                  disabled
                 >
-                  <v-icon>mdi-close</v-icon>
-                </v-btn>
-              </div>
-            </div>
-
-            <div
-              v-if="fileError"
-              class="error-message"
-            >
-              <v-icon
-                size="16"
-                color="error"
-                class="mr-2"
+                  Select a project
+                </option>
+                <option 
+                  v-for="proj in projects" 
+                  :key="proj.id" 
+                  :value="proj.id"
+                >
+                  {{ proj.name }}
+                </option>
+              </select>
+              <p
+                v-if="isProjectLocked"
+                class="field-locked-hint"
               >
-                mdi-alert-circle
-              </v-icon>
-              {{ fileError }}
+                <v-icon
+                  size="14"
+                  color="grey"
+                >
+                  mdi-lock
+                </v-icon>
+                Project is locked during processing
+              </p>
+              <p
+                v-if="projectError"
+                class="field-error"
+              >
+                <v-icon
+                  size="14"
+                  color="error"
+                >
+                  mdi-alert-circle
+                </v-icon>
+                Please select a project before uploading
+              </p>
             </div>
 
-            <div class="step-actions">
+            <div class="setup-section upload-section">
+              <div class="section-header">
+                <div class="section-icon">
+                  <v-icon
+                    size="20"
+                    color="primary"
+                  >
+                    mdi-file-document-multiple-outline
+                  </v-icon>
+                </div>
+                <div class="section-info">
+                  <h3 class="section-title">
+                    Select Documents
+                  </h3>
+                  <p class="section-hint">
+                    Upload one or more invoices for AI processing
+                  </p>
+                </div>
+              </div>
+
+              <div 
+                class="dropzone"
+                :class="{ 
+                  'dropzone-active': isDragging,
+                  'dropzone-has-files': documentQueue.length > 0
+                }"
+                @dragover.prevent="isDragging = true"
+                @dragleave.prevent="isDragging = false"
+                @drop.prevent="handleDrop"
+                @click="openFilePicker"
+              >
+                <input
+                  ref="fileInput"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  multiple
+                  hidden
+                  @change="handleFileSelect"
+                >
+
+                <div
+                  v-if="documentQueue.length === 0"
+                  class="dropzone-empty"
+                >
+                  <div class="dropzone-icon-wrapper">
+                    <div class="dropzone-icon-bg" />
+                    <v-icon
+                      size="32"
+                      color="primary"
+                    >
+                      mdi-cloud-upload-outline
+                    </v-icon>
+                  </div>
+                  <h3 class="dropzone-title">
+                    Drop invoices here
+                  </h3>
+                  <p class="dropzone-hint">
+                    or click to browse files
+                  </p>
+                  <div class="file-types">
+                    <span class="file-type">PDF</span>
+                    <span class="file-type">JPG</span>
+                    <span class="file-type">PNG</span>
+                  </div>
+                </div>
+
+                <div
+                  v-else
+                  class="document-queue"
+                  @click.stop
+                >
+                  <div class="queue-header">
+                    <span class="queue-count">{{ documentQueue.length }} document{{ documentQueue.length > 1 ? 's' : '' }} ready</span>
+                    <button
+                      class="btn-text-small"
+                      @click.stop="clearQueue"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div class="queue-list">
+                    <div 
+                      v-for="(doc, idx) in documentQueue" 
+                      :key="idx" 
+                      class="queue-item"
+                    >
+                      <div class="queue-item-icon">
+                        <v-icon
+                          :icon="getFileIcon(doc.file)"
+                          size="18"
+                          color="primary"
+                        />
+                      </div>
+                      <div class="queue-item-info">
+                        <span class="queue-item-name">{{ doc.file.name }}</span>
+                        <span class="queue-item-size">{{ formatFileSize(doc.file.size) }}</span>
+                      </div>
+                      <button
+                        class="btn-icon-small"
+                        @click.stop="removeFromQueue(idx)"
+                      >
+                        <v-icon size="16">
+                          mdi-close
+                        </v-icon>
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    class="btn-add-more"
+                    @click.stop="openFilePicker"
+                  >
+                    <v-icon size="16">
+                      mdi-plus
+                    </v-icon>
+                    Add more files
+                  </button>
+                </div>
+              </div>
+
+              <p
+                v-if="fileError"
+                class="field-error"
+              >
+                <v-icon
+                  size="14"
+                  color="error"
+                >
+                  mdi-alert-circle
+                </v-icon>
+                {{ fileError }}
+              </p>
+            </div>
+
+            <div class="setup-actions">
               <v-btn
                 variant="text"
+                class="btn-cancel"
                 @click="goBack"
               >
                 Cancel
               </v-btn>
-              <v-btn
-                color="primary"
-                :disabled="!selectedFile"
-                @click="processFile"
+              <v-btn 
+                color="primary" 
+                size="large"
+                :disabled="documentQueue.length === 0"
+                class="btn-process"
+                @click="startProcessing"
               >
-                Process Invoice
-                <v-icon end>
-                  mdi-arrow-right
+                <v-icon
+                  start
+                  size="18"
+                >
+                  mdi-brain
                 </v-icon>
+                Process {{ documentQueue.length }} Document{{ documentQueue.length > 1 ? 's' : '' }}
               </v-btn>
             </div>
           </div>
+        </div>
 
-          <div
-            v-else-if="currentStep === 1"
-            key="processing"
-            class="step-content processing-step"
-          >
-            <div class="processing-animation">
-              <div class="processing-spinner">
-                <svg
-                  class="spinner-ring"
-                  viewBox="0 0 100 100"
-                >
-                  <circle
-                    class="spinner-track"
-                    cx="50"
-                    cy="50"
-                    r="42"
-                  />
-                  <circle
-                    class="spinner-progress"
-                    cx="50"
-                    cy="50"
-                    r="42"
-                  />
-                </svg>
-                <div class="spinner-icon">
-                  <v-icon
-                    size="32"
-                    color="primary"
-                  >
-                    mdi-file-search-outline
-                  </v-icon>
-                </div>
-              </div>
-            </div>
-            <h3 class="processing-title">
-              Processing your invoice
-            </h3>
-            <p class="processing-status">
-              {{ processingStatus }}
-            </p>
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                :style="{ width: progressPercent + '%' }"
-              />
-            </div>
-          </div>
-
-          <div
-            v-else-if="currentStep === 2"
-            key="review"
-            class="step-content review-step"
-          >
-            <div class="review-header">
-              <div class="review-icon">
-                <v-icon
-                  size="24"
-                  color="success"
-                >
-                  mdi-check-circle
-                </v-icon>
-              </div>
-              <div>
-                <h3 class="review-title">
-                  Review Extracted Data
-                </h3>
-                <p class="review-subtitle">
-                  Please verify and correct the information below
+        <div
+          v-else-if="stage === 'processing'"
+          key="processing"
+          class="stage-content"
+        >
+          <div class="processing-panel">
+            <div class="processing-header">
+              <div class="processing-info">
+                <h2 class="processing-title">
+                  Processing Documents
+                </h2>
+                <p class="processing-subtitle">
+                  {{ selectedProjectName }}
                 </p>
               </div>
+              <div class="overall-progress">
+                <span class="progress-text">{{ processedCount }}/{{ documentQueue.length }}</span>
+                <div class="progress-ring">
+                  <svg viewBox="0 0 36 36">
+                    <circle
+                      class="progress-ring-bg"
+                      cx="18"
+                      cy="18"
+                      r="16"
+                    />
+                    <circle 
+                      class="progress-ring-fill" 
+                      cx="18"
+                      cy="18"
+                      r="16"
+                      :style="{ strokeDasharray: `${overallProgress} 100` }"
+                    />
+                  </svg>
+                  <span class="progress-percent">{{ Math.round(overallProgress) }}%</span>
+                </div>
+              </div>
             </div>
 
-            <div class="review-grid">
-              <div class="form-field">
-                <label class="field-label">
-                  Supplier / Issuer
-                  <span class="required">*</span>
-                </label>
-                <input
-                  v-model="invoiceData.issuer"
-                  type="text"
-                  class="field-input"
-                  placeholder="Company name"
-                >
-              </div>
-
-              <div class="form-field">
-                <label class="field-label">
-                  Amount
-                  <span class="required">*</span>
-                </label>
-                <div class="input-with-prefix">
-                  <span class="input-prefix">€</span>
-                  <input
-                    v-model.number="invoiceData.amount"
-                    type="number"
-                    step="0.01"
-                    class="field-input has-prefix"
-                    placeholder="0.00"
-                  >
-                </div>
-              </div>
-
-              <div class="form-field">
-                <label class="field-label">Project</label>
-                <select
-                  v-model="invoiceData.project"
-                  class="field-select"
-                >
-                  <option :value="null">
-                    Select a project
-                  </option>
-                  <option 
-                    v-for="proj in projects" 
-                    :key="proj.id" 
-                    :value="proj.id"
-                  >
-                    {{ proj.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="form-field">
-                <label class="field-label">VAT (BTW)</label>
-                <div class="vat-row">
-                  <label class="toggle-label">
-                    <input
-                      v-model="invoiceData.includesBtw"
-                      type="checkbox"
-                      class="toggle-input"
-                    >
-                    <span class="toggle-switch" />
-                    <span>Includes VAT</span>
-                  </label>
+            <div class="document-status-list">
+              <div 
+                v-for="(doc, idx) in documentQueue" 
+                :key="idx"
+                class="document-status-item"
+                :class="getDocumentStatusClass(doc)"
+              >
+                <div class="status-indicator">
                   <div
-                    v-if="invoiceData.includesBtw"
-                    class="vat-percent"
+                    v-if="doc.status === 'pending'"
+                    class="status-pending"
                   >
-                    <input
-                      v-model.number="invoiceData.btwPercent"
-                      type="number"
-                      class="field-input small"
-                      placeholder="21"
+                    <v-icon
+                      size="18"
+                      color="grey"
                     >
-                    <span class="percent-sign">%</span>
+                      mdi-clock-outline
+                    </v-icon>
+                  </div>
+                  <div
+                    v-else-if="doc.status === 'processing'"
+                    class="status-processing"
+                  >
+                    <div class="mini-spinner" />
+                  </div>
+                  <div
+                    v-else-if="doc.status === 'complete'"
+                    class="status-complete"
+                  >
+                    <v-icon
+                      size="18"
+                      color="success"
+                    >
+                      mdi-check-circle
+                    </v-icon>
+                  </div>
+                  <div
+                    v-else-if="doc.status === 'attention'"
+                    class="status-attention"
+                  >
+                    <v-icon
+                      size="18"
+                      color="warning"
+                    >
+                      mdi-alert-circle
+                    </v-icon>
+                  </div>
+                  <div
+                    v-else-if="doc.status === 'error'"
+                    class="status-error"
+                  >
+                    <v-icon
+                      size="18"
+                      color="error"
+                    >
+                      mdi-close-circle
+                    </v-icon>
                   </div>
                 </div>
-              </div>
-
-              <div class="form-field">
-                <label class="field-label">Margin</label>
-                <div class="input-with-prefix">
-                  <span class="input-prefix">€</span>
-                  <input
-                    v-model.number="invoiceData.margin"
-                    type="number"
-                    step="0.01"
-                    class="field-input has-prefix"
-                    placeholder="0.00"
-                  >
+                <div class="status-content">
+                  <span class="status-filename">{{ doc.file.name }}</span>
+                  <span class="status-message">{{ getStatusMessage(doc) }}</span>
                 </div>
-              </div>
-
-              <div class="form-field file-info-field">
-                <label class="field-label">Attached File</label>
-                <div class="attached-file">
-                  <v-icon
-                    :icon="getFileIcon(selectedFile)"
-                    size="20"
-                    color="primary"
-                  />
-                  <span>{{ selectedFile?.name }}</span>
+                <div
+                  v-if="doc.extractedData"
+                  class="status-preview"
+                >
+                  <span
+                    v-if="doc.extractedData.amount"
+                    class="preview-amount"
+                  >
+                    €{{ formatAmount(doc.extractedData.amount) }}
+                  </span>
                 </div>
               </div>
             </div>
 
             <div
-              v-if="extractionWarning"
-              class="extraction-warning"
+              v-if="currentlyProcessing"
+              class="current-processing"
             >
-              <v-icon
-                size="18"
-                color="warning"
-                class="mr-2"
-              >
-                mdi-alert
-              </v-icon>
-              {{ extractionWarning }}
+              <div class="current-file-info">
+                <span class="current-label">Currently analyzing:</span>
+                <span class="current-filename">{{ currentlyProcessing.file.name }}</span>
+              </div>
+              <div class="current-progress-bar">
+                <div
+                  class="current-progress-fill"
+                  :style="{ width: currentProgress + '%' }"
+                />
+              </div>
+              <span class="current-status">{{ currentStatus }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-else-if="stage === 'decision'"
+          key="decision"
+          class="stage-content"
+        >
+          <div class="decision-panel">
+            <div class="decision-header">
+              <div class="decision-icon success">
+                <v-icon
+                  size="32"
+                  color="success"
+                >
+                  mdi-check-circle-outline
+                </v-icon>
+              </div>
+              <h2 class="decision-title">
+                Processing Complete
+              </h2>
+              <p class="decision-subtitle">
+                {{ successCount }} document{{ successCount > 1 ? 's' : '' }} extracted successfully
+              </p>
             </div>
 
-            <div class="step-actions">
+            <div class="decision-summary">
+              <div class="summary-card">
+                <div class="summary-stat">
+                  <span class="stat-value success">{{ successCount }}</span>
+                  <span class="stat-label">Ready to Save</span>
+                </div>
+                <div
+                  v-if="attentionCount > 0"
+                  class="summary-stat"
+                >
+                  <span class="stat-value warning">{{ attentionCount }}</span>
+                  <span class="stat-label">Needs Review</span>
+                </div>
+                <div
+                  v-if="errorCount > 0"
+                  class="summary-stat"
+                >
+                  <span class="stat-value error">{{ errorCount }}</span>
+                  <span class="stat-label">Failed</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="decision-options">
+              <div
+                class="option-card"
+                @click="goToReview"
+              >
+                <div class="option-icon">
+                  <v-icon
+                    size="28"
+                    color="primary"
+                  >
+                    mdi-file-document-edit-outline
+                  </v-icon>
+                </div>
+                <div class="option-content">
+                  <h3 class="option-title">
+                    Review Details
+                  </h3>
+                  <p class="option-description">
+                    Review and edit extracted data for each document before saving
+                  </p>
+                </div>
+                <v-icon
+                  size="20"
+                  color="grey"
+                >
+                  mdi-chevron-right
+                </v-icon>
+              </div>
+
+              <div
+                class="option-card"
+                :class="{ disabled: successCount === 0 }"
+                @click="saveAllImmediately"
+              >
+                <div class="option-icon">
+                  <v-icon
+                    size="28"
+                    color="success"
+                  >
+                    mdi-content-save-all
+                  </v-icon>
+                </div>
+                <div class="option-content">
+                  <h3 class="option-title">
+                    Save All Now
+                  </h3>
+                  <p class="option-description">
+                    Save all confident extractions immediately, flag uncertain items for later
+                  </p>
+                </div>
+                <v-icon
+                  size="20"
+                  color="grey"
+                >
+                  mdi-chevron-right
+                </v-icon>
+              </div>
+            </div>
+
+            <div class="decision-actions">
               <v-btn
                 variant="text"
-                @click="goToStep(0)"
+                @click="startOver"
               >
                 <v-icon start>
-                  mdi-arrow-left
+                  mdi-refresh
                 </v-icon>
-                Back
-              </v-btn>
-              <v-btn
-                color="primary"
-                :disabled="!canConfirm"
-                @click="goToStep(3)"
-              >
-                Confirm & Save
-                <v-icon end>
-                  mdi-check
-                </v-icon>
+                Start Over
               </v-btn>
             </div>
           </div>
+        </div>
 
-          <div
-            v-else-if="currentStep === 3"
-            key="confirm"
-            class="step-content confirm-step"
-          >
-            <div class="confirm-card">
-              <h3 class="confirm-title">
-                Confirm Invoice Details
-              </h3>
-              <p class="confirm-subtitle">
-                Review the final invoice before saving
-              </p>
-
-              <div class="confirm-details">
-                <div class="detail-row">
-                  <span class="detail-label">Supplier</span>
-                  <span class="detail-value">{{ invoiceData.issuer || 'Not specified' }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Amount</span>
-                  <span class="detail-value highlight">€{{ formatAmount(invoiceData.amount) }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Project</span>
-                  <span class="detail-value">{{ getProjectName(invoiceData.project) || 'Unassigned' }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">VAT Included</span>
-                  <span class="detail-value">
-                    {{ invoiceData.includesBtw ? `Yes (${invoiceData.btwPercent}%)` : 'No' }}
-                  </span>
-                </div>
-                <div
-                  v-if="invoiceData.margin"
-                  class="detail-row"
+        <div
+          v-else-if="stage === 'review'"
+          key="review"
+          class="stage-content"
+        >
+          <div class="review-panel">
+            <div class="review-header">
+              <div class="review-nav">
+                <v-btn 
+                  variant="text" 
+                  size="small" 
+                  :disabled="currentReviewIndex === 0"
+                  @click="prevReview"
                 >
-                  <span class="detail-label">Margin</span>
-                  <span class="detail-value">€{{ formatAmount(invoiceData.margin) }}</span>
+                  <v-icon>mdi-chevron-left</v-icon>
+                </v-btn>
+                <span class="review-counter">{{ currentReviewIndex + 1 }} of {{ reviewableDocuments.length }}</span>
+                <v-btn 
+                  variant="text" 
+                  size="small" 
+                  :disabled="currentReviewIndex >= reviewableDocuments.length - 1"
+                  @click="nextReview"
+                >
+                  <v-icon>mdi-chevron-right</v-icon>
+                </v-btn>
+              </div>
+              <div class="review-title-area">
+                <h2 class="review-title">
+                  Review Document
+                </h2>
+                <span class="review-filename">{{ currentReviewDoc?.file.name }}</span>
+              </div>
+            </div>
+
+            <div
+              v-if="currentReviewDoc"
+              class="review-form"
+            >
+              <div class="review-grid">
+                <div class="form-field">
+                  <label class="field-label">
+                    Supplier / Issuer
+                    <span class="required">*</span>
+                    <span
+                      v-if="currentReviewDoc.confidence?.issuer === 'low'"
+                      class="confidence-badge low"
+                    >Low confidence</span>
+                  </label>
+                  <input
+                    v-model="currentReviewDoc.extractedData.issuer"
+                    type="text"
+                    class="field-input"
+                    :class="{ 'low-confidence': currentReviewDoc.confidence?.issuer === 'low' }"
+                    placeholder="Company name"
+                  >
+                </div>
+
+                <div class="form-field">
+                  <label class="field-label">
+                    Amount
+                    <span class="required">*</span>
+                    <span
+                      v-if="currentReviewDoc.confidence?.amount === 'low'"
+                      class="confidence-badge low"
+                    >Low confidence</span>
+                  </label>
+                  <div class="input-with-prefix">
+                    <span class="input-prefix">€</span>
+                    <input
+                      v-model.number="currentReviewDoc.extractedData.amount"
+                      type="number"
+                      step="0.01"
+                      class="field-input has-prefix"
+                      :class="{ 'low-confidence': currentReviewDoc.confidence?.amount === 'low' }"
+                      placeholder="0.00"
+                    >
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label class="field-label">
+                    Invoice Number
+                    <span
+                      v-if="currentReviewDoc.confidence?.invoiceNumber === 'low'"
+                      class="confidence-badge low"
+                    >Low confidence</span>
+                  </label>
+                  <input
+                    v-model="currentReviewDoc.extractedData.invoiceNumber"
+                    type="text"
+                    class="field-input"
+                    :class="{ 'low-confidence': currentReviewDoc.confidence?.invoiceNumber === 'low' }"
+                    placeholder="INV-0001"
+                  >
+                </div>
+
+                <div class="form-field">
+                  <label class="field-label">
+                    Invoice Date
+                    <span
+                      v-if="currentReviewDoc.confidence?.date === 'low'"
+                      class="confidence-badge low"
+                    >Low confidence</span>
+                  </label>
+                  <input
+                    v-model="currentReviewDoc.extractedData.date"
+                    type="date"
+                    class="field-input"
+                    :class="{ 'low-confidence': currentReviewDoc.confidence?.date === 'low' }"
+                  >
+                </div>
+
+                <div class="form-field">
+                  <label class="field-label">VAT (BTW)</label>
+                  <div class="vat-row">
+                    <label class="toggle-label">
+                      <input
+                        v-model="currentReviewDoc.extractedData.includesBtw"
+                        type="checkbox"
+                        class="toggle-input"
+                      >
+                      <span class="toggle-switch" />
+                      <span>Includes VAT</span>
+                    </label>
+                    <div
+                      v-if="currentReviewDoc.extractedData.includesBtw"
+                      class="vat-percent"
+                    >
+                      <input
+                        v-model.number="currentReviewDoc.extractedData.btwPercent"
+                        type="number"
+                        class="field-input small"
+                        placeholder="21"
+                      >
+                      <span class="percent-sign">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label class="field-label">Margin Override</label>
+                  <div class="input-with-suffix">
+                    <input
+                      v-model.number="currentReviewDoc.extractedData.margin"
+                      type="number"
+                      step="0.1"
+                      class="field-input has-suffix"
+                      :placeholder="projectMargin ? `${projectMargin}% (from project)` : '0'"
+                    >
+                    <span class="input-suffix">%</span>
+                  </div>
                 </div>
               </div>
 
-              <div class="confirm-actions">
+              <div
+                v-if="currentReviewDoc.status === 'attention'"
+                class="review-warning"
+              >
+                <v-icon
+                  size="18"
+                  color="warning"
+                >
+                  mdi-alert
+                </v-icon>
+                <span>Some fields could not be extracted with high confidence. Please verify the data.</span>
+              </div>
+            </div>
+
+            <div class="review-actions">
+              <div class="review-actions-left">
                 <v-btn
                   variant="text"
-                  @click="goToStep(2)"
+                  @click="goToDecision"
                 >
                   <v-icon start>
                     mdi-arrow-left
                   </v-icon>
-                  Edit Details
+                  Back to Summary
                 </v-btn>
-                <v-btn
+              </div>
+              <div class="review-actions-right">
+                <v-btn 
+                  v-if="currentReviewIndex < reviewableDocuments.length - 1"
+                  variant="outlined"
+                  :loading="savingCurrent"
+                  @click="saveAndNext"
+                >
+                  Save & Next
+                  <v-icon end>
+                    mdi-arrow-right
+                  </v-icon>
+                </v-btn>
+                <v-btn 
                   color="primary"
-                  :loading="saving"
-                  @click="saveInvoice"
+                  :loading="savingCurrent"
+                  @click="saveCurrentAndFinish"
                 >
                   <v-icon start>
                     mdi-content-save
                   </v-icon>
-                  Save Invoice
+                  {{ currentReviewIndex < reviewableDocuments.length - 1 ? 'Save This' : 'Save & Finish' }}
                 </v-btn>
               </div>
             </div>
-          </div>
 
-          <div
-            v-else-if="currentStep === 4"
-            key="success"
-            class="step-content success-step"
-          >
+            <div class="review-progress">
+              <div 
+                v-for="(doc, idx) in reviewableDocuments" 
+                :key="idx"
+                class="review-dot"
+                :class="{ 
+                  active: idx === currentReviewIndex,
+                  saved: doc.saved,
+                  attention: doc.status === 'attention' && !doc.saved
+                }"
+                @click="goToReviewIndex(idx)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-else-if="stage === 'complete'"
+          key="complete"
+          class="stage-content"
+        >
+          <div class="complete-panel">
             <div class="success-animation">
               <div class="success-circle">
                 <svg
@@ -455,24 +746,34 @@
                 </svg>
               </div>
             </div>
-            <h3 class="success-title">
-              Invoice Saved Successfully!
-            </h3>
-            <p class="success-subtitle">
-              Your invoice has been added to the system
+            <h2 class="complete-title">
+              All Documents Saved!
+            </h2>
+            <p class="complete-subtitle">
+              {{ savedCount }} invoice{{ savedCount > 1 ? 's' : '' }} have been added to {{ selectedProjectName }}
             </p>
-            <div class="success-actions">
+            
+            <div class="complete-summary">
+              <div class="summary-row">
+                <span class="summary-label">Total Amount</span>
+                <span class="summary-value">€{{ formatAmount(totalSavedAmount) }}</span>
+              </div>
+            </div>
+
+            <div class="complete-actions">
               <v-btn
                 variant="outlined"
-                @click="uploadAnother"
+                size="large"
+                @click="startOver"
               >
                 <v-icon start>
                   mdi-plus
                 </v-icon>
-                Upload Another
+                Upload More
               </v-btn>
               <v-btn
                 color="primary"
+                size="large"
                 @click="goToInvoices"
               >
                 View Invoices
@@ -482,62 +783,96 @@
               </v-btn>
             </div>
           </div>
-        </transition>
-      </div>
+        </div>
+      </transition>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { invoices } from '@/stores/invoiceState'
 
 const router = useRouter()
 const invoiceStore = invoices()
 
-const steps = [
-  { id: 'upload', label: 'Upload' },
-  { id: 'processing', label: 'Processing' },
-  { id: 'review', label: 'Review' },
-  { id: 'confirm', label: 'Confirm' }
-]
-
-const currentStep = ref(0)
-const selectedFile = ref(null)
-const fileInput = ref(null)
-const isDragging = ref(false)
+const stage = ref('setup')
+const selectedProject = ref(null)
+const projectError = ref(false)
 const fileError = ref('')
-const processingStatus = ref('Uploading file...')
-const progressPercent = ref(0)
-const extractionWarning = ref('')
-const saving = ref(false)
+const isDragging = ref(false)
+const fileInput = ref(null)
+const processingStarted = ref(false)
 
-const invoiceData = ref({
-  issuer: '',
-  amount: null,
-  project: null,
-  includesBtw: false,
-  btwPercent: 21,
-  margin: null,
-  pdf_file: null
+const documentQueue = ref([])
+const currentlyProcessing = ref(null)
+const currentProgress = ref(0)
+const currentStatus = ref('')
+const currentReviewIndex = ref(0)
+const savingCurrent = ref(false)
+const savingAll = ref(false)
+const savedCount = ref(0)
+const totalSavedAmount = ref(0)
+
+const isProjectLocked = computed(() => {
+  return processingStarted.value && stage.value !== 'setup'
 })
 
 const projects = computed(() => {
   const set = []
   for (const inv of invoiceStore.dbResponse) {
     if (inv.project_name && !set.some(p => p.name === inv.project_name)) {
-      set.push({ name: inv.project_name, id: inv.project_id })
+      set.push({ name: inv.project_name, id: inv.project_id, margin: inv.margin })
     }
   }
   return set
 })
 
-const canConfirm = computed(() => {
-  return invoiceData.value.issuer && 
-         invoiceData.value.amount && 
-         invoiceData.value.amount > 0 &&
-         invoiceData.value.project !== null
+const selectedProjectName = computed(() => {
+  const proj = projects.value.find(p => p.id === selectedProject.value)
+  return proj?.name || 'Unknown Project'
+})
+
+const projectMargin = computed(() => {
+  const proj = projects.value.find(p => p.id === selectedProject.value)
+  return proj?.margin || 0
+})
+
+const processedCount = computed(() => {
+  return documentQueue.value.filter(d => d.status !== 'pending' && d.status !== 'processing').length
+})
+
+const overallProgress = computed(() => {
+  const total = documentQueue.value.length
+  if (total === 0) return 0
+  return (processedCount.value / total) * 100
+})
+
+const successCount = computed(() => {
+  return documentQueue.value.filter(d => d.status === 'complete').length
+})
+
+const attentionCount = computed(() => {
+  return documentQueue.value.filter(d => d.status === 'attention').length
+})
+
+const errorCount = computed(() => {
+  return documentQueue.value.filter(d => d.status === 'error').length
+})
+
+const reviewableDocuments = computed(() => {
+  return documentQueue.value.filter(d => d.status === 'complete' || d.status === 'attention')
+})
+
+const currentReviewDoc = computed(() => {
+  return reviewableDocuments.value[currentReviewIndex.value]
+})
+
+watch(selectedProject, () => {
+  if (selectedProject.value) {
+    projectError.value = false
+  }
 })
 
 const openFilePicker = () => {
@@ -545,38 +880,52 @@ const openFilePicker = () => {
 }
 
 const handleFileSelect = (e) => {
-  const file = e.target.files?.[0]
-  if (file) validateAndSetFile(file)
+  const files = Array.from(e.target.files || [])
+  files.forEach(file => addToQueue(file))
+  if (fileInput.value) fileInput.value.value = ''
 }
 
 const handleDrop = (e) => {
   isDragging.value = false
-  const file = e.dataTransfer?.files?.[0]
-  if (file) validateAndSetFile(file)
+  const files = Array.from(e.dataTransfer?.files || [])
+  files.forEach(file => addToQueue(file))
 }
 
-const validateAndSetFile = (file) => {
+const addToQueue = (file) => {
   fileError.value = ''
   
   const validTypes = ['application/pdf', 'image/jpeg', 'image/png']
   if (!validTypes.includes(file.type)) {
-    fileError.value = 'Invalid file type. Please upload PDF, JPG, or PNG files.'
+    fileError.value = `Invalid file type: ${file.name}. Please upload PDF, JPG, or PNG.`
     return
   }
   
   const maxSize = 10 * 1024 * 1024
   if (file.size > maxSize) {
-    fileError.value = 'File too large. Maximum size is 10MB.'
+    fileError.value = `File too large: ${file.name}. Maximum size is 10MB.`
     return
   }
   
-  selectedFile.value = file
+  if (documentQueue.value.some(d => d.file.name === file.name && d.file.size === file.size)) {
+    return
+  }
+  
+  documentQueue.value.push({
+    file,
+    status: 'pending',
+    extractedData: null,
+    confidence: null,
+    saved: false
+  })
 }
 
-const removeFile = () => {
-  selectedFile.value = null
+const removeFromQueue = (index) => {
+  documentQueue.value.splice(index, 1)
+}
+
+const clearQueue = () => {
+  documentQueue.value = []
   fileError.value = ''
-  if (fileInput.value) fileInput.value.value = ''
 }
 
 const getFileIcon = (file) => {
@@ -589,176 +938,314 @@ const getFileIcon = (file) => {
 const formatFileSize = (bytes) => {
   if (!bytes) return '0 B'
   const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
+  const sizes = ['B', 'KB', 'MB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
 const formatAmount = (amount) => {
   if (!amount && amount !== 0) return '0.00'
-  return Number(amount).toFixed(2)
+  return Number(amount).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-const getProjectName = (projectId) => {
-  const proj = projects.value.find(p => p.id === projectId)
-  return proj?.name
+const getDocumentStatusClass = (doc) => {
+  return `status-${doc.status}`
 }
 
-const processFile = async () => {
-  if (!selectedFile.value) return
-  
-  currentStep.value = 1
-  progressPercent.value = 0
-  processingStatus.value = 'Uploading file...'
-  extractionWarning.value = ''
+const getStatusMessage = (doc) => {
+  switch (doc.status) {
+    case 'pending': return 'Waiting...'
+    case 'processing': return 'Analyzing...'
+    case 'complete': return doc.extractedData?.issuer || 'Extracted'
+    case 'attention': return 'Needs review'
+    case 'error': return doc.error || 'Failed'
+    default: return ''
+  }
+}
 
-  const simulateProgress = () => {
-    const interval = setInterval(() => {
-      if (progressPercent.value < 90) {
-        progressPercent.value += Math.random() * 15
-      }
-    }, 300)
-    return () => clearInterval(interval)
+const startProcessing = async () => {
+  if (!selectedProject.value) {
+    projectError.value = true
+    return
   }
   
-  const stopProgress = simulateProgress()
+  if (documentQueue.value.length === 0) return
+  
+  processingStarted.value = true
+  stage.value = 'processing'
+  
+  for (let i = 0; i < documentQueue.value.length; i++) {
+    const doc = documentQueue.value[i]
+    doc.status = 'processing'
+    currentlyProcessing.value = doc
+    currentProgress.value = 0
+    currentStatus.value = 'Uploading document...'
+    
+    try {
+      await processDocument(doc)
+    } catch (err) {
+      console.error('Error processing document:', err)
+      doc.status = 'error'
+      doc.error = err.message
+    }
+    
+    currentlyProcessing.value = null
+  }
+  
+  stage.value = 'decision'
+}
 
-  try {
-    progressPercent.value = 20
-    processingStatus.value = 'Extracting text from document...'
-    
-    const formData = new FormData()
-    formData.append('file', selectedFile.value)
-    
-    const baseUrl = import.meta.env.VITE_BASE_URL
-    
-    progressPercent.value = 40
-    processingStatus.value = 'Analyzing invoice data with AI...'
-    
-    let extracted = null
-    
-    if (baseUrl) {
-      try {
-        const response = await fetch(`${baseUrl}/invoice/extract`, {
-          method: 'POST',
-          body: formData
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          extracted = data
-          progressPercent.value = 80
-          processingStatus.value = 'Data extracted successfully!'
+const processDocument = async (doc) => {
+  const formData = new FormData()
+  formData.append('file', doc.file)
+  
+  currentProgress.value = 10
+  currentStatus.value = 'Uploading file...'
+  
+  const baseUrl = import.meta.env.VITE_BASE_URL
+  let uploadedFilePath = doc.file.name
+  
+  if (baseUrl) {
+    try {
+      const uploadResponse = await fetch(`${baseUrl}/invoice/upload-file`, {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (uploadResponse.ok) {
+        const uploadResult = await uploadResponse.json()
+        uploadedFilePath = uploadResult.pdf_file || doc.file.name
+        doc.uploadedFilePath = uploadedFilePath
+      }
+    } catch (err) {
+      console.warn('File upload failed, continuing with extraction:', err)
+    }
+  }
+  
+  currentProgress.value = 30
+  currentStatus.value = 'Extracting text...'
+  
+  await delay(200)
+  
+  currentProgress.value = 50
+  currentStatus.value = 'Analyzing with AI...'
+  
+  let extracted = null
+  let confidence = { 
+    issuer: 'high', 
+    amount: 'high',
+    invoiceNumber: 'high',
+    date: 'high'
+  }
+  
+  if (baseUrl) {
+    try {
+      const extractFormData = new FormData()
+      extractFormData.append('file', doc.file)
+      
+      const response = await fetch(`${baseUrl}/invoice/extract`, {
+        method: 'POST',
+        body: extractFormData
+      })
+      
+      if (response.ok) {
+        extracted = await response.json()
+        currentProgress.value = 85
+        currentStatus.value = 'Data extracted!'
+        // Use extracted pdf_file as fallback if upload-file wasn't called
+        if (!uploadedFilePath && extracted.pdf_file) {
+          uploadedFilePath = extracted.pdf_file
+          doc.uploadedFilePath = uploadedFilePath
         }
-      } catch (err) {
-        console.warn('OCR extraction failed, manual entry required:', err)
       }
+    } catch (err) {
+      console.warn('Extraction failed for', doc.file.name, err)
     }
-    
-    progressPercent.value = 100
-    
-    invoiceData.value = {
-      issuer: extracted?.issuer || '',
-      amount: extracted?.amount || null,
-      project: null,
-      includesBtw: extracted?.btw || false,
-      btwPercent: extracted?.btwPercent || 21,
-      margin: null,
-      pdf_file: selectedFile.value.name
-    }
-    
-    if (!extracted || !extracted.issuer) {
-      extractionWarning.value = 'Some fields could not be extracted automatically. Please fill them in manually.'
-    }
-    
-    stopProgress()
-    
-    setTimeout(() => {
-      currentStep.value = 2
-    }, 500)
-    
-  } catch (err) {
-    console.error('Processing error:', err)
-    stopProgress()
-    extractionWarning.value = 'Processing failed. Please enter details manually.'
-    currentStep.value = 2
+  }
+  
+  await delay(150)
+  currentProgress.value = 100
+  
+  const hasIssuer = extracted?.issuer && extracted.issuer.trim().length > 0
+  const hasAmount = extracted?.amount && extracted.amount > 0
+  const hasInvoiceNumber = extracted?.invoiceNumber && extracted.invoiceNumber.trim().length > 0
+  const hasDate = extracted?.date && extracted.date.trim().length > 0
+  
+  if (!hasIssuer) confidence.issuer = 'low'
+  if (!hasAmount) confidence.amount = 'low'
+  if (!hasInvoiceNumber) confidence.invoiceNumber = 'low'
+  if (!hasDate) confidence.date = 'low'
+  
+  doc.extractedData = {
+    issuer: extracted?.issuer || '',
+    amount: extracted?.amount || 0,
+    invoiceNumber: extracted?.invoiceNumber || '',
+    date: extracted?.date || new Date().toISOString().split('T')[0],
+    includesBtw: extracted?.btw || false,
+    btwPercent: extracted?.btwPercent || 21,
+    margin: projectMargin.value || null,
+    project: selectedProject.value,
+    pdf_file: uploadedFilePath || extracted?.pdf_file || null
+  }
+  
+  doc.confidence = confidence
+  
+  const needsAttention = !hasIssuer || !hasAmount
+  
+  if (needsAttention) {
+    doc.status = 'attention'
+  } else {
+    doc.status = 'complete'
   }
 }
 
-const goToStep = (step) => {
-  currentStep.value = step
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+const goToDecision = () => {
+  stage.value = 'decision'
 }
 
-const goBack = () => {
-  router.back()
+const goToReview = () => {
+  currentReviewIndex.value = 0
+  stage.value = 'review'
 }
 
-const saveInvoice = async () => {
-  if (!canConfirm.value) return
+const saveAllImmediately = async () => {
+  if (successCount.value === 0) return
   
-  saving.value = true
+  savingAll.value = true
+  let saved = 0
+  let totalAmount = 0
+  
+  const baseUrl = import.meta.env.VITE_BASE_URL
+  
+  for (const doc of documentQueue.value) {
+    if ((doc.status === 'complete' || doc.status === 'attention') && !doc.saved) {
+      if (doc.extractedData.issuer && doc.extractedData.amount > 0) {
+        try {
+          const payload = {
+            issuer: doc.extractedData.issuer,
+            amount: parseFloat(doc.extractedData.amount),
+            project: doc.extractedData.project,
+            includesBtw: doc.extractedData.includesBtw,
+            btwPercent: doc.extractedData.btwPercent || 21,
+            margin: doc.extractedData.margin,
+            pdf_file: doc.extractedData.pdf_file
+          }
+          
+          const response = await fetch(`${baseUrl}/invoice/post`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+          
+          if (response.ok) {
+            doc.saved = true
+            saved++
+            totalAmount += parseFloat(doc.extractedData.amount)
+          }
+        } catch (err) {
+          console.error('Failed to save:', doc.file.name, err)
+        }
+      }
+    }
+  }
+  
+  await invoiceStore.getAmounts()
+  
+  savedCount.value = saved
+  totalSavedAmount.value = totalAmount
+  savingAll.value = false
+  stage.value = 'complete'
+}
+
+const prevReview = () => {
+  if (currentReviewIndex.value > 0) {
+    currentReviewIndex.value--
+  }
+}
+
+const nextReview = () => {
+  if (currentReviewIndex.value < reviewableDocuments.value.length - 1) {
+    currentReviewIndex.value++
+  }
+}
+
+const goToReviewIndex = (idx) => {
+  currentReviewIndex.value = idx
+}
+
+const saveCurrentDocument = async () => {
+  const doc = currentReviewDoc.value
+  if (!doc || doc.saved) return true
+  
+  const baseUrl = import.meta.env.VITE_BASE_URL
+  
+  const payload = {
+    issuer: doc.extractedData.issuer,
+    amount: parseFloat(doc.extractedData.amount),
+    project: doc.extractedData.project,
+    includesBtw: doc.extractedData.includesBtw,
+    btwPercent: doc.extractedData.btwPercent || 21,
+    margin: doc.extractedData.margin,
+    pdf_file: doc.extractedData.pdf_file
+  }
   
   try {
-    const payload = {
-      issuer: invoiceData.value.issuer,
-      amount: parseFloat(invoiceData.value.amount),
-      project: invoiceData.value.project,
-      includesBtw: invoiceData.value.includesBtw,
-      btwPercent: invoiceData.value.includesBtw ? parseInt(invoiceData.value.btwPercent) : 0,
-      margin: invoiceData.value.margin ? parseFloat(invoiceData.value.margin) : null,
-      pdf_file: invoiceData.value.pdf_file
-    }
-    
-    const baseUrl = import.meta.env.VITE_BASE_URL
     const response = await fetch(`${baseUrl}/invoice/post`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
     
-    if (!response.ok) {
-      throw new Error('Failed to save invoice')
+    if (response.ok) {
+      doc.saved = true
+      return true
     }
-    
-    await invoiceStore.getAmounts()
-    
-    currentStep.value = 4
-    
-    window.dispatchEvent(new CustomEvent('show-toast', {
-      detail: { 
-        title: 'Invoice Saved', 
-        message: 'Invoice has been added successfully', 
-        type: 'success' 
-      }
-    }))
-    
   } catch (err) {
-    console.error('Save error:', err)
-    window.dispatchEvent(new CustomEvent('show-toast', {
-      detail: { 
-        title: 'Error', 
-        message: 'Failed to save invoice. Please try again.', 
-        type: 'error' 
-      }
-    }))
-  } finally {
-    saving.value = false
+    console.error('Failed to save document:', err)
+  }
+  
+  return false
+}
+
+const saveAndNext = async () => {
+  savingCurrent.value = true
+  await saveCurrentDocument()
+  savingCurrent.value = false
+  nextReview()
+}
+
+const saveCurrentAndFinish = async () => {
+  savingCurrent.value = true
+  await saveCurrentDocument()
+  savingCurrent.value = false
+  
+  const unsaved = reviewableDocuments.value.filter(d => !d.saved)
+  
+  if (unsaved.length === 0 || currentReviewIndex.value >= reviewableDocuments.value.length - 1) {
+    await invoiceStore.getAmounts()
+    savedCount.value = reviewableDocuments.value.filter(d => d.saved).length
+    totalSavedAmount.value = reviewableDocuments.value
+      .filter(d => d.saved)
+      .reduce((sum, d) => sum + (parseFloat(d.extractedData.amount) || 0), 0)
+    stage.value = 'complete'
+  } else {
+    nextReview()
   }
 }
 
-const uploadAnother = () => {
-  selectedFile.value = null
-  invoiceData.value = {
-    issuer: '',
-    amount: null,
-    project: null,
-    includesBtw: false,
-    btwPercent: 21,
-    margin: null,
-    pdf_file: null
-  }
-  extractionWarning.value = ''
-  currentStep.value = 0
+const startOver = () => {
+  documentQueue.value = []
+  currentReviewIndex.value = 0
+  savedCount.value = 0
+  totalSavedAmount.value = 0
+  processingStarted.value = false
+  stage.value = 'setup'
+}
+
+const goBack = () => {
+  router.back()
 }
 
 const goToInvoices = () => {
@@ -773,460 +1260,856 @@ onMounted(() => {
 <style scoped>
 .upload-page {
   min-height: 100vh;
-  padding: 40px 24px;
-  background: rgb(var(--v-theme-grey-50));
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 2rem;
 }
 
 .upload-container {
-  max-width: 640px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
 .page-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 2rem;
 }
 
 .page-title {
   font-size: 1.75rem;
   font-weight: 700;
-  color: rgb(var(--v-theme-on-surface));
-  margin: 0 0 8px;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
 }
 
 .page-subtitle {
-  font-size: 0.9375rem;
-  color: rgb(var(--v-theme-grey-600));
-  margin: 0;
+  font-size: 0.95rem;
+  color: #64748b;
 }
 
-.steps-indicator {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 32px;
+.stage-content {
+  animation: fadeIn 0.3s ease-out;
 }
 
-.step-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 24px;
-  background: rgb(var(--v-theme-surface));
-  border: 1px solid rgb(var(--v-theme-grey-200));
-  transition: all 0.2s ease;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.step-item.step-active {
-  background: rgba(var(--v-theme-primary), 0.1);
-  border-color: rgb(var(--v-theme-primary));
-}
-
-.step-item.step-completed {
-  background: rgba(var(--v-theme-success), 0.1);
-  border-color: rgb(var(--v-theme-success));
-}
-
-.step-circle {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: rgb(var(--v-theme-grey-200));
-  color: rgb(var(--v-theme-grey-600));
-}
-
-.step-active .step-circle {
-  background: rgb(var(--v-theme-primary));
-  color: white;
-}
-
-.step-completed .step-circle {
-  background: rgb(var(--v-theme-success));
-  color: white;
-}
-
-.step-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: rgb(var(--v-theme-grey-600));
-}
-
-.step-active .step-label {
-  color: rgb(var(--v-theme-primary));
-}
-
-.step-completed .step-label {
-  color: rgb(var(--v-theme-success));
-}
-
-.upload-card {
-  background: rgb(var(--v-theme-surface));
+.setup-panel {
+  background: white;
   border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  padding: 2rem;
 }
 
-.step-content {
-  min-height: 320px;
+.setup-section {
+  margin-bottom: 2rem;
+}
+
+.section-header {
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.section-hint {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.project-select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+}
+
+.project-select:hover {
+  border-color: #cbd5e1;
+}
+
+.project-select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.project-select.has-error {
+  border-color: #ef4444;
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #ef4444;
+  margin-top: 0.5rem;
+}
+
+.field-locked-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+}
+
+.project-select:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .dropzone {
-  border: 2px dashed rgb(var(--v-theme-grey-300));
-  border-radius: 16px;
-  padding: 48px 32px;
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+  padding: 2rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: rgb(var(--v-theme-grey-50));
-  flex: 1;
+  background: #fafbfc;
 }
 
-.dropzone:hover,
+.dropzone:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
 .dropzone-active {
-  border-color: rgb(var(--v-theme-primary));
-  background: rgba(var(--v-theme-primary), 0.04);
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.05);
 }
 
-.dropzone-has-file {
-  padding: 24px;
-  background: rgb(var(--v-theme-surface));
-  border-style: solid;
-  border-color: rgb(var(--v-theme-primary));
+.dropzone-has-files {
+  padding: 1rem;
+  cursor: default;
 }
 
-.dropzone-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 20px;
-  background: rgba(var(--v-theme-primary), 0.1);
+.dropzone-icon-wrapper {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+}
+
+.dropzone-icon-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 0.3; }
+}
+
+.dropzone-icon-wrapper .v-icon {
+  position: relative;
+  z-index: 1;
+  margin-top: 16px;
 }
 
 .dropzone-title {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: rgb(var(--v-theme-on-surface));
-  margin: 0 0 4px;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
 }
 
 .dropzone-hint {
-  font-size: 0.875rem;
-  color: rgb(var(--v-theme-grey-500));
-  margin: 0 0 16px;
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 1rem;
 }
 
 .file-types {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 0.5rem;
 }
 
 .file-type {
-  padding: 4px 12px;
-  background: rgb(var(--v-theme-grey-100));
-  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: rgb(var(--v-theme-grey-600));
+  color: #64748b;
 }
 
-.size-limit {
-  font-size: 0.75rem;
-  color: rgb(var(--v-theme-grey-400));
-  margin: 0;
-}
-
-.file-selected {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.document-queue {
   text-align: left;
 }
 
-.file-preview-icon {
-  width: 56px;
-  height: 56px;
-  background: rgba(var(--v-theme-primary), 0.1);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.file-details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.file-name {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: rgb(var(--v-theme-on-surface));
-}
-
-.file-size {
-  font-size: 0.8125rem;
-  color: rgb(var(--v-theme-grey-500));
-}
-
-.error-message {
-  display: flex;
-  align-items: center;
-  margin-top: 16px;
-  padding: 12px 16px;
-  background: rgba(var(--v-theme-error), 0.1);
-  border-radius: 8px;
-  font-size: 0.875rem;
-  color: rgb(var(--v-theme-error));
-}
-
-.step-actions {
+.queue-header {
   display: flex;
   justify-content: space-between;
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid rgb(var(--v-theme-grey-100));
+  align-items: center;
+  margin-bottom: 0.75rem;
 }
 
-.processing-step {
+.queue-count {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.btn-text-small {
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.btn-text-small:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.queue-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 0.75rem;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.queue-item-icon {
+  flex-shrink: 0;
+}
+
+.queue-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.queue-item-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-item-size {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.btn-icon-small {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
+  transition: all 0.2s;
 }
 
-.processing-animation {
-  margin-bottom: 24px;
+.btn-icon-small:hover {
+  background: #fee2e2;
+  color: #ef4444;
 }
 
-.processing-spinner {
-  width: 120px;
-  height: 120px;
-  position: relative;
-  margin: 0 auto;
-}
-
-.spinner-ring {
+.btn-add-more {
   width: 100%;
-  height: 100%;
-  animation: rotate 2s linear infinite;
+  padding: 0.5rem;
+  background: none;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
 }
 
-.spinner-track {
-  fill: none;
-  stroke: rgb(var(--v-theme-grey-200));
-  stroke-width: 6;
+.btn-add-more:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.05);
 }
 
-.spinner-progress {
-  fill: none;
-  stroke: rgb(var(--v-theme-primary));
-  stroke-width: 6;
-  stroke-linecap: round;
-  stroke-dasharray: 264;
-  stroke-dashoffset: 66;
-  animation: dash 1.5s ease-in-out infinite;
+.setup-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
 }
 
-.spinner-icon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+.btn-process {
+  padding: 0.875rem 2rem !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
 }
 
-@keyframes rotate {
-  100% { transform: rotate(360deg); }
+.processing-panel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  padding: 2rem;
 }
 
-@keyframes dash {
-  0% { stroke-dashoffset: 264; }
-  50% { stroke-dashoffset: 66; }
-  100% { stroke-dashoffset: 264; }
+.processing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
 }
 
 .processing-title {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.processing-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.overall-progress {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.progress-text {
+  font-size: 0.9rem;
   font-weight: 600;
-  color: rgb(var(--v-theme-on-surface));
-  margin: 0 0 8px;
+  color: #64748b;
 }
 
-.processing-status {
-  font-size: 0.875rem;
-  color: rgb(var(--v-theme-grey-600));
-  margin: 0 0 24px;
+.progress-ring {
+  position: relative;
+  width: 48px;
+  height: 48px;
 }
 
-.progress-bar {
-  width: 200px;
-  height: 4px;
-  background: rgb(var(--v-theme-grey-200));
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-fill {
+.progress-ring svg {
+  transform: rotate(-90deg);
+  width: 100%;
   height: 100%;
-  background: rgb(var(--v-theme-primary));
-  border-radius: 2px;
+}
+
+.progress-ring-bg {
+  fill: none;
+  stroke: #e2e8f0;
+  stroke-width: 3;
+}
+
+.progress-ring-fill {
+  fill: none;
+  stroke: #6366f1;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.3s ease;
+}
+
+.progress-percent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.document-status-list {
+  margin-bottom: 1.5rem;
+}
+
+.document-status-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.document-status-item.status-processing {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.document-status-item.status-complete {
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.document-status-item.status-attention {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.document-status-item.status-error {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.status-indicator {
+  flex-shrink: 0;
+  width: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.mini-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e2e8f0;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.status-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.status-filename {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-message {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.status-preview {
+  flex-shrink: 0;
+}
+
+.preview-amount {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #22c55e;
+}
+
+.current-processing {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.current-file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.current-label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.current-filename {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.current-progress-bar {
+  height: 6px;
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.current-progress-fill {
+  height: 100%;
+  background: #6366f1;
+  border-radius: 3px;
   transition: width 0.3s ease;
 }
 
-.review-step {
-  gap: 24px;
+.current-status {
+  font-size: 0.85rem;
+  color: #6366f1;
+  font-weight: 500;
+}
+
+.decision-panel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.decision-header {
+  margin-bottom: 2rem;
+}
+
+.decision-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.decision-icon.success {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.decision-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.decision-subtitle {
+  font-size: 1rem;
+  color: #64748b;
+}
+
+.decision-summary {
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.summary-stat {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  display: block;
+}
+
+.stat-value.success { color: #22c55e; }
+.stat-value.warning { color: #f59e0b; }
+.stat-value.error { color: #ef4444; }
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.decision-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.option-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #fafbfc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.option-card:hover {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.02);
+}
+
+.option-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.option-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.option-content {
+  flex: 1;
+}
+
+.option-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.option-description {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.review-panel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  padding: 2rem;
 }
 
 .review-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.review-icon {
-  width: 48px;
-  height: 48px;
-  background: rgba(var(--v-theme-success), 0.1);
-  border-radius: 12px;
+.review-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.5rem;
+}
+
+.review-counter {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #64748b;
+  min-width: 60px;
+  text-align: center;
+}
+
+.review-title-area {
+  text-align: right;
 }
 
 .review-title {
-  font-size: 1.125rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: rgb(var(--v-theme-on-surface));
-  margin: 0 0 4px;
+  color: #1e293b;
+  margin-bottom: 0.125rem;
 }
 
-.review-subtitle {
-  font-size: 0.875rem;
-  color: rgb(var(--v-theme-grey-600));
-  margin: 0;
+.review-filename {
+  font-size: 0.85rem;
+  color: #64748b;
 }
 
 .review-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.file-info-field {
-  grid-column: 1 / -1;
 }
 
 .field-label {
-  font-size: 0.8125rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  color: rgb(var(--v-theme-grey-700));
+  color: #475569;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .required {
-  color: rgb(var(--v-theme-error));
+  color: #ef4444;
 }
 
-.field-input,
-.field-select {
-  padding: 10px 14px;
-  font-size: 0.9375rem;
-  border: 1px solid rgb(var(--v-theme-grey-300));
+.confidence-badge {
+  font-size: 0.7rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.confidence-badge.low {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.field-input {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
   border-radius: 8px;
-  background: rgb(var(--v-theme-surface));
-  color: rgb(var(--v-theme-on-surface));
-  transition: border-color 0.2s;
-  outline: none;
+  font-size: 0.95rem;
+  color: #1e293b;
+  transition: all 0.2s ease;
 }
 
-.field-input:focus,
-.field-select:focus {
-  border-color: rgb(var(--v-theme-primary));
+.field-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.field-input.low-confidence {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.field-input.has-prefix {
+  padding-left: 2rem;
+}
+
+.field-input.has-suffix {
+  padding-right: 2.5rem;
 }
 
 .field-input.small {
   width: 80px;
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
 }
 
-.input-with-prefix {
+.input-with-prefix,
+.input-with-suffix {
   position: relative;
-  display: flex;
-  align-items: center;
 }
 
 .input-prefix {
   position: absolute;
-  left: 14px;
-  font-size: 0.9375rem;
-  color: rgb(var(--v-theme-grey-500));
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-weight: 500;
 }
 
-.field-input.has-prefix {
-  padding-left: 32px;
+.input-suffix {
+  position: absolute;
+  right: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 .vat-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .toggle-label {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.5rem;
   cursor: pointer;
-  font-size: 0.875rem;
-  color: rgb(var(--v-theme-on-surface));
+  font-size: 0.9rem;
+  color: #475569;
 }
 
 .toggle-input {
-  position: absolute;
-  opacity: 0;
+  display: none;
 }
 
 .toggle-switch {
   width: 40px;
   height: 22px;
-  background: rgb(var(--v-theme-grey-300));
+  background: #e2e8f0;
   border-radius: 11px;
   position: relative;
-  transition: background 0.2s;
+  transition: background 0.2s ease;
 }
 
 .toggle-switch::after {
   content: '';
   position: absolute;
-  top: 2px;
-  left: 2px;
   width: 18px;
   height: 18px;
   background: white;
   border-radius: 50%;
-  transition: transform 0.2s;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-input:checked + .toggle-switch {
-  background: rgb(var(--v-theme-primary));
+  background: #6366f1;
 }
 
 .toggle-input:checked + .toggle-switch::after {
@@ -1236,106 +2119,82 @@ onMounted(() => {
 .vat-percent {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .percent-sign {
-  font-size: 0.875rem;
-  color: rgb(var(--v-theme-grey-600));
+  font-size: 0.9rem;
+  color: #64748b;
 }
 
-.attached-file {
+.review-warning {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: rgb(var(--v-theme-grey-50));
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(245, 158, 11, 0.08);
   border-radius: 8px;
-  font-size: 0.875rem;
-  color: rgb(var(--v-theme-on-surface));
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: #92400e;
 }
 
-.extraction-warning {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  background: rgba(var(--v-theme-warning), 0.1);
-  border-radius: 8px;
-  font-size: 0.875rem;
-  color: rgb(var(--v-theme-warning));
-}
-
-.confirm-step {
-  justify-content: center;
-}
-
-.confirm-card {
-  text-align: center;
-}
-
-.confirm-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: rgb(var(--v-theme-on-surface));
-  margin: 0 0 8px;
-}
-
-.confirm-subtitle {
-  font-size: 0.875rem;
-  color: rgb(var(--v-theme-grey-600));
-  margin: 0 0 32px;
-}
-
-.confirm-details {
-  background: rgb(var(--v-theme-grey-50));
-  border-radius: 12px;
-  padding: 20px 24px;
-  text-align: left;
-  margin-bottom: 24px;
-}
-
-.detail-row {
+.review-actions {
   display: flex;
   justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid rgb(var(--v-theme-grey-200));
+  align-items: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
 }
 
-.detail-row:last-child {
-  border-bottom: none;
+.review-actions-right {
+  display: flex;
+  gap: 0.75rem;
 }
 
-.detail-label {
-  font-size: 0.875rem;
-  color: rgb(var(--v-theme-grey-600));
-}
-
-.detail-value {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: rgb(var(--v-theme-on-surface));
-}
-
-.detail-value.highlight {
-  font-size: 1rem;
-  font-weight: 700;
-  color: rgb(var(--v-theme-primary));
-}
-
-.confirm-actions {
+.review-progress {
   display: flex;
   justify-content: center;
-  gap: 16px;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
 }
 
-.success-step {
-  align-items: center;
-  justify-content: center;
+.review-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.review-dot:hover {
+  background: #cbd5e1;
+}
+
+.review-dot.active {
+  background: #6366f1;
+  transform: scale(1.2);
+}
+
+.review-dot.saved {
+  background: #22c55e;
+}
+
+.review-dot.attention {
+  background: #f59e0b;
+}
+
+.complete-panel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  padding: 3rem;
   text-align: center;
 }
 
 .success-animation {
-  margin-bottom: 24px;
+  margin-bottom: 1.5rem;
 }
 
 .success-circle {
@@ -1347,52 +2206,75 @@ onMounted(() => {
 .checkmark {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
 }
 
 .checkmark-circle {
-  stroke: rgb(var(--v-theme-success));
+  stroke: #22c55e;
   stroke-width: 2;
   stroke-dasharray: 166;
   stroke-dashoffset: 166;
-  animation: stroke-circle 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
 }
 
 .checkmark-check {
-  stroke: rgb(var(--v-theme-success));
+  stroke: #22c55e;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 48;
   stroke-dashoffset: 48;
-  animation: stroke-check 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
 }
 
-@keyframes stroke-circle {
+@keyframes stroke {
   100% { stroke-dashoffset: 0; }
 }
 
-@keyframes stroke-check {
-  100% { stroke-dashoffset: 0; }
+.complete-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
 }
 
-.success-title {
+.complete-subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+
+.complete-summary {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-label {
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+.summary-value {
   font-size: 1.25rem;
-  font-weight: 600;
-  color: rgb(var(--v-theme-on-surface));
-  margin: 0 0 8px;
+  font-weight: 700;
+  color: #22c55e;
 }
 
-.success-subtitle {
-  font-size: 0.875rem;
-  color: rgb(var(--v-theme-grey-600));
-  margin: 0 0 32px;
-}
-
-.success-actions {
+.complete-actions {
   display: flex;
   justify-content: center;
-  gap: 16px;
+  gap: 1rem;
+}
+
+.decision-actions {
+  padding-top: 1rem;
 }
 
 .fade-slide-enter-active,
@@ -1402,38 +2284,40 @@ onMounted(() => {
 
 .fade-slide-enter-from {
   opacity: 0;
-  transform: translateX(20px);
+  transform: translateY(20px);
 }
 
 .fade-slide-leave-to {
   opacity: 0;
-  transform: translateX(-20px);
+  transform: translateY(-20px);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .upload-page {
-    padding: 24px 16px;
+    padding: 1rem;
   }
-
-  .steps-indicator {
-    flex-wrap: wrap;
+  
+  .setup-panel,
+  .processing-panel,
+  .decision-panel,
+  .review-panel,
+  .complete-panel {
+    padding: 1.5rem;
   }
-
-  .step-label {
-    display: none;
-  }
-
-  .upload-card {
-    padding: 24px 20px;
-  }
-
+  
   .review-grid {
     grid-template-columns: 1fr;
   }
-
-  .confirm-actions,
-  .success-actions {
+  
+  .summary-card {
     flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .processing-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
   }
 }
 </style>

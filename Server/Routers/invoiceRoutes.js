@@ -3,29 +3,30 @@ import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import crypto from "crypto";
+import { v4 as uuidv4 } from "uuid";
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import analyze from "../email-service/gpt.js";
-import AmountControllers from "../Controllers/amountControllers.js";
-import GeneralService from "../Services/generalService.js";
-import GeneralControllers from "../Controllers/generalControllers.js";
-import AmountService from "../Services/amountService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const route = express.Router();
 
+// Use the same downloads directory as email service for consistency
+const DOWNLOADS_DIR = path.join(__dirname, "../email-service/downloads");
+if (!fs.existsSync(DOWNLOADS_DIR)) {
+  fs.mkdirSync(DOWNLOADS_DIR, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, "../uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
+    cb(null, DOWNLOADS_DIR);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    const ext = path.extname(file.originalname) || ".pdf";
+    const uniqueName = `${uuidv4()}${ext}`;
+    cb(null, uniqueName);
   }
 });
 
@@ -42,7 +43,10 @@ const upload = multer({
   }
 });
 
-
+import AmountControllers from "../Controllers/amountControllers.js";
+import GeneralService from "../Services/generalService.js";
+import GeneralControllers from "../Controllers/generalControllers.js";
+import AmountService from "../Services/amountService.js";
 //import auth from "../middleware/auth.js"
 
 
@@ -57,6 +61,9 @@ route.post("/post-general/:db", GeneralControllers.postGeneral);
 
 //POST new email/project
 route.post("/newproject", AmountControllers.postNewEmail);
+
+//POST new project without email (email optional)
+route.post("/newproject-no-email", AmountControllers.postNewProjectNoEmail);
 
 //POST new email/project
 route.post("/add-to-existing-email", AmountControllers.postToExitingEmail);
@@ -84,6 +91,26 @@ route.get("/entries/:db", GeneralControllers.getByProject)
 
 //Delete entry (soft delete)
 route.delete("/delete/:db/:id", GeneralControllers.deleteEntry)
+
+//Upload file and return pdf_file (for preserving original files)
+route.post("/upload-file", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    res.json({
+      success: true,
+      pdf_file: req.file.filename,
+      original_name: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    });
+  } catch (err) {
+    console.error("File upload error:", err);
+    res.status(500).json({ error: "Failed to upload file" });
+  }
+});
 
 //Extract invoice data from uploaded file (OCR/GPT)
 route.post("/extract", upload.single("file"), async (req, res) => {
@@ -134,30 +161,28 @@ route.post("/extract", upload.single("file"), async (req, res) => {
     
     const analyzed = await analyze(extractedText, "upload");
     
-    fs.unlinkSync(filePath);
-    
+    // Keep the file for preservation - return filename for linking
     res.status(200).json({
       issuer: analyzed.issuer || "",
       amount: analyzed.amount || null,
       btw: analyzed.btw || false,
       btwPercent: analyzed.btwPercent || 21,
-      extractionFailed: false
+      extractionFailed: false,
+      pdf_file: req.file.filename
     });
     
   } catch (err) {
     console.error("Extract error:", err);
     
-    if (req.file?.path && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
-    
+    // Keep the file even on error - user may still want to manually fill in details
     res.status(200).json({
       issuer: "",
       amount: null,
       btw: false,
       btwPercent: 21,
       extractionFailed: true,
-      message: err.message || "Extraction failed. Please enter details manually."
+      message: err.message || "Extraction failed. Please enter details manually.",
+      pdf_file: req.file?.filename || null
     });
   }
 });
