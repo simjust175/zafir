@@ -24,7 +24,7 @@
         <div class="header-content">
           <div class="header-badge">
             <!-- Revenue Tracking -->
-             {{ project_name }}
+            {{ project_name }}
           </div>
           <h1 class="page-title">
             Project Revenue
@@ -443,6 +443,12 @@
                   <span class="entry-date">{{ formatDate(entry.created_on) }}</span>
                 </div>
               </div>
+              <div>
+                <span
+                  v-if="entry.invoice_number"
+                  class="entry-invoice-number"
+                >#{{ entry.invoice_number }}</span>
+              </div>
               <div class="entry-actions">
                 <button
                   class="action-btn edit"
@@ -658,6 +664,15 @@
             hide-details="auto"
             class="amount-input"
           />
+          <v-text-field
+            v-if="dialogType === 'invoiced'"
+            v-model="dialogInvoiceNumber"
+            label="Invoice Number (optional)"
+            variant="outlined"
+            hide-details="auto"
+            class="invoice-number-input"
+            placeholder="e.g. INV-2026-001"
+          />
         </v-card-text>
         <v-card-actions class="dialog-actions">
           <v-btn
@@ -724,19 +739,44 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="sendDialog" max-width="440">
+    <v-dialog
+      v-model="sendDialog"
+      max-width="440"
+    >
       <div class="send-dialog">
         <div class="send-dialog-header">
           <h2>Send Revenue Summary</h2>
-          <button class="close-btn" @click="sendDialog = false">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
+          <button
+            class="close-btn"
+            @click="sendDialog = false"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line
+                x1="18"
+                y1="6"
+                x2="6"
+                y2="18"
+              />
+              <line
+                x1="6"
+                y1="6"
+                x2="18"
+                y2="18"
+              />
             </svg>
           </button>
         </div>
         <div class="send-dialog-body">
-          <p class="send-description">Send a PDF summary of invoices sent and payments received for this project.</p>
+          <p class="send-description">
+            Send a PDF summary of invoices sent and payments received for this project.
+          </p>
           
           <div class="send-form-field">
             <label class="send-field-label">Email Address <span class="required">*</span></label>
@@ -747,7 +787,10 @@
               :class="{ error: sendEmailError }"
               placeholder="recipient@company.com"
             >
-            <span v-if="sendEmailError" class="send-error-msg">{{ sendEmailError }}</span>
+            <span
+              v-if="sendEmailError"
+              class="send-error-msg"
+            >{{ sendEmailError }}</span>
           </div>
 
           <div class="send-form-field">
@@ -759,7 +802,10 @@
               :class="{ error: sendRecipientError }"
               placeholder="John Doe"
             >
-            <span v-if="sendRecipientError" class="send-error-msg">{{ sendRecipientError }}</span>
+            <span
+              v-if="sendRecipientError"
+              class="send-error-msg"
+            >{{ sendRecipientError }}</span>
           </div>
 
           <div class="send-form-field">
@@ -783,13 +829,38 @@
           </div>
         </div>
         <div class="send-dialog-footer">
-          <button class="send-btn-cancel" @click="sendDialog = false">Cancel</button>
-          <button class="send-btn-primary" :disabled="sendingEmail" @click="submitSendEmail">
-            <svg v-if="!sendingEmail" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="22" y1="2" x2="11" y2="13"/>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          <button
+            class="send-btn-cancel"
+            @click="sendDialog = false"
+          >
+            Cancel
+          </button>
+          <button
+            class="send-btn-primary"
+            :disabled="sendingEmail"
+            @click="submitSendEmail"
+          >
+            <svg
+              v-if="!sendingEmail"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line
+                x1="22"
+                y1="2"
+                x2="11"
+                y2="13"
+              />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>
-            <span v-if="sendingEmail" class="spinner-sm-light" />
+            <span
+              v-if="sendingEmail"
+              class="spinner-sm-light"
+            />
             {{ sendingEmail ? 'Sending...' : 'Send Email' }}
           </button>
         </div>
@@ -872,6 +943,7 @@ const percentPaid = computed(() => {
 const showDialog = ref(false)
 const dialogType = ref('invoiced')
 const dialogAmount = ref('')
+const dialogInvoiceNumber = ref('')
 const isEditMode = ref(false)
 const editEntryId = ref(null)
 const saving = ref(false)
@@ -901,6 +973,7 @@ const openDialog = (type) => {
   dialogType.value = type
   isEditMode.value = false
   dialogAmount.value = ''
+  dialogInvoiceNumber.value = ''
   editEntryId.value = null
   showDialog.value = true
 }
@@ -909,6 +982,7 @@ const editEntry = (type, entry) => {
   dialogType.value = type
   isEditMode.value = true
   dialogAmount.value = entry.amount
+  dialogInvoiceNumber.value = entry.invoice_number || ''
   editEntryId.value = entry.id
   showDialog.value = true
 }
@@ -916,6 +990,7 @@ const editEntry = (type, entry) => {
 const closeDialog = () => {
   showDialog.value = false
   dialogAmount.value = ''
+  dialogInvoiceNumber.value = ''
   isEditMode.value = false
   editEntryId.value = null
 }
@@ -923,6 +998,7 @@ const closeDialog = () => {
 const saveEntry = async () => {
   const table = dialogType.value === 'invoiced' ? 'invoicing' : 'payments'
   const amount = Number(dialogAmount.value)
+  const invoiceNumber = dialogInvoiceNumber.value.trim() || null
   
   if (!amount || amount <= 0) {
     snack.value = { show: true, color: 'error', message: 'Please enter a valid amount' }
@@ -933,10 +1009,18 @@ const saveEntry = async () => {
 
   try {
     if (isEditMode.value && editEntryId.value) {
-      await invoiceStore.updateRevenueEntry(table, editEntryId.value, amount)
+      if (table === 'invoicing') {
+        await invoiceStore.updateInvoicing(editEntryId.value, amount, invoiceNumber)
+      } else {
+        await invoiceStore.updatePayment(editEntryId.value, amount)
+      }
       snack.value = { show: true, color: 'success', message: `${table === 'invoicing' ? 'Invoice' : 'Payment'} updated` }
     } else {
-      await invoiceStore.addRevenueEntry(table, projectId.value, amount)
+      if (table === 'invoicing') {
+        await invoiceStore.createInvoicing(projectId.value, amount, invoiceNumber)
+      } else {
+        await invoiceStore.createPayment(projectId.value, amount)
+      }
       snack.value = { show: true, color: 'success', message: `${table === 'invoicing' ? 'Invoice' : 'Payment'} added` }
     }
     
@@ -1894,6 +1978,17 @@ const submitSendEmail = async () => {
   color: #a3a3a3;
 }
 
+.entry-invoice-number {
+  font-size: 11px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
 .entry-actions {
   display: flex;
   gap: 4px;
@@ -1988,6 +2083,13 @@ const submitSendEmail = async () => {
 
 .dialog-content {
   padding: 8px 24px 24px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.invoice-number-input {
+  margin-top: 4px;
 }
 
 .delete-message {

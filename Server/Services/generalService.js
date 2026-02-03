@@ -1,23 +1,6 @@
 import General from "../Database/Models/general.js";
 
 class GeneralService {
-  // static async postService(table, body, eventSystem = null) {
-  //   if (!table || !body) throw new Error("Database and body must be provided");
-  //   const result = await General.post(table, body);
-
-  //   // Emit real-time event for successful creation
-  //   if (eventSystem && result) {
-  //     if (table === 'invoices') {
-  //       eventSystem.emitInvoice('create', result);
-  //     } else if (table === 'projects') {
-  //       eventSystem.emitProject('create', result);
-  //     } else if (table === 'payments') {
-  //       eventSystem.emitPayment('create', result);
-  //     }
-  //   }
-
-  //   return result;
-  // }
 
   static async postService(table, body, eventSystem = null) {
     if (!table || !body) throw new Error("Database and body must be provided");
@@ -111,8 +94,6 @@ class GeneralService {
     }
     let whereClause = "";
     let params = [];
-    console.log("query QUERY QUERY>>>", query);
-
     if (query.id) {
       const idColumn = table === 'invoicing' ? 'invoicing_id' :
         table === 'payments' ? 'payment_id' : 'invoice_id';

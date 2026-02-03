@@ -120,6 +120,7 @@ class General {
         "amount_paid",
         "completed_on",
         "deleted_at",
+        "margin",
       ],
       payments: ["amount", "deleted_at"],
       invoicing: ["amount", "deleted_at"],
