@@ -95,6 +95,23 @@ class AmountService {
     
     return projectResult[0].project_id;
   }
+
+  static async postNewProjectNoEmailService({ project_name, margin }) {
+    let projectName = (project_name || "").trim() || `project${Date.now()}`;
+
+    const projectData = {
+      project_name: projectName,
+      email: null
+    };
+
+    if (margin !== undefined && margin !== null) {
+      projectData.margin = parseFloat(margin);
+    }
+
+    const newProject = await General.post("projects", projectData);
+
+    return { project: newProject, created: true };
+  }
 }
 
 export default AmountService;

@@ -24,7 +24,7 @@
         <div class="header-content">
           <div class="header-badge">
             <!-- Revenue Tracking -->
-            {{ project_name }}
+             {{ project_name }}
           </div>
           <h1 class="page-title">
             Project Revenue
@@ -724,6 +724,78 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="sendDialog" max-width="440">
+      <div class="send-dialog">
+        <div class="send-dialog-header">
+          <h2>Send Revenue Summary</h2>
+          <button class="close-btn" @click="sendDialog = false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="send-dialog-body">
+          <p class="send-description">Send a PDF summary of invoices sent and payments received for this project.</p>
+          
+          <div class="send-form-field">
+            <label class="send-field-label">Email Address <span class="required">*</span></label>
+            <input
+              v-model="sendEmail"
+              type="email"
+              class="send-text-input"
+              :class="{ error: sendEmailError }"
+              placeholder="recipient@company.com"
+            >
+            <span v-if="sendEmailError" class="send-error-msg">{{ sendEmailError }}</span>
+          </div>
+
+          <div class="send-form-field">
+            <label class="send-field-label">Recipient Name <span class="required">*</span></label>
+            <input
+              v-model="sendRecipient"
+              type="text"
+              class="send-text-input"
+              :class="{ error: sendRecipientError }"
+              placeholder="John Doe"
+            >
+            <span v-if="sendRecipientError" class="send-error-msg">{{ sendRecipientError }}</span>
+          </div>
+
+          <div class="send-form-field">
+            <label class="send-field-label">Language</label>
+            <div class="send-toggle-group">
+              <button 
+                class="send-toggle-btn" 
+                :class="{ active: sendLanguage === 'en' }"
+                @click="sendLanguage = 'en'"
+              >
+                English
+              </button>
+              <button 
+                class="send-toggle-btn" 
+                :class="{ active: sendLanguage === 'nl' }"
+                @click="sendLanguage = 'nl'"
+              >
+                Nederlands
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="send-dialog-footer">
+          <button class="send-btn-cancel" @click="sendDialog = false">Cancel</button>
+          <button class="send-btn-primary" :disabled="sendingEmail" @click="submitSendEmail">
+            <svg v-if="!sendingEmail" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            <span v-if="sendingEmail" class="spinner-sm-light" />
+            {{ sendingEmail ? 'Sending...' : 'Send Email' }}
+          </button>
+        </div>
+      </div>
+    </v-dialog>
+
     <v-snackbar
       v-model="snack.show"
       :color="snack.color"
@@ -749,6 +821,13 @@ const circumference = 2 * Math.PI * 52
 const isPrinting = ref(false)
 const isDownloading = ref(false)
 const isSending = ref(false)
+const sendDialog = ref(false)
+const sendEmail = ref('')
+const sendRecipient = ref('')
+const sendLanguage = ref('en')
+const sendEmailError = ref('')
+const sendRecipientError = ref('')
+const sendingEmail = ref(false)
 
 const goBack = () => {
   if (window.history.length > 1) {
@@ -1045,12 +1124,88 @@ const handlePrint = async () => {
 }
 
 const handleSend = async () => {
-  isSending.value = true
-  //MAKE THE SEND EMAIL (FROM SendInvoice.vue) WORK HERE
+  sendEmailError.value = ''
+  sendRecipientError.value = ''
+  sendDialog.value = true
+}
+
+const projectInvoices = computed(() => {
+  return invoiceStore.dbResponse?.filter(inv => inv.project === projectId.value) || []
+})
+
+const groupedInvoices = computed(() => {
+  const groups = {}
+  projectInvoices.value.forEach(inv => {
+    const issuer = inv.issuer?.trim() || 'Unknown'
+    if (!groups[issuer]) groups[issuer] = { issuer, invoices: [], totalAmount: 0, totalWithMargin: 0 }
+    const g = groups[issuer]
+    g.invoices.push(inv)
+    g.totalAmount += Number(inv.amount) || 0
+    g.totalWithMargin += (Number(inv.amount) || 0) * (1 + (Number(inv.margin) || 0) / 100)
+  })
+  return Object.values(groups)
+})
+
+const currentProjectMargin = computed(() => {
+  const projectData = invoiceStore.dbResponse?.find(inv => inv.project_id === projectId.value || inv.project === projectId.value)
+  return Number(projectData?.margin) || 0
+})
+
+const overallTotalWithMargin = computed(() => {
+  return groupedInvoices.value.reduce((sum, g) => sum + g.totalWithMargin, 0)
+})
+
+const validateSendForm = () => {
+  sendEmailError.value = ''
+  sendRecipientError.value = ''
+  
+  if (!sendEmail.value) {
+    sendEmailError.value = 'Email is required'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sendEmail.value)) {
+    sendEmailError.value = 'Please enter a valid email'
+  }
+  
+  if (!sendRecipient.value) {
+    sendRecipientError.value = 'Recipient name is required'
+  }
+  
+  return !sendEmailError.value && !sendRecipientError.value
+}
+
+const submitSendEmail = async () => {
+  if (!validateSendForm()) return
+  
+  sendingEmail.value = true
+  
   try {
-    snack.value = { show: true, color: 'info', message: 'Send feature coming soon' }
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/email/send-invoice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: sendEmail.value,
+        language: sendLanguage.value,
+        recipient: sendRecipient.value || 'To whom it may concern',
+        projectName: project_name.value,
+        total: overallTotalWithMargin.value,
+        groupedInvoices: groupedInvoices.value,
+        groupedPayments: paymentEntries.value,
+        invoicingEntries: invoicingEntries.value,
+        projectMargin: currentProjectMargin.value
+      })
+    })
+    
+    if (!res.ok) throw new Error('Failed to send email')
+    
+    sendDialog.value = false
+    snack.value = { show: true, color: 'success', message: `Email sent to ${sendEmail.value}` }
+    
+    sendEmail.value = ''
+    sendRecipient.value = ''
+  } catch (err) {
+    console.error('Failed to send email:', err)
+    snack.value = { show: true, color: 'error', message: 'Failed to send email. Please try again.' }
   } finally {
-    isSending.value = false
+    sendingEmail.value = false
   }
 }
 </script>
@@ -1924,5 +2079,197 @@ const handleSend = async () => {
   .entries-column {
     padding: 16px;
   }
+}
+
+.send-dialog {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.send-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.send-dialog-header h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: #171717;
+}
+
+.send-dialog-header .close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.send-dialog-header .close-btn:hover {
+  background: #f5f5f5;
+  color: #171717;
+}
+
+.send-dialog-body {
+  padding: 24px;
+}
+
+.send-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.send-form-field {
+  margin-bottom: 16px;
+}
+
+.send-form-field:last-child {
+  margin-bottom: 0;
+}
+
+.send-field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #171717;
+  margin-bottom: 6px;
+}
+
+.send-field-label .required {
+  color: #ef4444;
+}
+
+.send-text-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #171717;
+  background: #fafafa;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.send-text-input:focus {
+  outline: none;
+  border-color: #171717;
+  background: #fff;
+}
+
+.send-text-input.error {
+  border-color: #ef4444;
+}
+
+.send-text-input::placeholder {
+  color: #999;
+}
+
+.send-error-msg {
+  display: block;
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: 4px;
+}
+
+.send-toggle-group {
+  display: flex;
+  gap: 8px;
+}
+
+.send-toggle-btn {
+  flex: 1;
+  height: 38px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  background: #fafafa;
+  border: 1px solid #eaeaea;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.send-toggle-btn:hover {
+  background: #f5f5f5;
+}
+
+.send-toggle-btn.active {
+  background: #171717;
+  border-color: #171717;
+  color: #fff;
+}
+
+.send-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #fafafa;
+  border-top: 1px solid #eaeaea;
+}
+
+.send-btn-cancel {
+  height: 40px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #171717;
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.send-btn-cancel:hover {
+  background: #f5f5f5;
+}
+
+.send-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: #171717;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.send-btn-primary:hover:not(:disabled) {
+  background: #000;
+}
+
+.send-btn-primary:disabled {
+  background: #d4d4d4;
+  cursor: not-allowed;
+}
+
+.spinner-sm-light {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 </style>

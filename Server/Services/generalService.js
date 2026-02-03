@@ -111,6 +111,7 @@ class GeneralService {
     }
     let whereClause = "";
     let params = [];
+    console.log("query QUERY QUERY>>>", query);
 
     if (query.id) {
       const idColumn = table === 'invoicing' ? 'invoicing_id' :
@@ -127,6 +128,10 @@ class GeneralService {
     } else if (query.project) {
       whereClause = "project_id = ?";
       params = [query.project];
+    } else if (query.marginPerProject) {
+      whereClause = "project = ?";
+      params = [query.marginPerProject];
+    
     } else if (query.allWarnings) {
       whereClause = "conflict_resolved IS NULL";
     } else {
@@ -134,6 +139,28 @@ class GeneralService {
     }
 
     const result = await General.patch(table, body, whereClause, params);
+
+    // When updating project margin, only update invoices that DON'T have a manual override
+    // Invoices with margin_override = 1 (or true) have been manually set and should not be changed
+    if (table === 'projects' && body.margin !== undefined && query.id) {
+      const projectId = parseInt(query.id);
+
+      // Only update invoices without margin_override (inherit project margin)
+      await General.patch(
+        'invoices',
+        { margin: body.margin },
+        'project = ? AND deleted_at IS NULL AND (margin_override IS NULL OR margin_override = 0)',
+        [projectId]
+      );
+
+      // Emit invoice update event for all project invoices
+      if (eventSystem) {
+        eventSystem.emitInvoice('bulk_update', {
+          project: projectId,
+          margin: body.margin
+        });
+      }
+    }
 
     // Emit real-time event for successful update
     if (eventSystem && result) {

@@ -1,9 +1,24 @@
 <template> 
   <div class="margin-setter">
     <div class="margin-control">
-      <button class="stepper-btn" @click.stop="decrementMargin">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="5" y1="12" x2="19" y2="12"></line>
+      <button
+        class="stepper-btn"
+        @click.stop="decrementMargin"
+      >
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line
+            x1="5"
+            y1="12"
+            x2="19"
+            y2="12"
+          />
         </svg>
       </button>
       <div class="margin-value">
@@ -17,33 +32,87 @@
         >
         <span class="percent-sign">%</span>
       </div>
-      <button class="stepper-btn" @click.stop="incrementMargin">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
+      <button
+        class="stepper-btn"
+        @click.stop="incrementMargin"
+      >
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line
+            x1="12"
+            y1="5"
+            x2="12"
+            y2="19"
+          />
+          <line
+            x1="5"
+            y1="12"
+            x2="19"
+            y2="12"
+          />
         </svg>
       </button>
     </div>
     
-    <div v-if="marginChangedMap[item.issuer]" class="action-buttons">
+    <div
+      v-if="marginChangedMap[item.issuer]"
+      class="action-buttons"
+    >
       <button
         class="action-btn save"
         :disabled="loading"
         @click.stop="saveMargin(item)"
       >
-        <svg v-if="!loading" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-          <polyline points="20 6 9 17 4 12"></polyline>
+        <svg
+          v-if="!loading"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+        >
+          <polyline points="20 6 9 17 4 12" />
         </svg>
-        <v-progress-circular v-else indeterminate size="12" width="2" color="white" />
+        <v-progress-circular
+          v-else
+          indeterminate
+          size="12"
+          width="2"
+          color="white"
+        />
       </button>
       <button
         class="action-btn cancel"
         :disabled="loading"
         @click.stop="cancelMargin(item)"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line
+            x1="18"
+            y1="6"
+            x2="6"
+            y2="18"
+          />
+          <line
+            x1="6"
+            y1="6"
+            x2="18"
+            y2="18"
+          />
         </svg>
       </button>
     </div>
@@ -62,18 +131,21 @@ const props = defineProps({
 
 const emit = defineEmits(['marginUpdate']);
 
-const localMargin = ref(props.item?.weightedMargin || 0);
+// Use Math.round to ensure the initial value is an integer
+const localMargin = ref(Math.round(props.item?.weightedMargin || 0));
 const marginChangedMap = ref({});
 const loading = ref(false);
 
 const onMarginChange = () => {
-  marginChangedMap.value[props.item.issuer] = localMargin.value !== props.item.weightedMargin;
+  // Ensure we compare integers by rounding the prop value during comparison
+  marginChangedMap.value[props.item.issuer] = localMargin.value !== Math.round(props.item.weightedMargin);
 };
 
 watch(() => localMargin.value, () => onMarginChange());
 
 watch(() => props.item?.weightedMargin, (newVal) => {
-  localMargin.value = newVal || 0;
+  // Round the incoming prop value to remove decimals
+  localMargin.value = Math.round(newVal || 0);
 });
 
 const incrementMargin = () => {
@@ -94,7 +166,10 @@ const saveMargin = async (item) => {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/patch/invoices?margin=${JSON.stringify(query)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ margin: localMargin.value })
+      body: JSON.stringify({ 
+        margin: localMargin.value,
+        margin_override: 1
+      })
     });
     
     if (!res.ok) {
@@ -105,13 +180,15 @@ const saveMargin = async (item) => {
     marginChangedMap.value[item.issuer] = false;
     emit('marginUpdate', localMargin.value);
   } catch (err) {
+    console.error(err);
   } finally {
     loading.value = false;
   }
 };
 
 const cancelMargin = (item) => {
-  localMargin.value = item.weightedMargin || 0;
+  // Round the value when resetting/canceling
+  localMargin.value = Math.round(item.weightedMargin || 0);
   marginChangedMap.value[item.issuer] = false;
 };
 </script>

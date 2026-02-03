@@ -209,27 +209,120 @@ export const invoices = defineStore(
       id: entry.invoicing_id ?? entry.payment_id,
       project: projectId,
       amount: Number(entry.amount),
+      invoice_number: entry.invoice_number || null,
       created_on: entry.created_on,
     });
 
-    const addRevenueEntry = async (table, projectId, amount) => {
-      console.log("project_id", projectId);
+    // Create invoicing entry with optional invoice_number
+    const createInvoicing = async (projectId, amount, invoiceNumber = null) => {
+      const payload = { project: projectId, amount }
+      if (invoiceNumber) payload.invoice_number = invoiceNumber
       
-      const res = await fetch(`${API}/invoice/post-general/${table}`, {
+      const res = await fetch(`${API}/invoice/post-general/invoicing`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Failed to create invoicing entry");
+
+      const data = await res.json();
+      const entry = normalizeRevenueEntry(data.newGeneral, projectId);
+
+      if (!entry.id) throw new Error("Invalid invoicing entry ID");
+
+      invoicing.value.push(entry);
+      return entry;
+    };
+
+    // Create payment entry
+    const createPayment = async (projectId, amount) => {
+      const res = await fetch(`${API}/invoice/post-general/payments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ project: projectId, amount }),
       });
 
-      if (!res.ok) throw new Error("Failed to create revenue entry");
+      if (!res.ok) throw new Error("Failed to create payment entry");
 
       const data = await res.json();
       const entry = normalizeRevenueEntry(data.newGeneral, projectId);
 
-      if (!entry.id) throw new Error("Invalid revenue entry ID");
+      if (!entry.id) throw new Error("Invalid payment entry ID");
 
-      (table === "invoicing" ? invoicing.value : payments.value).push(entry);
+      payments.value.push(entry);
       return entry;
+    };
+
+    // Update invoicing entry with optional invoice_number
+    const updateInvoicing = async (entryId, newAmount, invoiceNumber = null) => {
+      const payload = { amount: newAmount }
+      if (invoiceNumber !== null) payload.invoice_number = invoiceNumber
+      
+      const res = await fetch(
+        `${API}/invoice/patch/invoicing?id=${entryId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to update invoicing entry");
+
+      const item = invoicing.value.find((e) => e.id === entryId);
+      if (item) {
+        item.amount = Number(newAmount);
+        if (invoiceNumber !== null) item.invoice_number = invoiceNumber;
+      }
+    };
+
+    // Update payment entry
+    const updatePayment = async (entryId, newAmount) => {
+      const res = await fetch(
+        `${API}/invoice/patch/payments?id=${entryId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: newAmount }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to update payment entry");
+
+      const item = payments.value.find((e) => e.id === entryId);
+      if (item) item.amount = Number(newAmount);
+    };
+
+    // Delete invoicing entry
+    const deleteInvoicing = async (entryId) => {
+      const res = await fetch(
+        `${API}/invoice/delete/invoicing/${entryId}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) throw new Error("Failed to delete invoicing entry");
+      invoicing.value = invoicing.value.filter((e) => e.id !== entryId);
+    };
+
+    // Delete payment entry
+    const deletePayment = async (entryId) => {
+      const res = await fetch(
+        `${API}/invoice/delete/payments/${entryId}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) throw new Error("Failed to delete payment entry");
+      payments.value = payments.value.filter((e) => e.id !== entryId);
+    };
+
+    // Legacy function for backwards compatibility
+    const addRevenueEntry = async (table, projectId, amount) => {
+      if (table === "invoicing") {
+        return createInvoicing(projectId, amount);
+      } else {
+        return createPayment(projectId, amount);
+      }
     };
 
     const updateRevenueEntry = async (table, entryId, newAmount) => {
@@ -265,6 +358,40 @@ export const invoices = defineStore(
     };
 
     /* --------------------------------------------------
+     * Margin Helpers (Centralized Logic)
+     * -------------------------------------------------- */
+
+    /**
+     * Get effective margin for an invoice
+     * Priority: 1) invoice.margin (if override) 2) project.margin 3) 0
+     */
+    const getEffectiveMargin = (invoice, projectMargin = 0) => {
+      // If invoice has margin_override set, use its margin
+      if (invoice.margin_override === 1 || invoice.margin_override === true) {
+        return Number(invoice.margin) || 0;
+      }
+      // Otherwise, use project margin (or invoice margin if same as project)
+      return Number(invoice.margin) || Number(projectMargin) || 0;
+    };
+
+    /**
+     * Get project margin from first invoice in project
+     */
+    const getProjectMargin = (projectId) => {
+      const projectData = dbResponse.value.find(
+        inv => inv.project_id === projectId || inv.project === projectId
+      );
+      return Number(projectData?.margin) || 0;
+    };
+
+    /**
+     * Calculate total with margin applied
+     */
+    const calculateTotalWithMargin = (amount, margin) => {
+      return Number(amount) * (1 + Number(margin) / 100);
+    };
+
+    /* --------------------------------------------------
      * Exports
      * -------------------------------------------------- */
 
@@ -280,14 +407,24 @@ export const invoices = defineStore(
       getAmounts,
       getActiveEmails,
       setPaymentsData,
-      refreshInvoices, // NEW: Export the refresh method
+      refreshInvoices,
 
       // Invoice CRUD
       createInvoice,
       updateInvoice,
       deleteInvoice,
 
-      // Revenue CRUD (SAFE & GUARANTEED)
+      // Invoicing CRUD (with invoice_number support)
+      createInvoicing,
+      updateInvoicing,
+      deleteInvoicing,
+
+      // Payment CRUD
+      createPayment,
+      updatePayment,
+      deletePayment,
+
+      // Revenue CRUD (legacy - backwards compatibility)
       addRevenueEntry,
       updateRevenueEntry,
       deleteRevenueEntry,
@@ -295,6 +432,11 @@ export const invoices = defineStore(
       // Optimistic
       removeProjectOptimistic,
       addProjectOptimistic,
+
+      // Margin Helpers
+      getEffectiveMargin,
+      getProjectMargin,
+      calculateTotalWithMargin,
 
       // Realtime status
       isConnected: realtimeStore.isConnected,

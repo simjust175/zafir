@@ -1,18 +1,27 @@
 <template>
-  <div class="table-container">
-    <div class="table-header">
-      <div class="header-left">
-        <h1 class="project-title">
-          {{ capitalizeName(projectName) }}
-        </h1>
-        <span class="supplier-count">{{ groupedInvoices.length }} suppliers</span>
+  <div class="table-surface">
+    <header class="table-header">
+      <div class="header-identity">
+        <div class="title-row">
+          <h1 class="project-title">
+            {{ projectName }}
+          </h1>
+        </div>
+        <span class="supplier-meta">{{ groupedInvoices.length }} {{ groupedInvoices.length === 1 ? 'supplier' : 'suppliers' }}</span>
       </div>
-      <div class="header-right">
-        <div class="search-wrapper">
+      <div class="header-controls">
+        <ProjectMarginControl
+          :project-id="project_id"
+          :project-name="projectName"
+          :margin-value="currentProjectMargin"
+          :invoice-count="projectInvoices.length"
+          @saved="handleMarginSaved"
+        />
+        <div class="search-field">
           <svg
             class="search-icon"
-            width="16"
-            height="16"
+            width="15"
+            height="15"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -34,10 +43,10 @@
             v-model="search"
             type="text"
             class="search-input"
-            placeholder="Search..."
+            placeholder="Search suppliers..."
           >
         </div>
-        <div class="action-buttons">
+        <div class="header-actions">
           <download-file
             :grouped-invoices="groupedInvoices"
             :project-name="projectName"
@@ -54,135 +63,51 @@
             :total="overallTotalWithMargin"
             :print="true"
           />
-          <!-- projectInvoicing NOT projectInvoices -->
           <SendInvoice
-            :grouped-invoices="projectInvoicing"
+            :grouped-invoices="groupedInvoices"
             :project-name="projectName"
             :current-project-id="project_id"
             :payments="projectPayments"
             :double-checked="allInvoicesChecked"
-            :total="totalInvoicedAmount"
+            :total="overallTotalWithMargin"
+            :invoicing-entries="projectInvoicing"
+            :project-margin="currentProjectMargin"
             @refresh-data="refreshComputedData"
           />
           <table-parent-toolbar-menu :project="invoiceArray" />
         </div>
       </div>
-    </div>
+    </header>
 
     <router-link
       :to="`/billing/${project_id}/revenue`"
-      class="revenue-metrics-strip-link"
+      class="metrics-link"
     >
-      <div class="revenue-metrics-strip">
-        <div class="metric-item invoiced">
-          <!-- <div class="metric-icon-wrap">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line
-                x1="16"
-                y1="13"
-                x2="8"
-                y2="13"
-              />
-              <line
-                x1="16"
-                y1="17"
-                x2="8"
-                y2="17"
-              />
-            </svg>
-          </div> -->
-          <div class="metric-content">
-            <span class="metric-label">Total Invoiced</span>
-            <span class="metric-value">{{ formatCurrency(totalInvoicedAmount) }}</span>
-          </div>
-          <!-- <div class="metric-badge">
-            {{ projectInvoicing.length }}
-          </div> -->
+      <div class="metrics-bar">
+        <div class="metric-block">
+          <span class="metric-label">Total Invoiced</span>
+          <span class="metric-figure">{{ formatCurrency(totalInvoicedAmount) }}</span>
         </div>
-        <div class="metric-divider" />
-        <div class="metric-item paid">
-          <!-- <div class="metric-icon-wrap paid">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-          </div> -->
-          <div class="metric-content">
-            <span class="metric-label">Total Paid</span>
-            <span class="metric-value success">{{ formatCurrency(totalPaidAmount) }}</span>
-          </div>
-          <!-- <div class="metric-badge success">
-            {{ projectPayments.length }}
-          </div> -->
+        <div class="metric-separator" />
+        <div class="metric-block">
+          <span class="metric-label">Total Paid</span>
+          <span class="metric-figure success">{{ formatCurrency(totalPaidAmount) }}</span>
         </div>
-        <div class="metric-divider" />
-        <div
-          class="metric-item balance"
-          :class="{ positive: outstandingBalance <= 0 }"
-        >
-          <!-- <div
-            class="metric-icon-wrap balance"
-            :class="{ positive: outstandingBalance <= 0 }"
+        <div class="metric-separator" />
+        <div class="metric-block">
+          <span class="metric-label">Outstanding</span>
+          <span
+            class="metric-figure"
+            :class="{ success: outstandingBalance <= 0 }"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle
-                cx="12"
-                cy="12"
-                r="10"
-              />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-          </div> -->
-          <div class="metric-content">
-            <span class="metric-label">Outstanding</span>
-            <span
-              class="metric-value"
-              :class="{ positive: outstandingBalance <= 0 }"
-            >{{ formatCurrency(Math.abs(outstandingBalance)) }}</span>
-          </div>
-          <!-- <div
-            v-if="totalInvoicedAmount > 0"
-            class="collection-indicator"
-          >
-            <div class="collection-bar">
-              <div
-                class="collection-fill"
-                :style="{ width: `${collectionPercent}%` }"
-              />
-            </div>
-            <span class="collection-percent">{{ collectionPercent }}%</span>
-          </div> -->
+            {{ formatCurrency(Math.abs(outstandingBalance)) }}
+          </span>
         </div>
-        <div class="revenue-cta">
-          <span class="cta-text">Manage Revenue</span>
+        <div class="metric-cta">
+          <span>Manage Revenue</span>
           <svg
-            class="cta-arrow"
-            color="primary"
-            width="16"
-            height="16"
+            width="14"
+            height="14"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -194,10 +119,67 @@
       </div>
     </router-link>
 
-    <div class="table-content">
+    <div class="table-body">
+      <div
+        v-if="loading"
+        class="loading-container"
+      >
+        <div class="loading-spinner" />
+        <span>Loading...</span>
+      </div>
+
+      <div
+        v-else-if="filteredInvoices.length === 0"
+        class="empty-container"
+      >
+        <div class="empty-visual">
+          <div class="empty-shape">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <polyline
+                points="17 8 12 3 7 8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <line
+                x1="12"
+                y1="3"
+                x2="12"
+                y2="15"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+        <h3 class="empty-heading">
+          No invoices yet
+        </h3>
+        <p class="empty-text">
+          Upload your first invoice to begin tracking costs for this project.
+        </p>
+        <router-link
+          to="/upload"
+          class="empty-action"
+        >
+          Upload invoice
+        </router-link>
+      </div>
+
       <table
-        v-if="!loading && filteredInvoices.length > 0"
-        class="invoice-table"
+        v-else
+        class="data-table"
       >
         <thead>
           <tr>
@@ -205,18 +187,18 @@
               class="col-supplier"
               @click="sortBy('issuer')"
             >
-              <span class="th-content">
+              <span class="th-label">
                 Supplier
                 <svg
                   v-if="sortKey === 'issuer'"
-                  class="sort-icon"
+                  class="sort-indicator"
                   :class="{ desc: sortOrder === 'desc' }"
-                  width="12"
-                  height="12"
+                  width="10"
+                  height="10"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="2"
+                  stroke-width="2.5"
                 >
                   <polyline points="18 15 12 9 6 15" />
                 </svg>
@@ -226,18 +208,18 @@
               class="col-amount"
               @click="sortBy('totalAmount')"
             >
-              <span class="th-content">
+              <span class="th-label">
                 Amount
                 <svg
                   v-if="sortKey === 'totalAmount'"
-                  class="sort-icon"
+                  class="sort-indicator"
                   :class="{ desc: sortOrder === 'desc' }"
-                  width="12"
-                  height="12"
+                  width="10"
+                  height="10"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="2"
+                  stroke-width="2.5"
                 >
                   <polyline points="18 15 12 9 6 15" />
                 </svg>
@@ -250,18 +232,18 @@
               class="col-total"
               @click="sortBy('totalWithMargin')"
             >
-              <span class="th-content">
+              <span class="th-label">
                 Total
                 <svg
                   v-if="sortKey === 'totalWithMargin'"
-                  class="sort-icon"
+                  class="sort-indicator"
                   :class="{ desc: sortOrder === 'desc' }"
-                  width="12"
-                  height="12"
+                  width="10"
+                  height="10"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="2"
+                  stroke-width="2.5"
                 >
                   <polyline points="18 15 12 9 6 15" />
                 </svg>
@@ -270,14 +252,14 @@
             <th class="col-status">
               Status
             </th>
-            <th class="col-action" />
+            <th class="col-chevron" />
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="group in filteredInvoices"
             :key="group.issuer"
-            class="invoice-row"
+            class="data-row"
             :class="{ highlighted: updatedIssuer === group.issuer }"
             @click="openInvoiceDialog(group)"
           >
@@ -289,14 +271,14 @@
                 >
                   {{ getInitials(group.issuer) }}
                 </div>
-                <div class="supplier-info">
+                <div class="supplier-details">
                   <span class="supplier-name">{{ group.issuer }}</span>
-                  <span class="invoice-meta">{{ group.invoices.length }} invoice{{ group.invoices.length !== 1 ? 's' : '' }}</span>
+                  <span class="invoice-count">{{ group.invoices.length }} invoice{{ group.invoices.length !== 1 ? 's' : '' }}</span>
                 </div>
               </div>
             </td>
             <td class="col-amount">
-              <span class="amount-value">{{ formatCurrency(group.totalAmount) }}</span>
+              <span class="amount-text">{{ formatCurrency(group.totalAmount) }}</span>
             </td>
             <td
               class="col-margin"
@@ -308,20 +290,20 @@
               />
             </td>
             <td class="col-total">
-              <span class="total-value">{{ formatCurrency(group.totalWithMargin) }}</span>
+              <span class="total-text">{{ formatCurrency(group.totalWithMargin) }}</span>
             </td>
             <td class="col-status">
               <span
-                class="status-pill"
+                class="status-badge"
                 :class="group.allChecked ? 'verified' : 'pending'"
               >
                 {{ group.allChecked ? 'Verified' : 'Pending' }}
               </span>
             </td>
-            <td class="col-action">
+            <td class="col-chevron">
               <svg
-                width="16"
-                height="16"
+                width="14"
+                height="14"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -333,107 +315,15 @@
           </tr>
         </tbody>
       </table>
-
-      <div
-        v-else-if="loading"
-        class="state-container"
-      >
-        <v-progress-circular
-          indeterminate
-          color="#171717"
-          size="24"
-          width="2"
-        />
-        <p>Loading...</p>
-      </div>
-
-      <div
-        v-else
-        class="empty-state-container"
-      >
-        <div class="empty-state-content">
-          <div class="empty-illustration">
-            <div class="illustration-wrapper">
-              <div class="illustration-glow" />
-              <div class="illustration-circle">
-                <svg
-                  class="illustration-icon"
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <path
-                    d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                  <polyline
-                    points="17 8 12 3 7 8"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                  <line
-                    x1="12"
-                    y1="3"
-                    x2="12"
-                    y2="15"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-        
-
-          <h3 class="empty-title">
-            No invoices yet
-          </h3>
-          <p class="empty-description">
-            Upload your first invoice to begin tracking costs and margins for this project.
-          </p>
-
-          <router-link
-            to="/upload"
-            class="empty-upload-btn"
-          >
-            Upload invoice
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <line
-                x1="5"
-                y1="12"
-                x2="19"
-                y2="12"
-              />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
-          </router-link>
-        </div>
-      </div>
     </div>
 
-    <div class="table-footer">
-      <span class="footer-count">{{ filteredInvoices.length }} of {{ groupedInvoices.length }} suppliers</span>
+    <footer class="table-footer">
+      <span class="footer-meta">{{ filteredInvoices.length }} of {{ groupedInvoices.length }} suppliers</span>
       <div class="footer-total">
         <span class="total-label">Total</span>
-        <span class="total-amount">{{ formatCurrency(overallTotalWithMargin) }}</span>
+        <span class="total-figure">{{ formatCurrency(overallTotalWithMargin) }}</span>
       </div>
-    </div>
+    </footer>
 
     <InvoiceDetails
       :invoices="selectedInvoices"
@@ -455,6 +345,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { invoices as invoiceStore } from '@/stores/invoiceState.js';
 import socket from '@/socket.js';
+import ProjectMarginControl from './ProjectMarginControl.vue';
 
 const props = defineProps({
   invoices: { type: Array, default: () => [] },
@@ -467,9 +358,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['amountUpdate']);
-const capitalizeName = s =>
-  s ? s[0].toUpperCase() + s.slice(1) : "";
-
 const invoiceArray = invoiceStore();
 
 const search = ref('');
@@ -487,10 +375,8 @@ const sortOrder = ref('asc');
 
 const avatarColors = ['#171717','#374151','#1e40af','#047857','#7c3aed','#be185d','#b45309','#0369a1','#4338ca','#0f766e'];
 
-// Reactive search
 watch(() => props.searchVal, (newVal) => search.value = newVal || '');
 
-// --- COMPUTED SAFE SOURCES ---
 const projectInvoices = computed(() => {
   const map = new Map();
   invoiceArray.dbResponse
@@ -569,11 +455,14 @@ const collectionPercent = computed(() => {
 
 const allInvoicesChecked = computed(() => {
   const projInv = projectInvoices.value;
-  
   return projInv.length > 0 && projInv.every(i => i.double_checked !== null);
 });
 
-// --- UTILITY FUNCTIONS ---
+const currentProjectMargin = computed(() => {
+  const projectData = invoiceArray.dbResponse?.find(inv => inv.project_id === props.project_id || inv.project === props.project_id);
+  return Number(projectData?.margin) || 0;
+});
+
 const formatCurrency = (value) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(Number(value) || 0);
 
 const getInitials = (name) => {
@@ -587,7 +476,15 @@ const getAvatarColor = (name) => {
   return avatarColors[hash % avatarColors.length];
 };
 
-// --- ACTIONS ---
+const sortBy = (key) => {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey.value = key;
+    sortOrder.value = 'asc';
+  }
+};
+
 const openInvoiceDialog = (group) => {
   if (!group) return;
   selectedInvoices.value = group.invoices;
@@ -600,14 +497,31 @@ const updateMargin = (group, newMargin) => {
   });
 };
 
-const refreshComputedData = () => {
-  // Reactive, safe: nothing else needed as projectInvoices/groupedInvoices recompute automatically
+const handleMarginSaved = ({ margin, projectId }) => {
+  // Update margin for invoices without override in local state
+  invoiceArray.dbResponse?.filter(inv => 
+    (inv.project_id === projectId || inv.project === projectId) &&
+    !inv.margin_override
+  ).forEach(inv => {
+    inv.margin = margin;
+  });
+  
+  const updatedCount = projectInvoices.value.filter(inv => !inv.margin_override).length;
+  
+  snackBarLabel.value = updatedCount > 0 
+    ? `Margin set to ${margin}% for ${updatedCount} invoice${updatedCount !== 1 ? 's' : ''}`
+    : `Project margin set to ${margin}%`;
+  snackBarColor.value = 'success';
+  snackBarIcon.value = 'mdi-check';
+  SnackBarTrigger.value = true;
+  setTimeout(() => (SnackBarTrigger.value = false), 3500);
 };
+
+const refreshComputedData = () => {};
 
 const handleNewInvoice = (invoice) => {
   if (!invoice) return;
   if (!invoice.invoice_id) return;
-  // Inject safely into store, deduplicated
   if (!invoiceArray.dbResponse.find(i => i.invoice_id === invoice.invoice_id)) {
     invoiceArray.dbResponse.unshift({ ...invoice, amount: Number(invoice.amount), margin: Number(invoice.margin || 0) });
   }
@@ -615,7 +529,6 @@ const handleNewInvoice = (invoice) => {
   setTimeout(() => (updatedIssuer.value = null), 1500);
 };
 
-// --- LIFECYCLE ---
 onMounted(() => {
   loading.value = false;
   socket.off('new-invoice');
@@ -631,51 +544,91 @@ watch(() => props.refreshing, () => { loading.value = false; });
 </script>
 
 <style scoped>
-.table-container {
+.table-surface {
   display: flex;
   flex-direction: column;
   height: 100%;
-   background: rgb(var(--v-theme-background));
-  color: rgb(var(--v-theme-on-surface));
+  background: rgb(var(--v-theme-surface));
 }
 
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  background: rgb(var(--v-theme-surface));
-  border-bottom: 1px solid #eaeaea;
+  padding: 24px 28px;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
-.header-left {
+.header-identity {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .project-title {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 600;
-  /* color: #171717; */
   color: rgb(var(--v-theme-on-surface));
   margin: 0;
   letter-spacing: -0.02em;
+  text-transform: capitalize;
 }
 
-.supplier-count {
-  font-size: 13px;
-  /* color: #666; */
-  color: rgb(var(--v-theme-on-surface-variant));
+.margin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6366f1;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.header-right {
+.margin-badge:hover {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  transform: translateY(-1px);
+}
+
+.add-margin-btn {
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgb(var(--v-theme-grey-500));
+  background: rgba(var(--v-theme-on-surface), 0.04);
+  border: 1px dashed rgba(var(--v-theme-on-surface), 0.15);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-margin-btn:hover {
+  color: rgb(var(--v-theme-on-surface));
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  border-color: rgba(var(--v-theme-on-surface), 0.25);
+}
+
+.supplier-meta {
+  font-size: 0.8125rem;
+  color: rgb(var(--v-theme-grey-500));
+}
+
+.header-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
-.search-wrapper {
+.search-field {
   position: relative;
   display: flex;
   align-items: center;
@@ -683,412 +636,249 @@ watch(() => props.refreshing, () => { loading.value = false; });
 
 .search-icon {
   position: absolute;
-  left: 10px;
-  color: #999;
-  /* color: rgb(var(--v-theme-on-surface-variant)); */
+  left: 12px;
+  color: rgb(var(--v-theme-grey-400));
   pointer-events: none;
 }
 
 .search-input {
-  width: 200px;
-  height: 36px;
-  padding: 0 12px 0 36px;
-  border: 1px solid #eaeaea;
-  border-radius: 8px;
-  font-size: 14px;
-  /* color: #171717;
-  background: #fafafa; */
-  background: rgb(var(--v-theme-surface-variant));
+  width: 220px;
+  height: 38px;
+  padding: 0 14px 0 40px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
+  border-radius: 10px;
+  font-size: 0.875rem;
   color: rgb(var(--v-theme-on-surface));
-  transition: all 0.2s ease;
+  background: rgba(var(--v-theme-on-surface), 0.02);
+  transition: all 0.15s ease;
 }
 
 .search-input:focus {
   outline: none;
-  /* border-color: #171717; */
-  border-color: rgb(var(--v-theme-primary));
-
-  /* background: #fff; */
+  border-color: rgb(var(--v-theme-on-surface));
   background: rgb(var(--v-theme-surface));
 }
 
 .search-input::placeholder {
-  color: #999;
+  color: rgb(var(--v-theme-grey-400));
 }
 
-.action-buttons {
+.header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
-.metrics-section {
-  border-bottom: 1px solid #eaeaea;
-}
-
-.revenue-metrics-strip-link {
+.metrics-link {
   display: block;
   text-decoration: none;
-  transition: all 0.2s ease;
 }
 
-.revenue-metrics-strip-link:hover .revenue-metrics-strip {
-  background: linear-gradient(180deg, #f5f5f5 0%, #fafafa 100%);
-  border-bottom-color: #d4d4d4;
+.metrics-link:hover .metrics-bar {
+  background: rgba(var(--v-theme-on-surface), 0.03);
 }
 
-.revenue-metrics-strip-link:hover .revenue-cta {
+.metrics-link:hover .metric-cta {
   opacity: 1;
-  transform: translateX(0);
 }
 
-.revenue-metrics-strip-link:hover .cta-arrow {
-  transform: translateX(4px);
+.metrics-link:hover .metric-cta svg {
+  transform: translateX(2px);
 }
 
-/* .revenue-metrics-strip {
+.metrics-bar {
   display: flex;
   align-items: center;
-  gap: 0;
-  padding: 16px 24px;
-  background: linear-gradient(180deg, #fafafa 0%, #fff 100%);
-  border-bottom: 1px solid #eaeaea;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-} */
-
-.revenue-metrics-strip {
-  display: flex;
-  align-items: center;
-  padding: 16px 24px;
-  background: #fafafa;
-  /* background: rgb(var(--v-theme-surface-variant)); */
-  /* background: linear-gradient(180deg, #fafafa 0%, #fff 100%); */
-
-  border-bottom: 1px solid #eaeaea;
-  gap: 0;
+  padding: 20px 28px;
+  background: rgba(var(--v-theme-on-surface), 0.015);
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+  transition: background 0.15s ease;
 }
 
-.metric-item {
-  flex: 1;
+.metric-block {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 0 20px;
+  padding: 0 24px;
+}
+
+.metric-block:first-child {
+  padding-left: 0;
 }
 
 .metric-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #666;
+  letter-spacing: 0.04em;
+  color: rgb(var(--v-theme-grey-500));
 }
 
-.metric-value {
-  font-size: 18px;
+.metric-figure {
+  font-size: 1.125rem;
   font-weight: 600;
-  color: #171717;
-}
-
-.metric-value.success {
-  color: #059669;
-}
-
-.metric-value.positive {
-  color: #059669;
-}
-
-.metric-divider {
-  width: 1px;
-  height: 36px;
-  background: #e5e5e5;
-}
-
-/* ad kan older design */
-
-.revenue-cta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  padding: 8px 16px 8px 20px;
-  background: linear-gradient(135deg, #171717 0%, #262626 100%);
-  border-radius: 100px;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0.85;
-  transform: translateX(8px);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.cta-text {
+  color: rgb(var(--v-theme-on-surface));
   letter-spacing: -0.01em;
 }
 
-.cta-arrow {
-  transition: transform 0.2s ease;
-  opacity: 0.8;
+.metric-figure.success {
+  color: rgb(var(--v-theme-success));
 }
 
-/* .metric-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 20px;
-  flex: 1;
-} */
-
-.metric-divider {
+.metric-separator {
   width: 1px;
-  height: 40px;
-  background: linear-gradient(180deg, transparent 0%, #e5e5e5 50%, transparent 100%);
+  height: 32px;
+  background: rgba(var(--v-theme-on-surface), 0.08);
 }
 
-.metric-icon-wrap {
-  width: 40px;
-  height: 40px;
+.metric-cta {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-  border-radius: 10px;
-  color: #6366f1;
-  flex-shrink: 0;
-}
-
-.metric-icon-wrap.paid {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  color: #10b981;
-}
-
-.metric-icon-wrap.balance {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  color: #f59e0b;
-}
-
-.metric-icon-wrap.balance.positive {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  color: #10b981;
-}
-
-.metric-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-/* .metric-label {
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #737373;
-}
-
-.metric-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #171717;
-  letter-spacing: -0.02em;
-} */
-
-.metric-value.success {
-  color: #10b981;
-}
-
-.metric-value.positive {
-  color: #10b981;
-}
-
-.metric-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #6366f1;
-  background: #eef2ff;
-  border-radius: 6px;
-}
-
-.metric-badge.success {
-  color: #10b981;
-  background: #ecfdf5;
-}
-
-.collection-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-left: auto;
+  padding: 10px 16px;
+  background: rgb(var(--v-theme-on-surface));
+  color: rgb(var(--v-theme-surface));
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  opacity: 0.9;
+  transition: opacity 0.15s ease;
 }
 
-.collection-bar {
-  width: 60px;
-  height: 6px;
-  background: #f0f0f0;
-  border-radius: 3px;
-  overflow: hidden;
+.metric-cta svg {
+  transition: transform 0.15s ease;
 }
 
-.collection-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.collection-percent {
-  font-size: 12px;
-  font-weight: 600;
-  color: #10b981;
-  min-width: 32px;
-}
-
-@media (max-width: 1024px) {
-  .revenue-metrics-strip {
-    padding: 12px 16px;
-    gap: 0;
-  }
-  
-  .metric-item {
-    padding: 6px 12px;
-  }
-  
-  .metric-value {
-    font-size: 16px;
-  }
-  
-  .collection-indicator {
-    display: none;
-  }
-  
-  .revenue-cta {
-    padding: 6px 12px 6px 16px;
-    font-size: 12px;
-  }
-}
-
-@media (max-width: 768px) {
-  .revenue-metrics-strip {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  .metric-divider {
-    display: none;
-  }
-  
-  .metric-item {
-    flex: 1 1 calc(50% - 4px);
-    min-width: 140px;
-    padding: 10px 12px;
-    background: #fff;
-    border-radius: 10px;
-    border: 1px solid #f0f0f0;
-  }
-  
-  .metric-item.balance {
-    flex: 1 1 100%;
-  }
-  
-  .revenue-cta {
-    flex: 1 1 100%;
-    justify-content: center;
-    margin-top: 4px;
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .revenue-metrics-strip {
-    padding: 10px 12px;
-  }
-  
-  .metric-item {
-    flex: 1 1 100%;
-    gap: 10px;
-  }
-  
-  .metric-icon-wrap {
-    width: 36px;
-    height: 36px;
-  }
-  
-  .metric-icon-wrap svg {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .metric-value {
-    font-size: 15px;
-  }
-  
-  .metric-badge {
-    display: none;
-  }
-  
-  .revenue-cta {
-    padding: 10px 16px;
-    font-size: 13px;
-  }
-}
-
-.table-content {
+.table-body {
   flex: 1;
   overflow-y: auto;
 }
 
-.invoice-table {
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  gap: 12px;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(var(--v-theme-on-surface), 0.1);
+  border-top-color: rgb(var(--v-theme-on-surface));
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-container span {
+  font-size: 0.875rem;
+  color: rgb(var(--v-theme-grey-500));
+}
+
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.empty-visual {
+  margin-bottom: 20px;
+}
+
+.empty-shape {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: rgba(var(--v-theme-primary), 0.06);
+  border-radius: 14px;
+  color: rgb(var(--v-theme-primary));
+}
+
+.empty-heading {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: rgb(var(--v-theme-on-surface));
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+
+.empty-text {
+  font-size: 0.875rem;
+  color: rgb(var(--v-theme-grey-500));
+  margin: 0 0 24px;
+  max-width: 300px;
+  line-height: 1.5;
+}
+
+.empty-action {
+  display: inline-flex;
+  padding: 12px 20px;
+  background: rgb(var(--v-theme-on-surface));
+  color: rgb(var(--v-theme-surface));
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.empty-action:hover {
+  opacity: 0.88;
+}
+
+.data-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.invoice-table thead {
+.data-table thead {
   position: sticky;
   top: 0;
-  /* background: #fafafa; */
-   background: rgb(var(--v-theme-surface));
+  background: rgba(var(--v-theme-on-surface), 0.02);
   z-index: 10;
 }
 
-.invoice-table th {
-  padding: 12px 16px;
-  font-size: 11px;
-  font-weight: 500;
+.data-table th {
+  padding: 14px 20px;
+  font-size: 0.6875rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #666;
+  letter-spacing: 0.04em;
+  color: rgb(var(--v-theme-grey-500));
   text-align: left;
-  border-bottom: 1px solid #eaeaea;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
   cursor: pointer;
   user-select: none;
+  transition: color 0.12s ease;
 }
 
-.invoice-table th:hover {
-  color: #171717;
+.data-table th:hover {
+  color: rgb(var(--v-theme-on-surface));
 }
 
-.th-content {
+.th-label {
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
 
-.sort-icon {
-  transition: transform 0.2s ease;
+.sort-indicator {
+  transition: transform 0.15s ease;
 }
 
-.sort-icon.desc {
+.sort-indicator.desc {
   transform: rotate(180deg);
 }
 
@@ -1098,54 +888,54 @@ watch(() => props.refreshing, () => { loading.value = false; });
 }
 
 .col-margin,
-.col-status,
-.col-action {
+.col-status {
   text-align: center;
 }
 
-.col-action {
+.col-chevron {
   width: 48px;
+  text-align: center;
 }
 
-.invoice-row {
+.data-row {
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.12s ease;
 }
 
-.invoice-row:hover {
-  background: #fafafa;
+.data-row:hover {
+  background: rgba(var(--v-theme-on-surface), 0.02);
 }
 
-.invoice-row.highlighted {
-  background: #f0f9ff;
-  animation: highlight 1.5s ease;
+.data-row.highlighted {
+  background: rgba(var(--v-theme-primary), 0.04);
+  animation: row-highlight 1.5s ease;
 }
 
-@keyframes highlight {
-  0% { background: #dbeafe; }
-  100% { background: #f0f9ff; }
+@keyframes row-highlight {
+  0% { background: rgba(var(--v-theme-primary), 0.1); }
+  100% { background: rgba(var(--v-theme-primary), 0.04); }
 }
 
-.invoice-table td {
-  padding: 14px 16px;
-  font-size: 14px;
-  color: #171717;
-  border-bottom: 1px solid #f5f5f5;
+.data-table td {
+  padding: 16px 20px;
+  font-size: 0.875rem;
+  color: rgb(var(--v-theme-on-surface));
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.04);
   vertical-align: middle;
 }
 
 .supplier-cell {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .supplier-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   color: #fff;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -1153,7 +943,7 @@ watch(() => props.refreshing, () => { loading.value = false; });
   flex-shrink: 0;
 }
 
-.supplier-info {
+.supplier-details {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1161,94 +951,64 @@ watch(() => props.refreshing, () => { loading.value = false; });
 
 .supplier-name {
   font-weight: 500;
-  color: #171717;
+  color: rgb(var(--v-theme-on-surface));
 }
 
-.invoice-meta {
-  font-size: 12px;
-  color: #999;
+.invoice-count {
+  font-size: 0.75rem;
+  color: rgb(var(--v-theme-grey-400));
 }
 
-.amount-value {
-  color: #666;
+.amount-text {
+  color: rgb(var(--v-theme-grey-600));
 }
 
-.total-value {
+.total-text {
   font-weight: 600;
-  color: #171717;
+  color: rgb(var(--v-theme-on-surface));
 }
 
-.status-pill {
+.status-badge {
   display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 16px;
+  padding: 5px 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-radius: 6px;
 }
 
-.status-pill.verified {
-  background: #ecfdf5;
-  color: #059669;
+.status-badge.verified {
+  background: rgba(var(--v-theme-success), 0.1);
+  color: rgb(var(--v-theme-success));
 }
 
-.status-pill.pending {
-  background: #fffbeb;
-  color: #d97706;
+.status-badge.pending {
+  background: rgba(var(--v-theme-warning), 0.1);
+  color: rgb(var(--v-theme-warning));
 }
 
-.col-action svg {
-  color: #d4d4d4;
-  transition: color 0.15s ease;
+.col-chevron svg {
+  color: rgb(var(--v-theme-grey-300));
+  transition: color 0.12s ease;
 }
 
-.invoice-row:hover .col-action svg {
-  color: #999;
-}
-
-.state-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  text-align: center;
-}
-
-.state-container p {
-  margin-top: 12px;
-  font-size: 14px;
-  color: #999;
-}
-
-.state-container.empty .empty-icon {
-  color: #d4d4d4;
-  margin-bottom: 8px;
-}
-
-.state-container.empty h3 {
-  font-size: 15px;
-  font-weight: 500;
-  color: #171717;
-  margin: 0 0 4px;
-}
-
-.state-container.empty p {
-  margin: 0;
+.data-row:hover .col-chevron svg {
+  color: rgb(var(--v-theme-grey-500));
 }
 
 .table-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  background: #fafafa;
-  border-top: 1px solid #eaeaea;
+  padding: 18px 28px;
+  background: rgba(var(--v-theme-on-surface), 0.02);
+  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.06);
 }
 
-.footer-count {
-  font-size: 13px;
-  color: #666;
+.footer-meta {
+  font-size: 0.8125rem;
+  color: rgb(var(--v-theme-grey-500));
 }
 
 .footer-total {
@@ -1258,44 +1018,49 @@ watch(() => props.refreshing, () => { loading.value = false; });
 }
 
 .total-label {
-  font-size: 13px;
-  color: #666;
+  font-size: 0.8125rem;
+  color: rgb(var(--v-theme-grey-500));
 }
 
-.total-amount {
-  font-size: 20px;
+.total-figure {
+  font-size: 1.25rem;
   font-weight: 600;
-  color: #171717;
+  color: rgb(var(--v-theme-on-surface));
   letter-spacing: -0.02em;
 }
 
 @media (max-width: 1024px) {
-  .col-margin {
+  .col-margin,
+  .data-table td.col-margin {
     display: none;
   }
   
-  .invoice-table td.col-margin {
-    display: none;
+  .metrics-bar {
+    padding: 16px 20px;
+  }
+  
+  .metric-block {
+    padding: 0 16px;
   }
 }
 
 @media (max-width: 768px) {
   .table-header {
     flex-wrap: wrap;
-    gap: 12px;
-    padding: 16px;
+    gap: 16px;
+    padding: 20px;
   }
   
-  .header-left {
+  .header-identity {
     width: 100%;
   }
   
-  .header-right {
+  .header-controls {
     width: 100%;
     justify-content: space-between;
   }
   
-  .search-wrapper {
+  .search-field {
     flex: 1;
   }
   
@@ -1303,214 +1068,391 @@ watch(() => props.refreshing, () => { loading.value = false; });
     width: 100%;
   }
   
-  .action-buttons {
-    flex-shrink: 0;
+  .metrics-bar {
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px 20px;
   }
   
-  .invoice-table td,
-  .invoice-table th {
-    padding: 12px 8px;
-  }
-  
-  .col-status {
+  .metric-separator {
     display: none;
   }
   
-  .invoice-table td.col-status {
+  .metric-block {
+    flex: 1;
+    min-width: 100px;
+    padding: 0;
+  }
+  
+  .metric-cta {
+    flex: 1 1 100%;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  
+  .col-status,
+  .data-table td.col-status {
+    display: none;
+  }
+  
+  .data-table td,
+  .data-table th {
+    padding: 12px 12px;
+  }
+  
+  .table-footer {
+    padding: 14px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .col-amount,
+  .data-table td.col-amount {
     display: none;
   }
   
   .supplier-avatar {
     width: 32px;
     height: 32px;
-    font-size: 11px;
-  }
-  
-  .table-footer {
-    padding: 12px 16px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  .footer-total {
-    gap: 8px;
-  }
-  
-  .total-amount {
-    font-size: 18px;
-  }
-}
-
-@media (max-width: 480px) {
-  .action-buttons {
-    gap: 4px;
-  }
-  
-  .col-amount {
-    display: none;
-  }
-  
-  .invoice-table td.col-amount {
-    display: none;
+    font-size: 0.6875rem;
   }
   
   .supplier-cell {
-    gap: 8px;
-  }
-  
-  .supplier-name {
-    font-size: 13px;
-  }
-  
-  .invoice-meta {
-    font-size: 11px;
+    gap: 10px;
   }
 }
 
-.revenue-link {
-  text-decoration: none;
+.margin-dialog-premium {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
-.revenue-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #fff;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.margin-dialog-premium .margin-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.revenue-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-}
-
-.revenue-btn svg {
-  stroke: currentColor;
-}
-
-.empty-state-container {
+.margin-dialog-premium .header-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 80px 24px;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: #fff;
+  flex-shrink: 0;
 }
 
-.empty-state-content {
-  text-align: center;
-  max-width: 380px;
+.margin-dialog-premium .header-text {
+  flex: 1;
+  min-width: 0;
 }
 
-.empty-state-content .empty-illustration {
-  position: relative;
-  display: inline-block;
+.margin-dialog-premium .header-text h3 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f0f0f;
+  letter-spacing: -0.02em;
+}
+
+.margin-dialog-premium .header-text p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.margin-dialog-premium .close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.margin-dialog-premium .close-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.margin-dialog-premium .margin-dialog-body {
+  padding: 24px;
+}
+
+.margin-preview-card {
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+  padding: 16px 20px;
   margin-bottom: 24px;
 }
 
-.empty-state-content .illustration-wrapper {
-  position: relative;
-}
-
-.empty-state-content .illustration-glow {
-  position: absolute;
-  inset: -16px;
-  background: radial-gradient(circle, rgba(14, 165, 233, 0.06) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: subtle-glow 4s ease-in-out infinite;
-}
-
-@keyframes subtle-glow {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.03); }
-}
-
-.empty-state-content .illustration-circle {
-  width: 88px;
-  height: 88px;
-  background: rgb(236 236 253);
-  border: 1px solid rgba(99, 101, 241, 0.37);
-  border-radius: 22px;
+.preview-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 
-    0 1px 2px rgba(0, 0, 0, 0.02),
-    0 4px 16px rgba(14, 165, 233, 0.05);
+  justify-content: space-between;
 }
 
-.empty-state-content .illustration-icon {
-  color: rgb(99, 101, 241);
+.preview-label {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  font-weight: 500;
 }
 
-.empty-state-content .empty-badge {
-  display: inline-block;
-  padding: 5px 12px;
-  font-size: 11px;
+.preview-value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.preview-value.current {
+  color: #9ca3af;
+}
+
+.preview-value.new {
+  color: #0f0f0f;
+  transition: all 0.2s ease;
+}
+
+.preview-value.new.changed {
+  color: #7c3aed;
+}
+
+.preview-divider {
+  height: 1px;
+  background: #e5e5e5;
+  margin: 12px 0;
+}
+
+.margin-input-section {
+  margin-bottom: 20px;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.8125rem;
   font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #0ea5e9;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-radius: 100px;
-  margin-bottom: 14px;
+  letter-spacing: 0.05em;
 }
 
-.empty-state-content .empty-title {
-  font-size: 22px;
+.margin-slider-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.margin-slider {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(90deg, #e5e7eb 0%, #e5e7eb 100%);
+  border-radius: 3px;
+  outline: none;
+}
+
+.margin-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.margin-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.margin-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.margin-dialog-premium .margin-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.margin-dialog-premium .margin-input-wrapper:focus-within {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.margin-dialog-premium .margin-input {
+  flex: 1;
+  width: 50px;
+  height: 44px;
+  padding: 0 8px 0 12px;
+  font-size: 1.125rem;
   font-weight: 700;
   color: #0f0f0f;
-  margin: 0 0 10px;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  background: transparent;
+  border: none;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-.empty-state-content .empty-description {
-  font-size: 14px;
+.margin-dialog-premium .margin-input:focus {
+  outline: none;
+}
+
+.margin-dialog-premium .margin-suffix {
+  padding: 0 12px 0 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+.quick-presets {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: #6b7280;
-  line-height: 1.7;
-  margin: 0 0 28px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.empty-upload-btn {
+.preset-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.preset-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.info-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+}
+
+.info-callout svg {
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.info-callout span {
+  font-size: 0.8125rem;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.margin-dialog-premium .margin-dialog-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 20px 24px;
+  background: #fafafa;
+  border-top: 1px solid #f0f0f0;
+}
+
+.margin-dialog-premium .btn-cancel {
+  height: 44px;
+  padding: 0 24px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.margin-dialog-premium .btn-cancel:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.margin-dialog-premium .btn-save {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 13px 22px;
-  font-size: 14px;
+  gap: 8px;
+  height: 44px;
+  padding: 0 24px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #fff;
-  background: #0f0f0f;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   border-radius: 10px;
-  text-decoration: none;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
 }
 
-.empty-upload-btn:hover {
-  background: #171717;
+.margin-dialog-premium .btn-save:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  color: #fff;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
 }
 
-.empty-upload-btn:active {
-  transform: translateY(0);
+.margin-dialog-premium .btn-save:disabled {
+  background: #d1d5db;
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
-.empty-upload-btn svg {
-  stroke: currentColor;
-  transition: transform 0.2s ease;
-}
-
-.empty-upload-btn:hover svg {
-  transform: translateX(3px);
+.spinner-sm {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
 }
 </style>
