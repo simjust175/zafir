@@ -14,7 +14,6 @@
         <template #default>
           <AppShell>
             <OverlayComponent v-if="loading" :overlay-trigger="loading" />
-            <SessionBanner v-if="!loading" />
             <router-view v-if="!loading" v-slot="{ Component }">
               <component :is="Component" />
             </router-view>
@@ -50,7 +49,6 @@ import { invoices } from "@/stores/invoiceState.js"
 import { setupAutoLogout } from "@/stores/loginState"
 
 import OverlayComponent from "@/components/Utilities/OverlayComponent.vue"
-import SessionBanner from "@/components/Utilities/SessionBanner.vue"
 
 const AppShell = defineAsyncComponent(() => 
   import("@/components/layout/AppShell.vue")
