@@ -14,6 +14,9 @@ const addProjectDialog = ref(false)
 <style scoped>
 .projects-page {
   min-height: 100vh;
-  background: rgb(var(--v-theme-background));
+  background: linear-gradient(180deg, 
+    rgba(var(--v-theme-surface), 1) 0%,
+    rgba(var(--v-theme-background), 1) 100%
+  );
 }
 </style>

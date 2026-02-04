@@ -2,41 +2,21 @@
   <div class="upload-page">
     <div class="upload-container">
       <div class="page-header">
-        <h1 class="page-title">
-          AI Document Upload
-        </h1>
-        <p class="page-subtitle">
-          Intelligent invoice processing with automatic data extraction
-        </p>
+        <h1 class="page-title">AI Document Upload</h1>
+        <p class="page-subtitle">Intelligent invoice processing with automatic data extraction</p>
       </div>
 
-      <transition
-        name="fade-slide"
-        mode="out-in"
-      >
-        <div
-          v-if="stage === 'setup'"
-          key="setup"
-          class="stage-content"
-        >
+      <transition name="fade-slide" mode="out-in">
+        <div v-if="stage === 'setup'" key="setup" class="stage-content">
           <div class="setup-panel">
             <div class="setup-section project-section">
               <div class="section-header">
                 <div class="section-icon">
-                  <v-icon
-                    size="20"
-                    color="primary"
-                  >
-                    mdi-folder-outline
-                  </v-icon>
+                  <v-icon size="20" color="primary">mdi-folder-outline</v-icon>
                 </div>
                 <div class="section-info">
-                  <h3 class="section-title">
-                    Target Project
-                  </h3>
-                  <p class="section-hint">
-                    All documents will be assigned to this project
-                  </p>
+                  <h3 class="section-title">Target Project</h3>
+                  <p class="section-hint">All documents will be assigned to this project</p>
                 </div>
               </div>
               <select 
@@ -45,12 +25,7 @@
                 :class="{ 'has-error': projectError }"
                 :disabled="isProjectLocked"
               >
-                <option
-                  :value="null"
-                  disabled
-                >
-                  Select a project
-                </option>
+                <option :value="null" disabled>Select a project</option>
                 <option 
                   v-for="proj in projects" 
                   :key="proj.id" 
@@ -59,28 +34,12 @@
                   {{ proj.name }}
                 </option>
               </select>
-              <p
-                v-if="isProjectLocked"
-                class="field-locked-hint"
-              >
-                <v-icon
-                  size="14"
-                  color="grey"
-                >
-                  mdi-lock
-                </v-icon>
+              <p v-if="isProjectLocked" class="field-locked-hint">
+                <v-icon size="14" color="grey">mdi-lock</v-icon>
                 Project is locked during processing
               </p>
-              <p
-                v-if="projectError"
-                class="field-error"
-              >
-                <v-icon
-                  size="14"
-                  color="error"
-                >
-                  mdi-alert-circle
-                </v-icon>
+              <p v-if="projectError" class="field-error">
+                <v-icon size="14" color="error">mdi-alert-circle</v-icon>
                 Please select a project before uploading
               </p>
             </div>
@@ -88,20 +47,11 @@
             <div class="setup-section upload-section">
               <div class="section-header">
                 <div class="section-icon">
-                  <v-icon
-                    size="20"
-                    color="primary"
-                  >
-                    mdi-file-document-multiple-outline
-                  </v-icon>
+                  <v-icon size="20" color="primary">mdi-file-document-multiple-outline</v-icon>
                 </div>
                 <div class="section-info">
-                  <h3 class="section-title">
-                    Select Documents
-                  </h3>
-                  <p class="section-hint">
-                    Upload one or more invoices for AI processing
-                  </p>
+                  <h3 class="section-title">Select Documents</h3>
+                  <p class="section-hint">Upload one or more invoices for AI processing</p>
                 </div>
               </div>
 
@@ -123,27 +73,15 @@
                   multiple
                   hidden
                   @change="handleFileSelect"
-                >
+                />
 
-                <div
-                  v-if="documentQueue.length === 0"
-                  class="dropzone-empty"
-                >
+                <div v-if="documentQueue.length === 0" class="dropzone-empty">
                   <div class="dropzone-icon-wrapper">
-                    <div class="dropzone-icon-bg" />
-                    <v-icon
-                      size="32"
-                      color="primary"
-                    >
-                      mdi-cloud-upload-outline
-                    </v-icon>
+                    <div class="dropzone-icon-bg"></div>
+                    <v-icon size="32" color="primary">mdi-cloud-upload-outline</v-icon>
                   </div>
-                  <h3 class="dropzone-title">
-                    Drop invoices here
-                  </h3>
-                  <p class="dropzone-hint">
-                    or click to browse files
-                  </p>
+                  <h3 class="dropzone-title">Drop invoices here</h3>
+                  <p class="dropzone-hint">or click to browse files</p>
                   <div class="file-types">
                     <span class="file-type">PDF</span>
                     <span class="file-type">JPG</span>
@@ -151,19 +89,10 @@
                   </div>
                 </div>
 
-                <div
-                  v-else
-                  class="document-queue"
-                  @click.stop
-                >
+                <div v-else class="document-queue" @click.stop>
                   <div class="queue-header">
                     <span class="queue-count">{{ documentQueue.length }} document{{ documentQueue.length > 1 ? 's' : '' }} ready</span>
-                    <button
-                      class="btn-text-small"
-                      @click.stop="clearQueue"
-                    >
-                      Clear All
-                    </button>
+                    <button class="btn-text-small" @click.stop="clearQueue">Clear All</button>
                   </div>
                   <div class="queue-list">
                     <div 
@@ -172,109 +101,61 @@
                       class="queue-item"
                     >
                       <div class="queue-item-icon">
-                        <v-icon
-                          :icon="getFileIcon(doc.file)"
-                          size="18"
-                          color="primary"
-                        />
+                        <v-icon :icon="getFileIcon(doc.file)" size="18" color="primary" />
                       </div>
                       <div class="queue-item-info">
                         <span class="queue-item-name">{{ doc.file.name }}</span>
                         <span class="queue-item-size">{{ formatFileSize(doc.file.size) }}</span>
                       </div>
-                      <button
-                        class="btn-icon-small"
-                        @click.stop="removeFromQueue(idx)"
-                      >
-                        <v-icon size="16">
-                          mdi-close
-                        </v-icon>
+                      <button class="btn-icon-small" @click.stop="removeFromQueue(idx)">
+                        <v-icon size="16">mdi-close</v-icon>
                       </button>
                     </div>
                   </div>
-                  <button
-                    class="btn-add-more"
-                    @click.stop="openFilePicker"
-                  >
-                    <v-icon size="16">
-                      mdi-plus
-                    </v-icon>
+                  <button class="btn-add-more" @click.stop="openFilePicker">
+                    <v-icon size="16">mdi-plus</v-icon>
                     Add more files
                   </button>
                 </div>
               </div>
 
-              <p
-                v-if="fileError"
-                class="field-error"
-              >
-                <v-icon
-                  size="14"
-                  color="error"
-                >
-                  mdi-alert-circle
-                </v-icon>
+              <p v-if="fileError" class="field-error">
+                <v-icon size="14" color="error">mdi-alert-circle</v-icon>
                 {{ fileError }}
               </p>
             </div>
 
             <div class="setup-actions">
-              <v-btn
-                variant="text"
-                class="btn-cancel"
-                @click="goBack"
-              >
-                Cancel
-              </v-btn>
+              <v-btn variant="text" @click="goBack" class="btn-cancel">Cancel</v-btn>
               <v-btn 
                 color="primary" 
                 size="large"
                 :disabled="documentQueue.length === 0"
-                class="btn-process"
                 @click="startProcessing"
+                class="btn-process"
               >
-                <v-icon
-                  start
-                  size="18"
-                >
-                  mdi-brain
-                </v-icon>
+                <v-icon start size="18">mdi-brain</v-icon>
                 Process {{ documentQueue.length }} Document{{ documentQueue.length > 1 ? 's' : '' }}
               </v-btn>
             </div>
           </div>
         </div>
 
-        <div
-          v-else-if="stage === 'processing'"
-          key="processing"
-          class="stage-content"
-        >
+        <div v-else-if="stage === 'processing'" key="processing" class="stage-content">
           <div class="processing-panel">
             <div class="processing-header">
               <div class="processing-info">
-                <h2 class="processing-title">
-                  Processing Documents
-                </h2>
-                <p class="processing-subtitle">
-                  {{ selectedProjectName }}
-                </p>
+                <h2 class="processing-title">Processing Documents</h2>
+                <p class="processing-subtitle">{{ selectedProjectName }}</p>
               </div>
               <div class="overall-progress">
                 <span class="progress-text">{{ processedCount }}/{{ documentQueue.length }}</span>
                 <div class="progress-ring">
                   <svg viewBox="0 0 36 36">
-                    <circle
-                      class="progress-ring-bg"
-                      cx="18"
-                      cy="18"
-                      r="16"
-                    />
+                    <circle class="progress-ring-bg" cx="18" cy="18" r="16" />
                     <circle 
                       class="progress-ring-fill" 
-                      cx="18"
-                      cy="18"
-                      r="16"
+                      cx="18" cy="18" r="16"
                       :style="{ strokeDasharray: `${overallProgress} 100` }"
                     />
                   </svg>
@@ -291,115 +172,55 @@
                 :class="getDocumentStatusClass(doc)"
               >
                 <div class="status-indicator">
-                  <div
-                    v-if="doc.status === 'pending'"
-                    class="status-pending"
-                  >
-                    <v-icon
-                      size="18"
-                      color="grey"
-                    >
-                      mdi-clock-outline
-                    </v-icon>
+                  <div v-if="doc.status === 'pending'" class="status-pending">
+                    <v-icon size="18" color="grey">mdi-clock-outline</v-icon>
                   </div>
-                  <div
-                    v-else-if="doc.status === 'processing'"
-                    class="status-processing"
-                  >
-                    <div class="mini-spinner" />
+                  <div v-else-if="doc.status === 'processing'" class="status-processing">
+                    <div class="mini-spinner"></div>
                   </div>
-                  <div
-                    v-else-if="doc.status === 'complete'"
-                    class="status-complete"
-                  >
-                    <v-icon
-                      size="18"
-                      color="success"
-                    >
-                      mdi-check-circle
-                    </v-icon>
+                  <div v-else-if="doc.status === 'complete'" class="status-complete">
+                    <v-icon size="18" color="success">mdi-check-circle</v-icon>
                   </div>
-                  <div
-                    v-else-if="doc.status === 'attention'"
-                    class="status-attention"
-                  >
-                    <v-icon
-                      size="18"
-                      color="warning"
-                    >
-                      mdi-alert-circle
-                    </v-icon>
+                  <div v-else-if="doc.status === 'attention'" class="status-attention">
+                    <v-icon size="18" color="warning">mdi-alert-circle</v-icon>
                   </div>
-                  <div
-                    v-else-if="doc.status === 'error'"
-                    class="status-error"
-                  >
-                    <v-icon
-                      size="18"
-                      color="error"
-                    >
-                      mdi-close-circle
-                    </v-icon>
+                  <div v-else-if="doc.status === 'error'" class="status-error">
+                    <v-icon size="18" color="error">mdi-close-circle</v-icon>
                   </div>
                 </div>
                 <div class="status-content">
                   <span class="status-filename">{{ doc.file.name }}</span>
                   <span class="status-message">{{ getStatusMessage(doc) }}</span>
                 </div>
-                <div
-                  v-if="doc.extractedData"
-                  class="status-preview"
-                >
-                  <span
-                    v-if="doc.extractedData.amount"
-                    class="preview-amount"
-                  >
+                <div v-if="doc.extractedData" class="status-preview">
+                  <span v-if="doc.extractedData.amount" class="preview-amount">
                     €{{ formatAmount(doc.extractedData.amount) }}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div
-              v-if="currentlyProcessing"
-              class="current-processing"
-            >
+            <div v-if="currentlyProcessing" class="current-processing">
               <div class="current-file-info">
                 <span class="current-label">Currently analyzing:</span>
                 <span class="current-filename">{{ currentlyProcessing.file.name }}</span>
               </div>
               <div class="current-progress-bar">
-                <div
-                  class="current-progress-fill"
-                  :style="{ width: currentProgress + '%' }"
-                />
+                <div class="current-progress-fill" :style="{ width: currentProgress + '%' }"></div>
               </div>
               <span class="current-status">{{ currentStatus }}</span>
             </div>
           </div>
         </div>
 
-        <div
-          v-else-if="stage === 'decision'"
-          key="decision"
-          class="stage-content"
-        >
+        <div v-else-if="stage === 'decision'" key="decision" class="stage-content">
           <div class="decision-panel">
             <div class="decision-header">
               <div class="decision-icon success">
-                <v-icon
-                  size="32"
-                  color="success"
-                >
-                  mdi-check-circle-outline
-                </v-icon>
+                <v-icon size="32" color="success">mdi-check-circle-outline</v-icon>
               </div>
-              <h2 class="decision-title">
-                Processing Complete
-              </h2>
-              <p class="decision-subtitle">
-                {{ successCount }} document{{ successCount > 1 ? 's' : '' }} extracted successfully
-              </p>
+              <h2 class="decision-title">Processing Complete</h2>
+              <p class="decision-subtitle">{{ successCount }} document{{ successCount > 1 ? 's' : '' }} extracted successfully</p>
             </div>
 
             <div class="decision-summary">
@@ -408,17 +229,11 @@
                   <span class="stat-value success">{{ successCount }}</span>
                   <span class="stat-label">Ready to Save</span>
                 </div>
-                <div
-                  v-if="attentionCount > 0"
-                  class="summary-stat"
-                >
+                <div v-if="attentionCount > 0" class="summary-stat">
                   <span class="stat-value warning">{{ attentionCount }}</span>
                   <span class="stat-label">Needs Review</span>
                 </div>
-                <div
-                  v-if="errorCount > 0"
-                  class="summary-stat"
-                >
+                <div v-if="errorCount > 0" class="summary-stat">
                   <span class="stat-value error">{{ errorCount }}</span>
                   <span class="stat-label">Failed</span>
                 </div>
@@ -426,83 +241,39 @@
             </div>
 
             <div class="decision-options">
-              <div
-                class="option-card"
-                @click="goToReview"
-              >
+              <div class="option-card" @click="goToReview">
                 <div class="option-icon">
-                  <v-icon
-                    size="28"
-                    color="primary"
-                  >
-                    mdi-file-document-edit-outline
-                  </v-icon>
+                  <v-icon size="28" color="primary">mdi-file-document-edit-outline</v-icon>
                 </div>
                 <div class="option-content">
-                  <h3 class="option-title">
-                    Review Details
-                  </h3>
-                  <p class="option-description">
-                    Review and edit extracted data for each document before saving
-                  </p>
+                  <h3 class="option-title">Review Details</h3>
+                  <p class="option-description">Review and edit extracted data for each document before saving</p>
                 </div>
-                <v-icon
-                  size="20"
-                  color="grey"
-                >
-                  mdi-chevron-right
-                </v-icon>
+                <v-icon size="20" color="grey">mdi-chevron-right</v-icon>
               </div>
 
-              <div
-                class="option-card"
-                :class="{ disabled: successCount === 0 }"
-                @click="saveAllImmediately"
-              >
+              <div class="option-card" :class="{ disabled: successCount === 0 }" @click="saveAllImmediately">
                 <div class="option-icon">
-                  <v-icon
-                    size="28"
-                    color="success"
-                  >
-                    mdi-content-save-all
-                  </v-icon>
+                  <v-icon size="28" color="success">mdi-content-save-all</v-icon>
                 </div>
                 <div class="option-content">
-                  <h3 class="option-title">
-                    Save All Now
-                  </h3>
-                  <p class="option-description">
-                    Save all confident extractions immediately, flag uncertain items for later
-                  </p>
+                  <h3 class="option-title">Save All Now</h3>
+                  <p class="option-description">Save all confident extractions immediately, flag uncertain items for later</p>
                 </div>
-                <v-icon
-                  size="20"
-                  color="grey"
-                >
-                  mdi-chevron-right
-                </v-icon>
+                <v-icon size="20" color="grey">mdi-chevron-right</v-icon>
               </div>
             </div>
 
             <div class="decision-actions">
-              <v-btn
-                variant="text"
-                @click="startOver"
-              >
-                <v-icon start>
-                  mdi-refresh
-                </v-icon>
+              <v-btn variant="text" @click="startOver">
+                <v-icon start>mdi-refresh</v-icon>
                 Start Over
               </v-btn>
             </div>
           </div>
         </div>
 
-        <div
-          v-else-if="stage === 'review'"
-          key="review"
-          class="stage-content"
-        >
+        <div v-else-if="stage === 'review'" key="review" class="stage-content">
           <div class="review-panel">
             <div class="review-header">
               <div class="review-nav">
@@ -525,26 +296,18 @@
                 </v-btn>
               </div>
               <div class="review-title-area">
-                <h2 class="review-title">
-                  Review Document
-                </h2>
+                <h2 class="review-title">Review Document</h2>
                 <span class="review-filename">{{ currentReviewDoc?.file.name }}</span>
               </div>
             </div>
 
-            <div
-              v-if="currentReviewDoc"
-              class="review-form"
-            >
+            <div v-if="currentReviewDoc" class="review-form">
               <div class="review-grid">
                 <div class="form-field">
                   <label class="field-label">
                     Supplier / Issuer
                     <span class="required">*</span>
-                    <span
-                      v-if="currentReviewDoc.confidence?.issuer === 'low'"
-                      class="confidence-badge low"
-                    >Low confidence</span>
+                    <span v-if="currentReviewDoc.confidence?.issuer === 'low'" class="confidence-badge low">Low confidence</span>
                   </label>
                   <input
                     v-model="currentReviewDoc.extractedData.issuer"
@@ -552,17 +315,14 @@
                     class="field-input"
                     :class="{ 'low-confidence': currentReviewDoc.confidence?.issuer === 'low' }"
                     placeholder="Company name"
-                  >
+                  />
                 </div>
 
                 <div class="form-field">
                   <label class="field-label">
                     Amount
                     <span class="required">*</span>
-                    <span
-                      v-if="currentReviewDoc.confidence?.amount === 'low'"
-                      class="confidence-badge low"
-                    >Low confidence</span>
+                    <span v-if="currentReviewDoc.confidence?.amount === 'low'" class="confidence-badge low">Low confidence</span>
                   </label>
                   <div class="input-with-prefix">
                     <span class="input-prefix">€</span>
@@ -573,17 +333,14 @@
                       class="field-input has-prefix"
                       :class="{ 'low-confidence': currentReviewDoc.confidence?.amount === 'low' }"
                       placeholder="0.00"
-                    >
+                    />
                   </div>
                 </div>
 
                 <div class="form-field">
                   <label class="field-label">
                     Invoice Number
-                    <span
-                      v-if="currentReviewDoc.confidence?.invoiceNumber === 'low'"
-                      class="confidence-badge low"
-                    >Low confidence</span>
+                    <span v-if="currentReviewDoc.confidence?.invoiceNumber === 'low'" class="confidence-badge low">Low confidence</span>
                   </label>
                   <input
                     v-model="currentReviewDoc.extractedData.invoiceNumber"
@@ -591,23 +348,20 @@
                     class="field-input"
                     :class="{ 'low-confidence': currentReviewDoc.confidence?.invoiceNumber === 'low' }"
                     placeholder="INV-0001"
-                  >
+                  />
                 </div>
 
                 <div class="form-field">
                   <label class="field-label">
                     Invoice Date
-                    <span
-                      v-if="currentReviewDoc.confidence?.date === 'low'"
-                      class="confidence-badge low"
-                    >Low confidence</span>
+                    <span v-if="currentReviewDoc.confidence?.date === 'low'" class="confidence-badge low">Low confidence</span>
                   </label>
                   <input
                     v-model="currentReviewDoc.extractedData.date"
                     type="date"
                     class="field-input"
                     :class="{ 'low-confidence': currentReviewDoc.confidence?.date === 'low' }"
-                  >
+                  />
                 </div>
 
                 <div class="form-field">
@@ -615,23 +369,20 @@
                   <div class="vat-row">
                     <label class="toggle-label">
                       <input
-                        v-model="currentReviewDoc.extractedData.includesBtw"
                         type="checkbox"
+                        v-model="currentReviewDoc.extractedData.includesBtw"
                         class="toggle-input"
-                      >
-                      <span class="toggle-switch" />
+                      />
+                      <span class="toggle-switch"></span>
                       <span>Includes VAT</span>
                     </label>
-                    <div
-                      v-if="currentReviewDoc.extractedData.includesBtw"
-                      class="vat-percent"
-                    >
+                    <div v-if="currentReviewDoc.extractedData.includesBtw" class="vat-percent">
                       <input
                         v-model.number="currentReviewDoc.extractedData.btwPercent"
                         type="number"
                         class="field-input small"
                         placeholder="21"
-                      >
+                      />
                       <span class="percent-sign">%</span>
                     </div>
                   </div>
@@ -646,35 +397,34 @@
                       step="0.1"
                       class="field-input has-suffix"
                       :placeholder="projectMargin ? `${projectMargin}% (from project)` : '0'"
-                    >
+                    />
                     <span class="input-suffix">%</span>
                   </div>
                 </div>
               </div>
 
-              <div
-                v-if="currentReviewDoc.status === 'attention'"
-                class="review-warning"
-              >
-                <v-icon
-                  size="18"
-                  color="warning"
-                >
-                  mdi-alert
-                </v-icon>
+              <div v-if="currentReviewDoc.status === 'attention'" class="review-warning">
+                <v-icon size="18" color="warning">mdi-alert</v-icon>
                 <span>Some fields could not be extracted with high confidence. Please verify the data.</span>
+              </div>
+
+              <div v-if="currentReviewDoc.validationErrors?.length > 0" class="validation-errors">
+                <div class="validation-error" v-for="(error, idx) in currentReviewDoc.validationErrors" :key="idx">
+                  <v-icon size="16" color="error">mdi-close-circle</v-icon>
+                  <span>{{ error }}</span>
+                </div>
+              </div>
+
+              <div v-if="currentReviewDoc.error && !currentReviewDoc.validationErrors?.length" class="review-error">
+                <v-icon size="18" color="error">mdi-alert-circle</v-icon>
+                <span>{{ currentReviewDoc.error }}</span>
               </div>
             </div>
 
             <div class="review-actions">
               <div class="review-actions-left">
-                <v-btn
-                  variant="text"
-                  @click="goToDecision"
-                >
-                  <v-icon start>
-                    mdi-arrow-left
-                  </v-icon>
+                <v-btn variant="text" @click="goToDecision">
+                  <v-icon start>mdi-arrow-left</v-icon>
                   Back to Summary
                 </v-btn>
               </div>
@@ -682,22 +432,18 @@
                 <v-btn 
                   v-if="currentReviewIndex < reviewableDocuments.length - 1"
                   variant="outlined"
-                  :loading="savingCurrent"
                   @click="saveAndNext"
+                  :loading="savingCurrent"
                 >
                   Save & Next
-                  <v-icon end>
-                    mdi-arrow-right
-                  </v-icon>
+                  <v-icon end>mdi-arrow-right</v-icon>
                 </v-btn>
                 <v-btn 
                   color="primary"
-                  :loading="savingCurrent"
                   @click="saveCurrentAndFinish"
+                  :loading="savingCurrent"
                 >
-                  <v-icon start>
-                    mdi-content-save
-                  </v-icon>
+                  <v-icon start>mdi-content-save</v-icon>
                   {{ currentReviewIndex < reviewableDocuments.length - 1 ? 'Save This' : 'Save & Finish' }}
                 </v-btn>
               </div>
@@ -714,44 +460,23 @@
                   attention: doc.status === 'attention' && !doc.saved
                 }"
                 @click="goToReviewIndex(idx)"
-              />
+              ></div>
             </div>
           </div>
         </div>
 
-        <div
-          v-else-if="stage === 'complete'"
-          key="complete"
-          class="stage-content"
-        >
+        <div v-else-if="stage === 'complete'" key="complete" class="stage-content">
           <div class="complete-panel">
             <div class="success-animation">
               <div class="success-circle">
-                <svg
-                  class="checkmark"
-                  viewBox="0 0 52 52"
-                >
-                  <circle
-                    class="checkmark-circle"
-                    cx="26"
-                    cy="26"
-                    r="25"
-                    fill="none"
-                  />
-                  <path
-                    class="checkmark-check"
-                    fill="none"
-                    d="M14.1 27.2l7.1 7.2 16.7-16.8"
-                  />
+                <svg class="checkmark" viewBox="0 0 52 52">
+                  <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                  <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
                 </svg>
               </div>
             </div>
-            <h2 class="complete-title">
-              All Documents Saved!
-            </h2>
-            <p class="complete-subtitle">
-              {{ savedCount }} invoice{{ savedCount > 1 ? 's' : '' }} have been added to {{ selectedProjectName }}
-            </p>
+            <h2 class="complete-title">All Documents Saved!</h2>
+            <p class="complete-subtitle">{{ savedCount }} invoice{{ savedCount > 1 ? 's' : '' }} have been added to {{ selectedProjectName }}</p>
             
             <div class="complete-summary">
               <div class="summary-row">
@@ -761,25 +486,13 @@
             </div>
 
             <div class="complete-actions">
-              <v-btn
-                variant="outlined"
-                size="large"
-                @click="startOver"
-              >
-                <v-icon start>
-                  mdi-plus
-                </v-icon>
+              <v-btn variant="outlined" size="large" @click="startOver">
+                <v-icon start>mdi-plus</v-icon>
                 Upload More
               </v-btn>
-              <v-btn
-                color="primary"
-                size="large"
-                @click="goToInvoices"
-              >
+              <v-btn color="primary" size="large" @click="goToInvoices">
                 View Invoices
-                <v-icon end>
-                  mdi-arrow-right
-                </v-icon>
+                <v-icon end>mdi-arrow-right</v-icon>
               </v-btn>
             </div>
           </div>
@@ -900,6 +613,12 @@ const addToQueue = (file) => {
     return
   }
   
+  const minSize = 1024
+  if (file.size < minSize) {
+    fileError.value = `File too small: ${file.name}. File appears to be empty or corrupted.`
+    return
+  }
+  
   const maxSize = 10 * 1024 * 1024
   if (file.size > maxSize) {
     fileError.value = `File too large: ${file.name}. Maximum size is 10MB.`
@@ -907,6 +626,12 @@ const addToQueue = (file) => {
   }
   
   if (documentQueue.value.some(d => d.file.name === file.name && d.file.size === file.size)) {
+    fileError.value = `Duplicate file: ${file.name} is already in the queue.`
+    return
+  }
+  
+  if (documentQueue.value.length >= 20) {
+    fileError.value = 'Maximum 20 files per batch. Please process current batch first.'
     return
   }
   
@@ -915,7 +640,9 @@ const addToQueue = (file) => {
     status: 'pending',
     extractedData: null,
     confidence: null,
-    saved: false
+    saved: false,
+    validationErrors: null,
+    error: null
   })
 }
 
@@ -974,61 +701,40 @@ const startProcessing = async () => {
   processingStarted.value = true
   stage.value = 'processing'
   
-  for (let i = 0; i < documentQueue.value.length; i++) {
-    const doc = documentQueue.value[i]
-    doc.status = 'processing'
-    currentlyProcessing.value = doc
+  const PARALLEL_BATCH_SIZE = 3
+  
+  for (let i = 0; i < documentQueue.value.length; i += PARALLEL_BATCH_SIZE) {
+    const batch = documentQueue.value.slice(i, i + PARALLEL_BATCH_SIZE)
+    
+    batch.forEach(doc => {
+      doc.status = 'processing'
+    })
+    
+    currentlyProcessing.value = batch[0]
     currentProgress.value = 0
-    currentStatus.value = 'Uploading document...'
+    currentStatus.value = `Processing ${batch.length} document${batch.length > 1 ? 's' : ''}...`
     
-    try {
-      await processDocument(doc)
-    } catch (err) {
-      console.error('Error processing document:', err)
-      doc.status = 'error'
-      doc.error = err.message
-    }
+    await Promise.allSettled(
+      batch.map(async (doc) => {
+        try {
+          await processDocument(doc)
+        } catch (err) {
+          console.error('Error processing document:', err)
+          doc.status = 'error'
+          doc.error = err.message
+        }
+      })
+    )
     
-    currentlyProcessing.value = null
+    currentProgress.value = 100
   }
   
+  currentlyProcessing.value = null
   stage.value = 'decision'
 }
 
 const processDocument = async (doc) => {
-  const formData = new FormData()
-  formData.append('file', doc.file)
-  
-  currentProgress.value = 10
-  currentStatus.value = 'Uploading file...'
-  
   const baseUrl = import.meta.env.VITE_BASE_URL
-  let uploadedFilePath = doc.file.name
-  
-  if (baseUrl) {
-    try {
-      const uploadResponse = await fetch(`${baseUrl}/invoice/upload-file`, {
-        method: 'POST',
-        body: formData
-      })
-      
-      if (uploadResponse.ok) {
-        const uploadResult = await uploadResponse.json()
-        uploadedFilePath = uploadResult.pdf_file || doc.file.name
-        doc.uploadedFilePath = uploadedFilePath
-      }
-    } catch (err) {
-      console.warn('File upload failed, continuing with extraction:', err)
-    }
-  }
-  
-  currentProgress.value = 30
-  currentStatus.value = 'Extracting text...'
-  
-  await delay(200)
-  
-  currentProgress.value = 50
-  currentStatus.value = 'Analyzing with AI...'
   
   let extracted = null
   let confidence = { 
@@ -1040,33 +746,27 @@ const processDocument = async (doc) => {
   
   if (baseUrl) {
     try {
-      const extractFormData = new FormData()
-      extractFormData.append('file', doc.file)
+      const formData = new FormData()
+      formData.append('file', doc.file)
       
       const response = await fetch(`${baseUrl}/invoice/extract`, {
         method: 'POST',
-        body: extractFormData
+        body: formData
       })
       
       if (response.ok) {
         extracted = await response.json()
-        currentProgress.value = 85
-        currentStatus.value = 'Data extracted!'
-        // Use extracted pdf_file as fallback if upload-file wasn't called
-        if (!uploadedFilePath && extracted.pdf_file) {
-          uploadedFilePath = extracted.pdf_file
-          doc.uploadedFilePath = uploadedFilePath
-        }
+        doc.uploadedFilePath = extracted.pdf_file || doc.file.name
+      } else {
+        throw new Error(`Server returned ${response.status}`)
       }
     } catch (err) {
       console.warn('Extraction failed for', doc.file.name, err)
+      doc.error = err.message || 'Extraction failed'
     }
   }
   
-  await delay(150)
-  currentProgress.value = 100
-  
-  const hasIssuer = extracted?.issuer && extracted.issuer.trim().length > 0
+  const hasIssuer = extracted?.issuer && extracted.issuer.trim().length > 2
   const hasAmount = extracted?.amount && extracted.amount > 0
   const hasInvoiceNumber = extracted?.invoiceNumber && extracted.invoiceNumber.trim().length > 0
   const hasDate = extracted?.date && extracted.date.trim().length > 0
@@ -1077,22 +777,25 @@ const processDocument = async (doc) => {
   if (!hasDate) confidence.date = 'low'
   
   doc.extractedData = {
-    issuer: extracted?.issuer || '',
+    issuer: extracted?.issuer?.trim() || '',
     amount: extracted?.amount || 0,
-    invoiceNumber: extracted?.invoiceNumber || '',
+    invoiceNumber: extracted?.invoiceNumber?.trim() || '',
     date: extracted?.date || new Date().toISOString().split('T')[0],
     includesBtw: extracted?.btw || false,
     btwPercent: extracted?.btwPercent || 21,
     margin: projectMargin.value || null,
     project: selectedProject.value,
-    pdf_file: uploadedFilePath || extracted?.pdf_file || null
+    pdf_file: doc.uploadedFilePath || extracted?.pdf_file || null
   }
   
   doc.confidence = confidence
   
   const needsAttention = !hasIssuer || !hasAmount
   
-  if (needsAttention) {
+  if (extracted?.extractionFailed) {
+    doc.status = 'attention'
+    doc.error = extracted.message || 'AI could not extract data'
+  } else if (needsAttention) {
     doc.status = 'attention'
   } else {
     doc.status = 'complete'
@@ -1110,43 +813,88 @@ const goToReview = () => {
   stage.value = 'review'
 }
 
+const validateDocument = (doc) => {
+  const errors = []
+  const data = doc.extractedData
+  
+  if (!data.issuer || data.issuer.trim().length < 2) {
+    errors.push('Supplier name is required (min 2 characters)')
+  }
+  
+  const amount = parseFloat(data.amount)
+  if (isNaN(amount) || amount <= 0) {
+    errors.push('Amount must be a positive number')
+  }
+  if (amount > 1000000) {
+    errors.push('Amount seems too large - please verify')
+  }
+  
+  if (data.includesBtw) {
+    const btw = parseInt(data.btwPercent)
+    if (isNaN(btw) || btw < 0 || btw > 100) {
+      errors.push('VAT percentage must be between 0 and 100')
+    }
+  }
+  
+  if (data.margin !== null && data.margin !== undefined) {
+    const margin = parseFloat(data.margin)
+    if (isNaN(margin) || margin < 0 || margin > 100) {
+      errors.push('Margin must be between 0 and 100%')
+    }
+  }
+  
+  return errors
+}
+
 const saveAllImmediately = async () => {
   if (successCount.value === 0) return
   
   savingAll.value = true
   let saved = 0
   let totalAmount = 0
+  let skipped = 0
   
   const baseUrl = import.meta.env.VITE_BASE_URL
   
   for (const doc of documentQueue.value) {
     if ((doc.status === 'complete' || doc.status === 'attention') && !doc.saved) {
-      if (doc.extractedData.issuer && doc.extractedData.amount > 0) {
-        try {
-          const payload = {
-            issuer: doc.extractedData.issuer,
-            amount: parseFloat(doc.extractedData.amount),
-            project: doc.extractedData.project,
-            includesBtw: doc.extractedData.includesBtw,
-            btwPercent: doc.extractedData.btwPercent || 21,
-            margin: doc.extractedData.margin,
-            pdf_file: doc.extractedData.pdf_file
-          }
-          
-          const response = await fetch(`${baseUrl}/invoice/post`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          })
-          
-          if (response.ok) {
-            doc.saved = true
-            saved++
-            totalAmount += parseFloat(doc.extractedData.amount)
-          }
-        } catch (err) {
-          console.error('Failed to save:', doc.file.name, err)
+      const validationErrors = validateDocument(doc)
+      
+      if (validationErrors.length > 0) {
+        doc.validationErrors = validationErrors
+        skipped++
+        continue
+      }
+      
+      try {
+        const marginValue = doc.extractedData.margin
+        const payload = {
+          issuer: doc.extractedData.issuer.trim(),
+          amount: parseFloat(doc.extractedData.amount),
+          project: doc.extractedData.project,
+          includesBtw: doc.extractedData.includesBtw,
+          btwPercent: parseInt(doc.extractedData.btwPercent) || 21,
+          margin: marginValue === '' || marginValue === null || marginValue === undefined ? null : parseFloat(marginValue),
+          pdf_file: doc.extractedData.pdf_file
         }
+        
+        const response = await fetch(`${baseUrl}/invoice/post`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        
+        if (response.ok) {
+          doc.saved = true
+          saved++
+          totalAmount += payload.amount
+        } else {
+          const errorData = await response.json().catch(() => ({}))
+          doc.error = errorData.message || `Server error: ${response.status}`
+        }
+      } catch (err) {
+        console.error('Failed to save:', doc.file.name, err)
+        doc.error = err.message || 'Network error'
       }
     }
   }
@@ -1156,7 +904,30 @@ const saveAllImmediately = async () => {
   savedCount.value = saved
   totalSavedAmount.value = totalAmount
   savingAll.value = false
-  stage.value = 'complete'
+  
+  if (skipped > 0) {
+    window.dispatchEvent(new CustomEvent('show-toast', {
+      detail: { 
+        title: 'Some documents skipped', 
+        message: `${skipped} document(s) had validation errors and were not saved.`, 
+        type: 'warning' 
+      }
+    }))
+  }
+  
+  if (saved === 0 && skipped > 0) {
+    stage.value = 'review'
+    currentReviewIndex.value = 0
+    window.dispatchEvent(new CustomEvent('show-toast', {
+      detail: { 
+        title: 'No documents saved', 
+        message: 'All documents have validation errors. Please review and fix them.', 
+        type: 'error' 
+      }
+    }))
+  } else {
+    stage.value = 'complete'
+  }
 }
 
 const prevReview = () => {
@@ -1177,17 +948,31 @@ const goToReviewIndex = (idx) => {
 
 const saveCurrentDocument = async () => {
   const doc = currentReviewDoc.value
-  if (!doc || doc.saved) return true
+  if (!doc || doc.saved) return { success: true }
+  
+  const validationErrors = validateDocument(doc)
+  if (validationErrors.length > 0) {
+    doc.validationErrors = validationErrors
+    window.dispatchEvent(new CustomEvent('show-toast', {
+      detail: { 
+        title: 'Validation Error', 
+        message: validationErrors[0], 
+        type: 'error' 
+      }
+    }))
+    return { success: false, errors: validationErrors }
+  }
   
   const baseUrl = import.meta.env.VITE_BASE_URL
   
+  const marginValue = doc.extractedData.margin
   const payload = {
-    issuer: doc.extractedData.issuer,
+    issuer: doc.extractedData.issuer.trim(),
     amount: parseFloat(doc.extractedData.amount),
     project: doc.extractedData.project,
     includesBtw: doc.extractedData.includesBtw,
-    btwPercent: doc.extractedData.btwPercent || 21,
-    margin: doc.extractedData.margin,
+    btwPercent: parseInt(doc.extractedData.btwPercent) || 21,
+    margin: marginValue === '' || marginValue === null || marginValue === undefined ? null : parseFloat(marginValue),
     pdf_file: doc.extractedData.pdf_file
   }
   
@@ -1200,26 +985,38 @@ const saveCurrentDocument = async () => {
     
     if (response.ok) {
       doc.saved = true
-      return true
+      doc.validationErrors = null
+      return { success: true }
+    } else {
+      const errorData = await response.json().catch(() => ({}))
+      doc.error = errorData.message || `Server error: ${response.status}`
+      return { success: false, error: doc.error }
     }
   } catch (err) {
     console.error('Failed to save document:', err)
+    doc.error = err.message || 'Network error'
+    return { success: false, error: doc.error }
   }
-  
-  return false
 }
 
 const saveAndNext = async () => {
   savingCurrent.value = true
-  await saveCurrentDocument()
+  const result = await saveCurrentDocument()
   savingCurrent.value = false
-  nextReview()
+  
+  if (result.success) {
+    nextReview()
+  }
 }
 
 const saveCurrentAndFinish = async () => {
   savingCurrent.value = true
-  await saveCurrentDocument()
+  const result = await saveCurrentDocument()
   savingCurrent.value = false
+  
+  if (!result.success) {
+    return
+  }
   
   const unsaved = reviewableDocuments.value.filter(d => !d.saved)
   
@@ -2137,6 +1934,34 @@ onMounted(() => {
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
   color: #92400e;
+}
+
+.validation-errors {
+  margin-bottom: 1.5rem;
+}
+
+.validation-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: #dc2626;
+}
+
+.review-error {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: #dc2626;
 }
 
 .review-actions {

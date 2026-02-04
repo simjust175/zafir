@@ -1,26 +1,68 @@
 <template>
-  <article class="project-entry" @mouseenter="hovered = true" @mouseleave="hovered = false">
-    <div class="entry-main">
-      <div class="entry-identity">
-        <h3 class="project-name">{{ projectName }}</h3>
-        <p class="project-context">{{ invoiceCount }} {{ invoiceCount === 1 ? 'invoice' : 'invoices' }}</p>
+  <article class="project-card" @mouseenter="hovered = true" @mouseleave="hovered = false">
+    <div class="card-content">
+      <!-- Left: Project Info -->
+      <div class="project-info">
+        <div class="project-avatar">
+          <span class="avatar-letter">{{ projectName.charAt(0).toUpperCase() }}</span>
+        </div>
+        <div class="project-details">
+          <h3 class="project-name">{{ projectName }}</h3>
+          <div class="project-meta">
+            <span class="meta-item">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M11 2H3C2.44772 2 2 2.44772 2 3V11C2 11.5523 2.44772 12 3 12H11C11.5523 12 12 11.5523 12 11V3C12 2.44772 11.5523 2 11 2Z" stroke="currentColor" stroke-width="1.25"/>
+                <path d="M5 1V3M9 1V3M2 5H12" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+              </svg>
+              {{ invoiceCount }} {{ invoiceCount === 1 ? 'invoice' : 'invoices' }}
+            </span>
+            <span v-if="projectEmailDisplay !== 'No email'" class="meta-item email-meta">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <rect x="1.5" y="3" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.25"/>
+                <path d="M1.5 4.5L7 8L12.5 4.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+              </svg>
+              {{ truncatedEmail }}
+              <button 
+                class="copy-btn"
+                :class="{ copied: copied }"
+                @click.stop="copyProjectEmail"
+              >
+                <svg v-if="!copied" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <rect x="4" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.25"/>
+                  <path d="M8 4V3C8 2.44772 7.55228 2 7 2H3C2.44772 2 2 2.44772 2 3V7C2 7.55228 2.44772 8 3 8H4" stroke="currentColor" stroke-width="1.25"/>
+                </svg>
+                <svg v-else width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div class="entry-figures">
-        <div class="figure-block">
-          <span class="figure-value">{{ formatCurrency(invoicing) }}</span>
-          <span class="figure-label">Invoiced</span>
+      <!-- Center: Stats -->
+      <div class="project-stats">
+        <div class="stat-item">
+          <span class="stat-label">Invoiced</span>
+          <span class="stat-value">{{ formatCurrency(invoicing) }}</span>
         </div>
-        <div class="figure-block">
-          <span class="figure-value received">{{ formatCurrency(payments) }}</span>
-          <span class="figure-label">Received</span>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-label">Received</span>
+          <span class="stat-value received">{{ formatCurrency(payments) }}</span>
         </div>
-        <div class="figure-block margin-block" @click="openMarginEdit">
+        <div class="stat-divider"></div>
+        <div class="stat-item margin-stat" @click.stop="openMarginEdit">
+          <span class="stat-label">Margin</span>
           <div v-if="!editingMargin" class="margin-display">
-            <span class="figure-value margin-value">{{ projectMargin ? `${projectMargin}%` : 'Set' }}</span>
-            <v-icon size="12" class="margin-edit-icon">mdi-pencil</v-icon>
+            <span class="stat-value margin">{{ projectMargin ? `${projectMargin}%` : '—' }}</span>
+            <span class="edit-hint">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path d="M7.5 1.25L8.75 2.5L3.125 8.125L1.25 8.75L1.875 6.875L7.5 1.25Z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
           </div>
-          <div v-else class="margin-edit-inline" @click.stop>
+          <div v-else class="margin-editor" @click.stop>
             <input
               ref="marginInputRef"
               v-model.number="tempMargin"
@@ -34,53 +76,66 @@
               @keyup.escape="cancelMarginEdit"
               @blur="saveMargin"
             />
-            <span class="margin-suffix">%</span>
+            <span class="margin-unit">%</span>
           </div>
-          <span class="figure-label">Margin</span>
-        </div>
-        <div class="figure-block progress-block">
-          <span class="figure-value" :class="progressClass">{{ percentPaid }}%</span>
-          <span class="figure-label">Collected</span>
         </div>
       </div>
 
-      <div class="entry-actions" :class="{ visible: hovered }">
-        <button class="action-btn" @click="editDialog = true">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M11.333 2a1.886 1.886 0 0 1 2.667 2.667L5.25 13.417l-3.583.75.75-3.583L11.333 2z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Right: Progress & Actions -->
+      <div class="project-progress">
+        <div class="progress-ring">
+          <svg width="48" height="48" viewBox="0 0 48 48">
+            <circle
+              cx="24"
+              cy="24"
+              r="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="4"
+              class="ring-bg"
+            />
+            <circle
+              cx="24"
+              cy="24"
+              r="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="4"
+              stroke-linecap="round"
+              class="ring-fill"
+              :class="progressClass"
+              :style="{ 
+                strokeDasharray: `${2 * Math.PI * 20}`,
+                strokeDashoffset: `${2 * Math.PI * 20 * (1 - percentPaid / 100)}`
+              }"
+            />
           </svg>
-        </button>
-        <button class="action-btn" @click="dialogTrigger = true">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M13.333 4l-.77 9.243a1.333 1.333 0 0 1-1.328 1.224H4.765a1.333 1.333 0 0 1-1.329-1.224L2.667 4M6 4V2.667A.667.667 0 0 1 6.667 2h2.666a.667.667 0 0 1 .667.667V4M1.333 4h13.334" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+          <span class="progress-value" :class="progressClass">{{ percentPaid }}%</span>
+        </div>
+        
+        <div class="card-actions" :class="{ visible: hovered }">
+          <button class="action-btn" title="Edit project" @click.stop="editDialog = true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M11.333 2a1.886 1.886 0 0 1 2.667 2.667L5.25 13.417l-3.583.75.75-3.583L11.333 2z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button class="action-btn delete" title="Archive project" @click.stop="dialogTrigger = true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4h12M5.333 4V2.667a.667.667 0 0 1 .667-.667h4a.667.667 0 0 1 .667.667V4M12.667 4v9.333a1.333 1.333 0 0 1-1.334 1.334H4.667a1.333 1.333 0 0 1-1.334-1.334V4" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="entry-progress">
-      <div class="progress-track">
-        <div class="progress-fill" :class="progressClass" :style="{ width: `${percentPaid}%` }" />
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+      <div class="bar-track">
+        <div class="bar-fill" :class="progressClass" :style="{ width: `${percentPaid}%` }"></div>
       </div>
     </div>
 
-    <div v-if="projectEmailDisplay !== 'No email'" class="entry-meta">
-      <span class="meta-email">{{ projectEmailDisplay }}</span>
-      <button 
-        class="copy-trigger"
-        :class="{ copied: copied }"
-        @click="copyProjectEmail"
-      >
-        <svg v-if="!copied" width="14" height="14" viewBox="0 0 16 16" fill="none">
-          <rect x="5.333" y="5.333" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.25"/>
-          <path d="M10.667 5.333V4a1.333 1.333 0 0 0-1.334-1.333H4a1.333 1.333 0 0 0-1.333 1.333v5.333A1.333 1.333 0 0 0 4 10.667h1.333" stroke="currentColor" stroke-width="1.25"/>
-        </svg>
-        <svg v-else width="14" height="14" viewBox="0 0 16 16" fill="none">
-          <path d="M13.333 4L6 11.333 2.667 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </div>
-
+    <!-- Dialogs -->
     <v-snackbar v-model="snackbar" color="primary" timeout="2000" rounded="lg">
       {{ snackbarMessage }}
     </v-snackbar>
@@ -139,6 +194,14 @@ const projectEmailDisplay = computed(() => {
   return match?.email_address || 'No email'
 })
 
+const truncatedEmail = computed(() => {
+  const email = projectEmailDisplay.value
+  if (email.length > 24) {
+    return email.substring(0, 21) + '...'
+  }
+  return email
+})
+
 const projectMargin = computed(() => {
   const margin = props.project?.[0]?.margin
   return margin ? parseFloat(margin) : null
@@ -158,8 +221,6 @@ const invoiceCount = computed(() => {
   if (!Array.isArray(props.project)) return 0
   return props.project.filter(invoice => invoice.invoice_id !== null).length
 })
-
-const paidCount = computed(() => props.project?.filter(inv => inv.paid)?.length || 0)
 
 const reduceTotal = (array) => {
   return array.filter(inv => inv.project === projectId.value).reduce((sum, inv) => sum + Number(inv.amount || 0), 0)
@@ -254,83 +315,177 @@ const saveMargin = async () => {
 </script>
 
 <style scoped>
-.project-entry {
-  padding: 32px 0;
+.project-card {
+  padding: 20px 28px;
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
   transition: background 0.15s ease;
 }
 
-.project-entry:first-child {
-  padding-top: 40px;
+.project-card:hover {
+  background: rgba(var(--v-theme-on-surface), 0.02);
 }
 
-.project-entry:last-child {
+.project-card:last-child {
   border-bottom: none;
 }
 
-.entry-main {
+.card-content {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 32px;
 }
 
-.entry-identity {
+/* Project Info */
+.project-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   flex: 1;
   min-width: 0;
 }
 
-.project-name {
+.project-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, 
+    rgba(var(--v-theme-primary), 0.15) 0%, 
+    rgba(var(--v-theme-primary), 0.08) 100%
+  );
+  border: 1px solid rgba(var(--v-theme-primary), 0.2);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.avatar-letter {
   font-size: 1.125rem;
+  font-weight: 700;
+  color: rgb(var(--v-theme-primary));
+  text-transform: uppercase;
+}
+
+.project-details {
+  min-width: 0;
+}
+
+.project-name {
+  font-size: 1rem;
   font-weight: 600;
   color: rgb(var(--v-theme-on-surface));
   margin: 0 0 4px;
   letter-spacing: -0.01em;
   text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.project-context {
+.project-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.8125rem;
   color: rgb(var(--v-theme-grey-500));
-  margin: 0;
 }
 
-.entry-figures {
+.meta-item svg {
+  flex-shrink: 0;
+}
+
+.email-meta {
+  cursor: default;
+}
+
+.copy-btn {
   display: flex;
-  gap: 40px;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: rgb(var(--v-theme-grey-400));
+  cursor: pointer;
+  transition: all 0.15s ease;
+  opacity: 0;
 }
 
-.figure-block {
+.email-meta:hover .copy-btn {
+  opacity: 1;
+}
+
+.copy-btn:hover {
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.copy-btn.copied {
+  color: #10B981;
+  opacity: 1;
+}
+
+/* Stats */
+.project-stats {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.stat-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 80px;
+  gap: 2px;
+  min-width: 90px;
 }
 
-.figure-value {
+.stat-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgb(var(--v-theme-grey-400));
+}
+
+.stat-value {
   font-size: 1rem;
   font-weight: 600;
   color: rgb(var(--v-theme-on-surface));
   letter-spacing: -0.01em;
 }
 
-.figure-value.received {
-  color: rgb(var(--v-theme-success));
+.stat-value.received {
+  color: #10B981;
 }
 
-.figure-value.margin-value {
-  color: rgb(var(--v-theme-info));
+.stat-value.margin {
+  color: rgb(var(--v-theme-primary));
 }
 
-.margin-block {
+.stat-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.margin-stat {
   cursor: pointer;
-  transition: all 0.15s ease;
+  padding: 8px 12px;
+  margin: -8px -12px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
 }
 
-.margin-block:hover {
-  background: rgba(var(--v-theme-info), 0.06);
-  margin: -6px -10px;
-  padding: 6px 10px;
-  border-radius: 8px;
+.margin-stat:hover {
+  background: rgba(var(--v-theme-primary), 0.06);
 }
 
 .margin-display {
@@ -339,17 +494,17 @@ const saveMargin = async () => {
   gap: 6px;
 }
 
-.margin-edit-icon {
+.edit-hint {
   opacity: 0;
   color: rgb(var(--v-theme-grey-400));
   transition: opacity 0.15s ease;
 }
 
-.margin-block:hover .margin-edit-icon {
+.margin-stat:hover .edit-hint {
   opacity: 1;
 }
 
-.margin-edit-inline {
+.margin-editor {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -357,48 +512,81 @@ const saveMargin = async () => {
 
 .margin-input {
   width: 48px;
-  padding: 4px 6px;
+  padding: 4px 8px;
   font-size: 1rem;
   font-weight: 600;
-  color: rgb(var(--v-theme-info));
-  background: rgba(var(--v-theme-info), 0.08);
-  border: 1px solid rgb(var(--v-theme-info));
+  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.08);
+  border: 1px solid rgb(var(--v-theme-primary));
   border-radius: 6px;
   outline: none;
   text-align: right;
 }
 
 .margin-input:focus {
-  background: rgba(var(--v-theme-info), 0.12);
-  box-shadow: 0 0 0 3px rgba(var(--v-theme-info), 0.15);
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.15);
 }
 
-.margin-suffix {
+.margin-unit {
   font-size: 0.875rem;
   font-weight: 600;
-  color: rgb(var(--v-theme-info));
+  color: rgb(var(--v-theme-primary));
 }
 
-.figure-value.complete { color: rgb(var(--v-theme-success)); }
-.figure-value.high { color: #10B981; }
-.figure-value.mid { color: #F59E0B; }
-.figure-value.low { color: rgb(var(--v-theme-grey-500)); }
-
-.figure-label {
-  font-size: 0.6875rem;
-  color: rgb(var(--v-theme-grey-400));
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.entry-actions {
+/* Progress Ring */
+.project-progress {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 16px;
+}
+
+.progress-ring {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+
+.progress-ring svg {
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  color: rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.ring-fill {
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ring-fill.complete { color: #10B981; }
+.ring-fill.high { color: #10B981; }
+.ring-fill.mid { color: #F59E0B; }
+.ring-fill.low { color: rgb(var(--v-theme-grey-400)); }
+
+.progress-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.progress-value.complete { color: #10B981; }
+.progress-value.high { color: #10B981; }
+.progress-value.mid { color: #F59E0B; }
+.progress-value.low { color: rgb(var(--v-theme-grey-500)); }
+
+/* Actions */
+.card-actions {
+  display: flex;
+  gap: 6px;
   opacity: 0;
   transition: opacity 0.15s ease;
 }
 
-.entry-actions.visible {
+.card-actions.visible {
   opacity: 1;
 }
 
@@ -406,11 +594,11 @@ const saveMargin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   background: transparent;
   border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
-  border-radius: 6px;
+  border-radius: 8px;
   color: rgb(var(--v-theme-grey-500));
   cursor: pointer;
   transition: all 0.15s ease;
@@ -422,89 +610,82 @@ const saveMargin = async () => {
   color: rgb(var(--v-theme-on-surface));
 }
 
-.entry-progress {
-  margin-top: 16px;
-  padding-left: 0;
+.action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #EF4444;
 }
 
-.progress-track {
-  height: 3px;
+/* Progress Bar */
+.progress-bar {
+  margin-top: 16px;
+}
+
+.bar-track {
+  height: 4px;
   background: rgba(var(--v-theme-on-surface), 0.06);
   border-radius: 2px;
   overflow: hidden;
 }
 
-.progress-fill {
+.bar-fill {
   height: 100%;
   border-radius: 2px;
-  transition: width 0.4s ease;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.progress-fill.complete { background: rgb(var(--v-theme-success)); }
-.progress-fill.high { background: #10B981; }
-.progress-fill.mid { background: #F59E0B; }
-.progress-fill.low { background: rgb(var(--v-theme-grey-400)); }
+.bar-fill.complete { background: #10B981; }
+.bar-fill.high { background: #10B981; }
+.bar-fill.mid { background: #F59E0B; }
+.bar-fill.low { background: rgb(var(--v-theme-grey-400)); }
 
-.entry-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.meta-email {
-  font-size: 0.75rem;
-  color: rgb(var(--v-theme-grey-400));
-}
-
-.copy-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: rgb(var(--v-theme-grey-400));
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.copy-trigger:hover {
-  background: rgba(var(--v-theme-on-surface), 0.06);
-  color: rgb(var(--v-theme-on-surface));
-}
-
-.copy-trigger.copied {
-  color: rgb(var(--v-theme-success));
+/* Responsive */
+@media (max-width: 900px) {
+  .project-stats {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
-  .project-entry {
-    padding: 24px 0;
+  .project-card {
+    padding: 16px 20px;
   }
 
-  .entry-main {
+  .card-content {
+    gap: 16px;
+  }
+
+  .project-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .avatar-letter {
+    font-size: 1rem;
+  }
+
+  .project-name {
+    font-size: 0.9375rem;
+  }
+
+  .project-meta {
     flex-direction: column;
-    gap: 20px;
+    align-items: flex-start;
+    gap: 4px;
   }
 
-  .entry-figures {
-    gap: 24px;
-    flex-wrap: wrap;
+  .progress-ring {
+    width: 40px;
+    height: 40px;
   }
 
-  .entry-actions {
+  .progress-ring svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .card-actions {
     opacity: 1;
-    position: absolute;
-    right: 0;
-    top: 0;
-  }
-
-  .project-entry {
-    position: relative;
-    padding-right: 72px;
   }
 }
 </style>
