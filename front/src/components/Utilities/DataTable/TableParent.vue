@@ -72,6 +72,8 @@
             :total="overallTotalWithMargin"
             :invoicing-entries="projectInvoicing"
             :project-margin="currentProjectMargin"
+            :total-invoiced="totalInvoicedAmount"
+            :outstanding="outstandingBalance"
             @refresh-data="refreshComputedData"
           />
           <table-parent-toolbar-menu :project="invoiceArray" />
@@ -341,6 +343,7 @@
   </div>
 </template>
 
+<!-- eslint-disable vue/require-default-prop -->
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { invoices as invoiceStore } from '@/stores/invoiceState.js';
@@ -352,12 +355,13 @@ const props = defineProps({
   language: String,
   expanded: Boolean,
   projectName: String,
+  // eslint-disable-next-line vue/prop-name-casing
   project_id: Number,
   refreshing: Boolean,
   searchVal: String
 });
 
-const emit = defineEmits(['amountUpdate']);
+// const emit = defineEmits(['amountUpdate']);
 const invoiceArray = invoiceStore();
 
 const search = ref('');

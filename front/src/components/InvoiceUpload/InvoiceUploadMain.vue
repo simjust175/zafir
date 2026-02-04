@@ -16,29 +16,45 @@
           >
             <v-icon>mdi-close</v-icon>
           </v-btn>
-          <h2 class="dialog-title">{{ dialogTitle }}</h2>
+          <h2 class="dialog-title">
+            {{ dialogTitle }}
+          </h2>
         </div>
-        <div v-if="currentStep === 0" class="mode-toggle">
+        <div
+          v-if="currentStep === 0"
+          class="mode-toggle"
+        >
           <button 
             :class="['mode-btn', { active: activeMode === 'upload' }]"
             @click="activeMode = 'upload'"
           >
-            <v-icon size="18">mdi-upload</v-icon>
+            <v-icon size="18">
+              mdi-upload
+            </v-icon>
             Upload
           </button>
           <button 
             :class="['mode-btn', { active: activeMode === 'manual' }]"
             @click="activeMode = 'manual'"
           >
-            <v-icon size="18">mdi-pencil</v-icon>
+            <v-icon size="18">
+              mdi-pencil
+            </v-icon>
             Manual
           </button>
         </div>
       </div>
 
       <div class="dialog-body">
-        <transition name="fade-slide" mode="out-in">
-          <div v-if="currentStep === 0 && activeMode === 'upload'" key="upload" class="step-upload">
+        <transition
+          name="fade-slide"
+          mode="out-in"
+        >
+          <div
+            v-if="currentStep === 0 && activeMode === 'upload'"
+            key="upload"
+            class="step-upload"
+          >
             <div 
               class="dropzone"
               :class="{ 
@@ -56,19 +72,38 @@
                 accept=".pdf,.jpg,.jpeg,.png"
                 hidden
                 @change="handleFileSelect"
-              />
+              >
 
-              <div v-if="!selectedFile" class="dropzone-empty">
+              <div
+                v-if="!selectedFile"
+                class="dropzone-empty"
+              >
                 <div class="dropzone-icon">
-                  <v-icon size="40" color="primary">mdi-cloud-upload-outline</v-icon>
+                  <v-icon
+                    size="40"
+                    color="primary"
+                  >
+                    mdi-cloud-upload-outline
+                  </v-icon>
                 </div>
-                <p class="dropzone-title">Drop files here or click to browse</p>
-                <p class="dropzone-hint">PDF, JPG, PNG up to 10MB</p>
+                <p class="dropzone-title">
+                  Drop files here or click to browse
+                </p>
+                <p class="dropzone-hint">
+                  PDF, JPG, PNG up to 10MB
+                </p>
               </div>
 
-              <div v-else class="file-preview">
+              <div
+                v-else
+                class="file-preview"
+              >
                 <div class="file-icon">
-                  <v-icon :icon="getFileIcon(selectedFile)" size="28" color="primary" />
+                  <v-icon
+                    :icon="getFileIcon(selectedFile)"
+                    size="28"
+                    color="primary"
+                  />
                 </div>
                 <div class="file-info">
                   <span class="file-name">{{ selectedFile.name }}</span>
@@ -81,18 +116,32 @@
                   color="error"
                   @click.stop="removeFile"
                 >
-                  <v-icon size="18">mdi-close</v-icon>
+                  <v-icon size="18">
+                    mdi-close
+                  </v-icon>
                 </v-btn>
               </div>
             </div>
 
-            <div v-if="fileError" class="error-alert">
-              <v-icon size="16" color="error">mdi-alert-circle</v-icon>
+            <div
+              v-if="fileError"
+              class="error-alert"
+            >
+              <v-icon
+                size="16"
+                color="error"
+              >
+                mdi-alert-circle
+              </v-icon>
               {{ fileError }}
             </div>
           </div>
 
-          <div v-else-if="currentStep === 0 && activeMode === 'manual'" key="manual" class="step-manual">
+          <div
+            v-else-if="currentStep === 0 && activeMode === 'manual'"
+            key="manual"
+            class="step-manual"
+          >
             <div class="form-grid">
               <div class="form-field">
                 <label class="field-label">Supplier / Issuer <span class="required">*</span></label>
@@ -172,26 +221,66 @@
             </div>
           </div>
 
-          <div v-else-if="currentStep === 1" key="processing" class="step-processing">
+          <div
+            v-else-if="currentStep === 1"
+            key="processing"
+            class="step-processing"
+          >
             <div class="processing-content">
               <div class="processing-spinner">
-                <svg class="spinner-svg" viewBox="0 0 50 50">
-                  <circle class="spinner-track" cx="25" cy="25" r="20" />
-                  <circle class="spinner-arc" cx="25" cy="25" r="20" />
+                <svg
+                  class="spinner-svg"
+                  viewBox="0 0 50 50"
+                >
+                  <circle
+                    class="spinner-track"
+                    cx="25"
+                    cy="25"
+                    r="20"
+                  />
+                  <circle
+                    class="spinner-arc"
+                    cx="25"
+                    cy="25"
+                    r="20"
+                  />
                 </svg>
-                <v-icon class="spinner-icon" size="24" color="primary">mdi-file-search</v-icon>
+                <v-icon
+                  class="spinner-icon"
+                  size="24"
+                  color="primary"
+                >
+                  mdi-file-search
+                </v-icon>
               </div>
-              <h3 class="processing-title">Processing Invoice</h3>
-              <p class="processing-status">{{ processingStatus }}</p>
+              <h3 class="processing-title">
+                Processing Invoice
+              </h3>
+              <p class="processing-status">
+                {{ processingStatus }}
+              </p>
               <div class="progress-track">
-                <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
+                <div
+                  class="progress-fill"
+                  :style="{ width: progressPercent + '%' }"
+                />
               </div>
             </div>
           </div>
 
-          <div v-else-if="currentStep === 2" key="review" class="step-review">
-            <div class="review-notice" :class="extractionWarning ? 'warning' : 'success'">
-              <v-icon :icon="extractionWarning ? 'mdi-alert' : 'mdi-check-circle'" size="20" />
+          <div
+            v-else-if="currentStep === 2"
+            key="review"
+            class="step-review"
+          >
+            <div
+              class="review-notice"
+              :class="extractionWarning ? 'warning' : 'success'"
+            >
+              <v-icon
+                :icon="extractionWarning ? 'mdi-alert' : 'mdi-check-circle'"
+                size="20"
+              />
               <span>{{ extractionWarning || 'Data extracted successfully. Please review and confirm.' }}</span>
             </div>
 
@@ -274,19 +363,39 @@
                 </div>
               </div>
 
-              <div v-if="selectedFile" class="attached-file-info">
-                <v-icon :icon="getFileIcon(selectedFile)" size="18" color="primary" />
+              <div
+                v-if="selectedFile"
+                class="attached-file-info"
+              >
+                <v-icon
+                  :icon="getFileIcon(selectedFile)"
+                  size="18"
+                  color="primary"
+                />
                 <span>{{ selectedFile.name }}</span>
               </div>
             </div>
           </div>
 
-          <div v-else-if="currentStep === 3" key="confirm" class="step-confirm">
+          <div
+            v-else-if="currentStep === 3"
+            key="confirm"
+            class="step-confirm"
+          >
             <div class="confirm-icon">
-              <v-icon size="32" color="primary">mdi-file-document-check</v-icon>
+              <v-icon
+                size="32"
+                color="primary"
+              >
+                mdi-file-document-check
+              </v-icon>
             </div>
-            <h3 class="confirm-title">Confirm Invoice Details</h3>
-            <p class="confirm-subtitle">Please review before saving</p>
+            <h3 class="confirm-title">
+              Confirm Invoice Details
+            </h3>
+            <p class="confirm-subtitle">
+              Please review before saving
+            </p>
 
             <div class="confirm-summary">
               <div class="summary-row">
@@ -305,7 +414,10 @@
                 <span class="summary-label">VAT Included</span>
                 <span class="summary-value">{{ invoiceData.includesBtw ? `Yes (${invoiceData.btwPercent}%)` : 'No' }}</span>
               </div>
-              <div v-if="invoiceData.margin" class="summary-row">
+              <div
+                v-if="invoiceData.margin"
+                class="summary-row"
+              >
                 <span class="summary-label">Margin</span>
                 <span class="summary-value">€{{ formatAmount(invoiceData.margin) }}</span>
               </div>
@@ -320,7 +432,9 @@
           variant="text"
           @click="goBack"
         >
-          <v-icon start>mdi-arrow-left</v-icon>
+          <v-icon start>
+            mdi-arrow-left
+          </v-icon>
           Back
         </v-btn>
         <v-spacer />
@@ -338,7 +452,9 @@
           @click="handleNext"
         >
           {{ activeMode === 'upload' ? 'Process Invoice' : 'Review Details' }}
-          <v-icon end>mdi-arrow-right</v-icon>
+          <v-icon end>
+            mdi-arrow-right
+          </v-icon>
         </v-btn>
         <v-btn
           v-if="currentStep === 2"
@@ -347,14 +463,18 @@
           @click="goToConfirm"
         >
           Confirm
-          <v-icon end>mdi-check</v-icon>
+          <v-icon end>
+            mdi-check
+          </v-icon>
         </v-btn>
         <v-btn
           v-if="currentStep === 3"
           variant="text"
           @click="currentStep = 2"
         >
-          <v-icon start>mdi-pencil</v-icon>
+          <v-icon start>
+            mdi-pencil
+          </v-icon>
           Edit
         </v-btn>
         <v-btn
@@ -363,7 +483,9 @@
           :loading="saving"
           @click="saveInvoice"
         >
-          <v-icon start>mdi-content-save</v-icon>
+          <v-icon start>
+            mdi-content-save
+          </v-icon>
           Save Invoice
         </v-btn>
       </div>
