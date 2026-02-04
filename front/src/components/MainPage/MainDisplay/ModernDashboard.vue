@@ -384,7 +384,8 @@ const getWarningTitle = (type) => {
 }
 
 const openUploadDialog = () => {
-  showUploadDialog.value = true
+  //showUploadDialog.value = true
+  router.push('/upload')
 }
 
 const openInvoice = (invoice) => {
