@@ -67,7 +67,7 @@
             >
               <v-card
                 :class="themeColor"
-                class="pa-4 py-6 fill-height"
+                class="pa-4 py-6 fill-height border-dashed"
                 rounded="lg"
               >
                 <div class="d-flex flex-column align-center">

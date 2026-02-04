@@ -190,7 +190,7 @@
     <Teleport to="body">
       <transition name="settings-backdrop">
         <div
-          v-if="showSettings"
+          v-show="showSettings"
           class="settings-backdrop"
           @click="closeSettings"
         />
@@ -198,7 +198,7 @@
 
       <transition name="settings-panel">
         <div
-          v-if="showSettings"
+          v-show="showSettings"
           class="settings-panel"
           @keydown.esc="closeSettings"
         >
@@ -528,9 +528,13 @@ const toggleTheme = () => {
   loginState.theme = theme.global.name.value
 }
 
+let themeTimeout
 const setTheme = (themeName) => {
-  theme.global.name.value = themeName
-  loginState.theme = themeName
+  clearTimeout(themeTimeout)
+  themeTimeout = setTimeout(() => {
+    theme.global.name.value = themeName
+    loginState.theme = themeName
+  }, 150)
 }
 
 const openSettings = () => {
@@ -554,12 +558,20 @@ const handleEscKey = (e) => {
   }
 }
 
-onMounted(() => {
-  document.addEventListener('keydown', handleEscKey)
-})
+// onMounted(() => {
+//   document.addEventListener('keydown', handleEscKey)
+// })
 
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleEscKey)
+// onUnmounted(() => {
+//   document.removeEventListener('keydown', handleEscKey)
+// })
+
+watch(showSettings, (open) => {
+  if (open) {
+    document.addEventListener('keydown', handleEscKey)
+  } else {
+    document.removeEventListener('keydown', handleEscKey)
+  }
 })
 
 const handleChangePassword = async () => {
@@ -673,7 +685,7 @@ const logout = async () => {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
+  /* backdrop-filter: blur(4px); */
   z-index: 2000;
 }
 
