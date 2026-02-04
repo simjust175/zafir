@@ -1,34 +1,29 @@
-// sendInvoice.js
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { config } from "dotenv";
 import path from "path";
-import fs from "fs";
 import { createInvoicePdf } from "./createInvoice.js";
 import InvoiceCalculations from "./calculations/invoiceCalculations.js";
+import fs from "fs";
 
 config();
 
-// ✅ Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-/* ---------------- EMAIL TEMPLATE ---------------- */
-
-function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPaid, language = "nl", invoiceNumber }) {
+function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPaid, language = "nl", invoiceNumber, companyBreakdown = [], totalInvoiced, outstanding }) {
   const isDutch = language === "nl";
   const calc = new InvoiceCalculations();
-
+  console.log("BALANCE DUE?", outstanding);
+ 
   const formattedDate = new Date().toLocaleDateString(isDutch ? "nl-BE" : "en-US", {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
-
+  
   const formattedTotal = calc.formatCurrency(total);
-  const formattedBalance = calc.formatCurrency(balanceDue);
+  const formattedBalance = calc.formatCurrency(outstanding);
   const invNumber = invoiceNumber || `INV-${Date.now().toString().slice(-8)}`;
-
-  const statusColor = isPaid ? "#38a169" : parseFloat(balanceDue) > 0 ? "#d69e2e" : "#3182ce";
-  const statusText = isPaid
+  
+  const statusColor = isPaid ? "#38a169" : parseFloat(outstanding) > 0 ? "#d69e2e" : "#3182ce";
+  const statusText = isPaid 
     ? (isDutch ? "BETAALD" : "PAID")
     : (isDutch ? "OPENSTAAND" : "PENDING");
 
@@ -54,7 +49,7 @@ function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPa
   
   <!-- Preheader Text -->
   <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
-    ${isDutch
+    ${isDutch 
       ? `Uw factuuroverzicht voor ${projectName} - Totaal: ${formattedTotal}`
       : `Your invoice summary for ${projectName} - Total: ${formattedTotal}`
     }
@@ -106,10 +101,10 @@ function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPa
               </p>
               
               <p style="margin: 0 0 32px; color: #4a5568; font-size: 15px; line-height: 1.7;">
-                ${isDutch
-      ? 'Hierbij ontvangt u het factuuroverzicht voor uw project. Alle details vindt u in de bijlage.'
-      : 'Please find attached the invoice summary for your project. All details are included in the attachment.'
-    }
+                ${isDutch 
+                  ? 'Hierbij ontvangt u het factuuroverzicht voor uw project. Alle details vindt u in de bijlage.'
+                  : 'Please find attached the invoice summary for your project. All details are included in the attachment.'
+                }
               </p>
               
               <!-- Project Info Card -->
@@ -143,7 +138,7 @@ function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPa
                                 <p style="margin: 0; color: #718096; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">
                                   ${isDutch ? 'Openstaand' : 'Balance Due'}
                                 </p>
-                                <p style="margin: 4px 0 0; color: ${parseFloat(balanceDue) > 0 ? '#e53e3e' : '#38a169'}; font-size: 24px; font-weight: 700;">
+                                <p style="margin: 4px 0 0; color: ${parseFloat(outstanding) > 0 ? '#e53e3e' : '#38a169'}; font-size: 24px; font-weight: 700;">
                                   ${formattedBalance}
                                 </p>
                               </td>
@@ -156,6 +151,55 @@ function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPa
                 </tr>
               </table>
               
+              ${companyBreakdown && companyBreakdown.length > 0 ? `
+              <!-- Company Breakdown Table -->
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 32px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                <tr>
+                  <td style="background-color: #f7fafc; padding: 12px 16px; border-bottom: 1px solid #e2e8f0;">
+                    <p style="margin: 0; color: #1a202c; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                      ${isDutch ? 'Overzicht per Leverancier' : 'Supplier Breakdown'}
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                      <tr style="background-color: #f7fafc;">
+                        <td style="padding: 10px 16px; font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0;">
+                          ${isDutch ? 'Leverancier' : 'Supplier'}
+                        </td>
+                        <td style="padding: 10px 16px; font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; text-align: right; border-bottom: 1px solid #e2e8f0;">
+                          ${isDutch ? 'Aantal' : 'Count'}
+                        </td>
+                        <td style="padding: 10px 16px; font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; text-align: right; border-bottom: 1px solid #e2e8f0;">
+                          ${isDutch ? 'Subtotaal' : 'Subtotal'}
+                        </td>
+                        <td style="padding: 10px 16px; font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; text-align: right; border-bottom: 1px solid #e2e8f0;">
+                          ${isDutch ? 'Totaal' : 'Total'}
+                        </td>
+                      </tr>
+                      ${companyBreakdown.map((company, idx) => `
+                      <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#f7fafc'};">
+                        <td style="padding: 12px 16px; font-size: 14px; color: #1a202c; border-bottom: 1px solid #e2e8f0;">
+                          ${company.name}
+                        </td>
+                        <td style="padding: 12px 16px; font-size: 14px; color: #4a5568; text-align: right; border-bottom: 1px solid #e2e8f0;">
+                          ${company.count}
+                        </td>
+                        <td style="padding: 12px 16px; font-size: 14px; color: #4a5568; text-align: right; border-bottom: 1px solid #e2e8f0;">
+                          ${calc.formatCurrency(company.subtotal)}
+                        </td>
+                        <td style="padding: 12px 16px; font-size: 14px; color: #1a202c; font-weight: 600; text-align: right; border-bottom: 1px solid #e2e8f0;">
+                          ${calc.formatCurrency(company.total)}
+                        </td>
+                      </tr>
+                      `).join('')}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+
               <!-- CTA Button -->
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 32px;">
                 <tr>
@@ -176,10 +220,10 @@ function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPa
               
               <!-- Contact Info -->
               <p style="margin: 0 0 8px; color: #4a5568; font-size: 14px; line-height: 1.6;">
-                ${isDutch
-      ? 'Heeft u vragen over deze factuur? Neem gerust contact met ons op.'
-      : 'Have questions about this invoice? Feel free to reach out to us.'
-    }
+                ${isDutch 
+                  ? 'Heeft u vragen over deze factuur? Neem gerust contact met ons op.'
+                  : 'Have questions about this invoice? Feel free to reach out to us.'
+                }
               </p>
               
               <!-- Signature -->
@@ -244,7 +288,37 @@ function generateEmailTemplate({ recipient, projectName, total, balanceDue, isPa
 `;
 }
 
-/* ---------------- SEND FUNCTION ---------------- */
+function calculateCompanyBreakdown(invoices, marginPercent = 0) {
+  const companyMap = new Map();
+  
+  invoices.forEach(invoice => {
+    const issuer = invoice.issuer || invoice.company || 'Unknown';
+    const amount = parseFloat(invoice.amount) || 0;
+    const invoiceMargin = invoice.margin !== undefined ? parseFloat(invoice.margin) : marginPercent;
+    
+    if (!companyMap.has(issuer)) {
+      companyMap.set(issuer, { 
+        name: issuer, 
+        count: 0, 
+        subtotal: 0,
+        totalWithMargin: 0
+      });
+    }
+    
+    const company = companyMap.get(issuer);
+    company.count += 1;
+    company.subtotal += amount;
+    company.totalWithMargin += amount + (amount * invoiceMargin / 100);
+  });
+  
+  return Array.from(companyMap.values()).map(c => ({
+    name: c.name,
+    count: c.count,
+    subtotal: c.subtotal,
+    total: c.totalWithMargin
+  }));
+}
+
 async function sendInvoiceByEmail({
   to,
   recipient,
@@ -252,64 +326,100 @@ async function sendInvoiceByEmail({
   groupedInvoices,
   groupedPayments,
   total,
-  language = "nl"
+  language = "nl",
+  projectMargin = 0,
+  invoicingEntries = [],
+  totalInvoiced = 0,
+  outstanding = 0
 }) {
   const calc = new InvoiceCalculations();
   const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`;
-
+  
   const paymentSummary = calc.calculatePaymentSummary(total, groupedPayments);
   const balanceDue = paymentSummary.summary.balanceDue;
   const isPaid = paymentSummary.summary.isPaid;
 
-  const fileNameSafe = projectName.replace(/[^a-zA-Z0-9]/g, "-");
-  const outputPath = path.join("invoices", `invoice-${Date.now()}.pdf`);
+  const flatInvoices = groupedInvoices.flatMap(g => g.invoices || [g]);
+  const companyBreakdown = calculateCompanyBreakdown(flatInvoices, projectMargin);
+
+  const outputPath = path.resolve(`invoices/invoice-${Date.now()}.pdf`);
+  
+  await createInvoicePdf({ 
+    projectName, 
+    groupedInvoices, 
+    groupedPayments,
+    invoicingData: invoicingEntries,
+    paymentsData: groupedPayments,
+    total,
+    totalInvoiced,
+    outstanding,
+    invoiceNumber,
+    projectMargin 
+  }, outputPath);
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.bookmyname.com",
+    port: parseInt(process.env.SMTP_PORT) || 587,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+
+  const htmlContent = generateEmailTemplate({
+    recipient,
+    projectName,
+    total,
+    balanceDue: balanceDue.toString(),
+    isPaid,
+    language,
+    invoiceNumber,
+    outstanding,
+    companyBreakdown
+  });
+
+  const isDutch = language === "nl";
+  
+  const mailOptions = {
+    from: `"ZAFIR TOTAAL PROJECTEN" <${process.env.EMAIL_USER || "info@zafir.be"}>`,
+    to,
+    subject: isDutch 
+      ? `Factuuroverzicht - ${projectName} [${invoiceNumber}]` 
+      : `Invoice Summary - ${projectName} [${invoiceNumber}]`,
+    html: htmlContent,
+    attachments: [
+      {
+        filename: `Invoice-${projectName.replace(/[^a-zA-Z0-9]/g, '-')}-${invoiceNumber}.pdf`,
+        path: outputPath,
+        contentType: 'application/pdf'
+      }
+    ],
+    headers: {
+      'X-Priority': '3',
+      'X-Mailer': 'BILLIO Invoice System'
+    }
+  };
 
   try {
-    // Generate PDF
-    await createInvoicePdf(
-      { projectName, groupedInvoices, groupedPayments, total, invoiceNumber },
-      outputPath
-    );
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", info.messageId);
 
-    // Generate email HTML
-    const htmlContent = generateEmailTemplate({
-      recipient,
-      projectName,
-      total,
-      balanceDue: balanceDue.toString(),
-      isPaid,
-      language,
-      invoiceNumber
+    fs.unlink(outputPath, (err) => {
+      if (err) console.warn("Could not delete temp PDF:", err.message);
     });
-
-    // Send email via Resend
-    const response = await resend.emails.send({
-      from: `ZAFIR TOTAAL PROJECTEN <billing@zafir.uk>`,
-      to: [to],
-      subject: language === "nl"
-        ? `Factuuroverzicht - ${projectName} [${invoiceNumber}]`
-        : `Invoice Summary - ${projectName} [${invoiceNumber}]`,
-      html: htmlContent,
-      attachments: [
-        {
-          filename: `Invoice-${fileNameSafe}-${invoiceNumber}.pdf`,
-          content: fs.readFileSync(outputPath).toString("base64"),
-          type: "application/pdf",
-          disposition: "attachment"
-        }
-      ]
-    });
-
-    console.log("Email sent via Resend:", response.id);
-    return { success: true, messageId: response.id, invoiceNumber };
-
+    
+    return { 
+      success: true, 
+      messageId: info.messageId,
+      invoiceNumber 
+    };
   } catch (err) {
     console.error("Email sending failed:", err.message);
+    
+    fs.unlink(outputPath, () => {});
+    
     throw err;
-
-  } finally {
-    // Always clean up PDF
-    fs.unlink(outputPath, () => { });
   }
 }
 

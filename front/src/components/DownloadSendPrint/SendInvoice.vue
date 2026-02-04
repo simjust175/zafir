@@ -291,7 +291,11 @@ const props = defineProps({
   projectName: String,
   payments: Array,
   currentProjectId: Number,
-  doubleChecked: Boolean
+  doubleChecked: Boolean,
+  invoicingEntries: { type: Array, default: () => [] },
+  projectMargin: { type: Number, default: 0 },
+  totalInvoiced: { type: Number, default: 0 },
+  outstanding: Number
 });
 
 const dialog = ref(false);
@@ -352,7 +356,11 @@ const handleSend = async () => {
         projectName: props.projectName,
         total: props.total,
         groupedInvoices: props.groupedInvoices,
-        groupedPayments: props.payments
+        groupedPayments: props.payments,
+        invoicingEntries: props.invoicingEntries,
+        projectMargin: props.projectMargin,
+        totalInvoiced: props.totalInvoiced,
+        outstanding: props.outstanding
       })
     });
 
