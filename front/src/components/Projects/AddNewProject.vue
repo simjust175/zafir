@@ -1,16 +1,36 @@
 <template>
   <div class="add-project-wrapper">
-    <transition name="view-slide" mode="out-in">
-      <div v-if="adding || !inTabs" key="login" class="form-view">
+    <transition
+      name="view-slide"
+      mode="out-in"
+    >
+      <div
+        v-if="adding || !inTabs"
+        key="login"
+        class="form-view"
+      >
         <div class="form-header">
           <div class="icon-wrapper">
-            <v-icon size="28" color="white">mdi-rocket-launch-outline</v-icon>
+            <v-icon
+              size="28"
+              color="white"
+            >
+              mdi-rocket-launch-outline
+            </v-icon>
           </div>
-          <h2 class="form-title">Create New Project</h2>
-          <p class="form-subtitle">Set up your project tracking in seconds</p>
+          <h2 class="form-title">
+            Create New Project
+          </h2>
+          <p class="form-subtitle">
+            Set up your project tracking in seconds
+          </p>
         </div>
 
-        <v-form ref="formRef" class="project-form" @submit.prevent="submitForm">
+        <v-form
+          ref="formRef"
+          class="project-form"
+          @submit.prevent="submitForm"
+        >
           <div class="form-section">
             <label class="section-label">
               Email Account
@@ -32,7 +52,12 @@
                 clearable
               >
                 <template #prepend-inner>
-                  <v-icon size="20" color="grey-darken-1">mdi-email-outline</v-icon>
+                  <v-icon
+                    size="20"
+                    color="grey-darken-1"
+                  >
+                    mdi-email-outline
+                  </v-icon>
                 </template>
               </v-select>
               
@@ -49,11 +74,19 @@
                 rounded="lg"
               >
                 <template #prepend-inner>
-                  <v-icon size="20" color="grey-darken-1">mdi-email-outline</v-icon>
+                  <v-icon
+                    size="20"
+                    color="grey-darken-1"
+                  >
+                    mdi-email-outline
+                  </v-icon>
                 </template>
               </v-text-field>
 
-              <v-tooltip location="top" open-delay="500">
+              <v-tooltip
+                location="top"
+                open-delay="500"
+              >
                 <template #activator="{ props }">
                   <v-btn
                     v-if="availableEmails.length > 0"
@@ -71,7 +104,10 @@
             </div>
           </div>
 
-          <div v-if="addingNewEmail && email" class="form-section">
+          <div
+            v-if="addingNewEmail && email"
+            class="form-section"
+          >
             <label class="section-label">Password</label>
             <v-text-field
               v-model="password"
@@ -87,7 +123,12 @@
               @click:append-inner="pwd = !pwd"
             >
               <template #prepend-inner>
-                <v-icon size="20" color="grey-darken-1">mdi-lock-outline</v-icon>
+                <v-icon
+                  size="20"
+                  color="grey-darken-1"
+                >
+                  mdi-lock-outline
+                </v-icon>
               </template>
             </v-text-field>
           </div>
@@ -95,13 +136,24 @@
           <!-- Email Guidance Card -->
           <div class="email-info-card">
             <div class="info-icon">
-              <v-icon size="18" color="primary">mdi-information-outline</v-icon>
+              <v-icon
+                size="18"
+                color="primary"
+              >
+                mdi-information-outline
+              </v-icon>
             </div>
             <div class="info-content">
-              <span v-if="hasEmailSelected" class="info-text">
+              <span
+                v-if="hasEmailSelected"
+                class="info-text"
+              >
                 <strong>With email:</strong> Invoices sent to this email will be automatically captured and added to this project.
               </span>
-              <span v-else class="info-text">
+              <span
+                v-else
+                class="info-text"
+              >
                 <strong>Without email:</strong> You can manually upload invoices or use AI upload. Automatic email ingestion will not be available.
               </span>
             </div>
@@ -121,7 +173,12 @@
               required
             >
               <template #prepend-inner>
-                <v-icon size="20" color="grey-darken-1">mdi-folder-outline</v-icon>
+                <v-icon
+                  size="20"
+                  color="grey-darken-1"
+                >
+                  mdi-folder-outline
+                </v-icon>
               </template>
             </v-text-field>
           </div>
@@ -144,21 +201,37 @@
               :loading="isSubmitting"
               class="submit-btn"
             >
-              <v-icon start size="18">mdi-rocket-launch</v-icon>
+              <v-icon
+                start
+                size="18"
+              >
+                mdi-rocket-launch
+              </v-icon>
               {{ addingNewEmail ? 'Create Project' : 'Attach Project' }}
             </v-btn>
           </div>
         </v-form>
       </div>
 
-      <div v-else key="project" class="initial-view">
+      <div
+        v-else
+        key="project"
+        class="initial-view"
+      >
         <div class="initial-illustration">
           <div class="illustration-bg" />
           <div class="illustration-icon">
-            <v-icon size="56" color="white">mdi-briefcase-plus-outline</v-icon>
+            <v-icon
+              size="56"
+              color="white"
+            >
+              mdi-briefcase-plus-outline
+            </v-icon>
           </div>
         </div>
-        <h2 class="initial-title">Start Your Next Project</h2>
+        <h2 class="initial-title">
+          Start Your Next Project
+        </h2>
         <p class="initial-subtitle">
           Track invoices, manage expenses, and stay organized with a new project workspace
         </p>
@@ -175,15 +248,30 @@
 
         <div class="features-list">
           <div class="feature-chip">
-            <v-icon size="16" color="success">mdi-check-circle</v-icon>
+            <v-icon
+              size="16"
+              color="success"
+            >
+              mdi-check-circle
+            </v-icon>
             <span>Invoice tracking</span>
           </div>
           <div class="feature-chip">
-            <v-icon size="16" color="success">mdi-check-circle</v-icon>
+            <v-icon
+              size="16"
+              color="success"
+            >
+              mdi-check-circle
+            </v-icon>
             <span>Payment management</span>
           </div>
           <div class="feature-chip">
-            <v-icon size="16" color="success">mdi-check-circle</v-icon>
+            <v-icon
+              size="16"
+              color="success"
+            >
+              mdi-check-circle
+            </v-icon>
             <span>Email integration</span>
           </div>
         </div>

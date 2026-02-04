@@ -379,18 +379,57 @@ const statusChartOptions = {
   }
 }
 
+// const statusSeries = computed(() => {
+//   const paid = totalPayments.value
+//   const pending = Math.max(0, outstanding.value * 0.7)
+//   const overdue = Math.max(0, outstanding.value * 0.3)
+
+//   return [
+//     Number((paid || 1).toFixed(2)),
+//     Number((pending || 1).toFixed(2)),
+//     Number((overdue || 1).toFixed(2))
+//   ]
+// })
+
 const statusSeries = computed(() => {
-  const paid = totalPayments.value
-  const pending = Math.max(0, outstanding.value * 0.7)
-  const overdue = Math.max(0, outstanding.value * 0.3)
+  const today = new Date()
+  let paid = 0
+  let pending = 0
+  let overdue = 0
+
+  invoiceStore.invoicing?.forEach(inv => {
+    const totalAmount = Number(inv.amount || 0)
+    const paidAmount = Number(inv.paid_amount || 0)
+    const remaining = Math.max(0, totalAmount - paidAmount)
+
+    const dueDate = inv.due_date ? new Date(inv.due_date) : null
+
+    // Fully paid
+    if (paidAmount >= totalAmount) {
+      paid += totalAmount
+      return
+    }
+
+    // Unpaid / partially paid
+    if (!dueDate) {
+      // If no due date, treat as pending (safe default)
+      pending += remaining
+      return
+    }
+
+    if (dueDate < today) {
+      overdue += remaining
+    } else {
+      pending += remaining
+    }
+  })
 
   return [
-    Number((paid || 1).toFixed(2)),
-    Number((pending || 1).toFixed(2)),
-    Number((overdue || 1).toFixed(2))
+    Number(paid.toFixed(2)),
+    Number(pending.toFixed(2)),
+    Number(overdue.toFixed(2))
   ]
 })
-
 </script>
 
 <style scoped>

@@ -1,6 +1,6 @@
 <template>
-  <div class="invoices-page">
-    <main class="page-content">
+  <div class="invoices-surface">
+    <main class="invoices-content">
       <main-display-tabs
         :invoice-array="amountArray"
         :expanded="true"
@@ -33,18 +33,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.invoices-page {
-  min-height: 100%;
+.invoices-surface {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #fafafa;
+  background: rgb(var(--v-theme-background));
 }
 
-.page-content {
+.invoices-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0;
   min-height: 0;
 }
 </style>

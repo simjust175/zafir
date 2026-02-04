@@ -1,7 +1,11 @@
 <template>
   <div class="notification-system">
     <Teleport to="body">
-      <transition-group name="notification-list" tag="div" class="notification-container">
+      <transition-group
+        name="notification-list"
+        tag="div"
+        class="notification-container"
+      >
         <div
           v-for="notification in activeNotifications"
           :key="notification.id"
@@ -9,57 +13,142 @@
           :class="[`notification-${notification.type}`, { 'is-progress': notification.type === 'progress' }]"
         >
           <div class="notification-content">
-            <div class="notification-icon-wrapper" :class="`icon-${notification.type}`">
-              <div v-if="notification.type === 'progress'" class="progress-spinner">
-                <svg class="spinner-svg" viewBox="0 0 24 24">
-                  <circle class="spinner-track" cx="12" cy="12" r="10" />
-                  <circle class="spinner-progress" cx="12" cy="12" r="10" />
+            <div
+              class="notification-icon-wrapper"
+              :class="`icon-${notification.type}`"
+            >
+              <div
+                v-if="notification.type === 'progress'"
+                class="progress-spinner"
+              >
+                <svg
+                  class="spinner-svg"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="spinner-track"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                  <circle
+                    class="spinner-progress"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
                 </svg>
               </div>
-              <v-icon v-else-if="notification.type === 'success'" size="18">mdi-check</v-icon>
-              <v-icon v-else-if="notification.type === 'error'" size="18">mdi-close</v-icon>
-              <v-icon v-else-if="notification.type === 'warning'" size="18">mdi-alert</v-icon>
-              <v-icon v-else size="18">mdi-information-variant</v-icon>
+              <v-icon
+                v-else-if="notification.type === 'success'"
+                size="18"
+              >
+                mdi-check
+              </v-icon>
+              <v-icon
+                v-else-if="notification.type === 'error'"
+                size="18"
+              >
+                mdi-close
+              </v-icon>
+              <v-icon
+                v-else-if="notification.type === 'warning'"
+                size="18"
+              >
+                mdi-alert
+              </v-icon>
+              <v-icon
+                v-else
+                size="18"
+              >
+                mdi-information-variant
+              </v-icon>
             </div>
 
             <div class="notification-body">
               <span class="notification-message">{{ notification.message }}</span>
-              <div v-if="notification.type === 'progress'" class="progress-bar-container">
+              <div
+                v-if="notification.type === 'progress'"
+                class="progress-bar-container"
+              >
                 <div class="progress-bar">
-                  <div class="progress-fill" :style="{ width: `${notification.progress}%` }" />
+                  <div
+                    class="progress-fill"
+                    :style="{ width: `${notification.progress}%` }"
+                  />
                 </div>
               </div>
             </div>
 
-            <button v-if="notification.type !== 'progress'" class="notification-close" @click="dismissNotification(notification.id)">
-              <v-icon size="16">mdi-close</v-icon>
+            <button
+              v-if="notification.type !== 'progress'"
+              class="notification-close"
+              @click="dismissNotification(notification.id)"
+            >
+              <v-icon size="16">
+                mdi-close
+              </v-icon>
             </button>
           </div>
         </div>
       </transition-group>
 
       <transition name="success-modal">
-        <div v-if="showSuccessModal" class="success-modal-overlay" @click.self="closeSuccessModal">
+        <div
+          v-if="showSuccessModal"
+          class="success-modal-overlay"
+          @click.self="closeSuccessModal"
+        >
           <div class="success-modal">
             <div class="success-animation">
               <div class="success-circle">
-                <svg class="success-svg" viewBox="0 0 52 52">
-                  <circle class="success-circle-bg" cx="26" cy="26" r="24" />
-                  <circle class="success-circle-stroke" cx="26" cy="26" r="24" />
-                  <path class="success-check" d="M14 27l8 8 16-16" />
+                <svg
+                  class="success-svg"
+                  viewBox="0 0 52 52"
+                >
+                  <circle
+                    class="success-circle-bg"
+                    cx="26"
+                    cy="26"
+                    r="24"
+                  />
+                  <circle
+                    class="success-circle-stroke"
+                    cx="26"
+                    cy="26"
+                    r="24"
+                  />
+                  <path
+                    class="success-check"
+                    d="M14 27l8 8 16-16"
+                  />
                 </svg>
               </div>
-              <div class="success-particles">
-                <span v-for="i in 8" :key="i" class="particle" :style="`--delay: ${i * 0.1}s; --angle: ${i * 45}deg`" />
-              </div>
+              <!-- <div class="success-particles">
+                <span
+                  v-for="i in 8"
+                  :key="i"
+                  class="particle"
+                  :style="`--delay: ${i * 0.1}s; --angle: ${i * 45}deg`"
+                />
+              </div> -->
             </div>
 
-            <h2 class="success-title">Project Created!</h2>
-            <p class="success-description">Your project has been set up successfully and is ready to use.</p>
+            <h2 class="success-title">
+              Project Created!
+            </h2>
+            <p class="success-description">
+              Your project has been set up successfully and is ready to use.
+            </p>
 
-            <button class="success-btn" @click="closeSuccessModal">
+            <button
+              class="success-btn"
+              @click="closeSuccessModal"
+            >
               <span>Continue</span>
-              <v-icon size="18">mdi-arrow-right</v-icon>
+              <v-icon size="18">
+                mdi-arrow-right
+              </v-icon>
             </button>
           </div>
         </div>
@@ -345,7 +434,7 @@ defineExpose({ showSnack })
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
+  /* backdrop-filter: blur(8px); */
   z-index: 10000;
   display: flex;
   align-items: center;
@@ -414,7 +503,7 @@ defineExpose({ showSnack })
   to { stroke-dashoffset: 0; }
 }
 
-.success-particles {
+/* .success-particles {
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -431,9 +520,9 @@ defineExpose({ showSnack })
   opacity: 0;
   animation: particle-burst 0.8s ease forwards;
   animation-delay: var(--delay);
-}
+} */
 
-@keyframes particle-burst {
+/* @keyframes particle-burst {
   0% {
     opacity: 1;
     transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0);
@@ -442,7 +531,7 @@ defineExpose({ showSnack })
     opacity: 0;
     transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-50px);
   }
-}
+} */
 
 .success-title {
   font-size: 1.5rem;
