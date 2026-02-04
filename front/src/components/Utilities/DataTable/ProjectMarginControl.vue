@@ -290,7 +290,7 @@ const saveMargin = async () => {
   saving.value = true;
   try {
     const margin = Math.max(0, Math.min(100, Number(editValue.value) || 0));
-    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/patch/projects?id=${props.projectId}`, {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/invoice/patch/invoices?marginPerProject=${props.projectId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ margin })

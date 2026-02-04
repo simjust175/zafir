@@ -24,7 +24,7 @@
         <div class="header-content">
           <div class="header-badge">
             <!-- Revenue Tracking -->
-            {{ project_name }}
+             {{ project_name }}
           </div>
           <h1 class="page-title">
             Project Revenue
@@ -440,14 +440,9 @@
                 <div class="entry-indicator invoiced" />
                 <div class="entry-info">
                   <span class="entry-amount">{{ formatCurrency(entry.amount) }}</span>
+                  <span v-if="entry.invoice_number" class="entry-invoice-number">#{{ entry.invoice_number }}</span>
                   <span class="entry-date">{{ formatDate(entry.created_on) }}</span>
                 </div>
-              </div>
-              <div>
-                <span
-                  v-if="entry.invoice_number"
-                  class="entry-invoice-number"
-                >#{{ entry.invoice_number }}</span>
               </div>
               <div class="entry-actions">
                 <button
@@ -739,44 +734,19 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog
-      v-model="sendDialog"
-      max-width="440"
-    >
+    <v-dialog v-model="sendDialog" max-width="440">
       <div class="send-dialog">
         <div class="send-dialog-header">
           <h2>Send Revenue Summary</h2>
-          <button
-            class="close-btn"
-            @click="sendDialog = false"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <line
-                x1="18"
-                y1="6"
-                x2="6"
-                y2="18"
-              />
-              <line
-                x1="6"
-                y1="6"
-                x2="18"
-                y2="18"
-              />
+          <button class="close-btn" @click="sendDialog = false">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
         </div>
         <div class="send-dialog-body">
-          <p class="send-description">
-            Send a PDF summary of invoices sent and payments received for this project.
-          </p>
+          <p class="send-description">Send a PDF summary of invoices sent and payments received for this project.</p>
           
           <div class="send-form-field">
             <label class="send-field-label">Email Address <span class="required">*</span></label>
@@ -787,10 +757,7 @@
               :class="{ error: sendEmailError }"
               placeholder="recipient@company.com"
             >
-            <span
-              v-if="sendEmailError"
-              class="send-error-msg"
-            >{{ sendEmailError }}</span>
+            <span v-if="sendEmailError" class="send-error-msg">{{ sendEmailError }}</span>
           </div>
 
           <div class="send-form-field">
@@ -802,10 +769,7 @@
               :class="{ error: sendRecipientError }"
               placeholder="John Doe"
             >
-            <span
-              v-if="sendRecipientError"
-              class="send-error-msg"
-            >{{ sendRecipientError }}</span>
+            <span v-if="sendRecipientError" class="send-error-msg">{{ sendRecipientError }}</span>
           </div>
 
           <div class="send-form-field">
@@ -829,38 +793,13 @@
           </div>
         </div>
         <div class="send-dialog-footer">
-          <button
-            class="send-btn-cancel"
-            @click="sendDialog = false"
-          >
-            Cancel
-          </button>
-          <button
-            class="send-btn-primary"
-            :disabled="sendingEmail"
-            @click="submitSendEmail"
-          >
-            <svg
-              v-if="!sendingEmail"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <line
-                x1="22"
-                y1="2"
-                x2="11"
-                y2="13"
-              />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          <button class="send-btn-cancel" @click="sendDialog = false">Cancel</button>
+          <button class="send-btn-primary" :disabled="sendingEmail" @click="submitSendEmail">
+            <svg v-if="!sendingEmail" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
-            <span
-              v-if="sendingEmail"
-              class="spinner-sm-light"
-            />
+            <span v-if="sendingEmail" class="spinner-sm-light" />
             {{ sendingEmail ? 'Sending...' : 'Send Email' }}
           </button>
         </div>
