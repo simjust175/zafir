@@ -1,14 +1,17 @@
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.bookmyname.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.RESET_EMAIL_USER,
-      pass: process.env.RESET_EMAIL_PASS
-    }
-  });
+  host: "smtp.bookmyname.com",
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.RESET_EMAIL_USER,
+    pass: process.env.RESET_EMAIL_PASS
+  },
+  tls: {
+    family: 4   // 👈 FORCE IPv4
+  }
+});
 
 // Verify connection at startup
 transporter.verify()
