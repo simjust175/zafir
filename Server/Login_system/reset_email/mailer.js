@@ -1,24 +1,32 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+import { config } from "dotenv";
 
-const transporter = nodemailer.createTransport({
-    host: "smtp.bookmyname.com",
-    port: 587,
-    secure: false, // TLS
-    auth: {
-      user: process.env.RESET_EMAIL_USER,
-      pass: process.env.RESET_EMAIL_PASS
-    },
-    // BEST PRACTICE: Add a timeout and force IPv4 for this specific connection
-    connectionTimeout: 10000, 
-    greetingTimeout: 10000,
-  });
+config();
 
-// Verify connection
-transporter.verify()
-  .then(() => console.log("📧 Password Reset Mailer: Ready"))
-  .catch(err => {
-    console.error("❌ Password Reset Mailer Error:", err.message);
-    // Log the actual error but don't let it crash the whole app process
-  });
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-export default transporter;
+export const sendResetPasswordEmail = async (email, resetToken) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: RESET_EMAIL_USER ||"ZAFIR TOTAAL PROJECTEN <info@zafir.be>", // Use your verified Resend domain
+      to: [email],
+      subject: "Wachtwoord herstellen",
+      html: `
+        <h1>Wachtwoord herstellen</h1>
+        <p>Klik op de onderstaande link om uw wachtwoord te resetten:</p>
+        <a href="https://yourdashboard.com/reset-password?token=${resetToken}">Wachtwoord resetten</a>
+      `,
+    });
+
+    if (error) {
+      console.error("❌ Resend Error:", error);
+      return { success: false };
+    }
+
+    console.log("✅ Reset email sent via Resend:", data.id);
+    return { success: true };
+  } catch (err) {
+    console.error("❌ Critical Email Failure:", err);
+    return { success: false };
+  }
+};
