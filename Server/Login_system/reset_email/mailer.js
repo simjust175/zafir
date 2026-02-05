@@ -5,28 +5,31 @@ config();
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export const sendResetPasswordEmail = async (email, resetToken) => {
-  try {
-    const { data, error } = await resend.emails.send({
-      from: RESET_EMAIL_USER ||"ZAFIR TOTAAL PROJECTEN <info@zafir.be>", // Use your verified Resend domain
-      to: [email],
-      subject: "Wachtwoord herstellen",
-      html: `
-        <h1>Wachtwoord herstellen</h1>
-        <p>Klik op de onderstaande link om uw wachtwoord te resetten:</p>
-        <a href="https://yourdashboard.com/reset-password?token=${resetToken}">Wachtwoord resetten</a>
-      `,
-    });
+// We export a default object with a 'sendMail' method
+// This makes it compatible with your existing code
+const transporter = {
+  sendMail: async ({ from, to, subject, html }) => {
+    try {
+      const { data, error } = await resend.emails.send({
+        // Fallback to info@zafir.be if APP_NAME/RESET_EMAIL_USER is missing
+        from: from || "ZAFIR TOTAAL PROJECTEN <info@zafir.be>",
+        to: [to],
+        subject: subject,
+        html: html,
+      });
 
-    if (error) {
-      console.error("❌ Resend Error:", error);
-      return { success: false };
+      if (error) {
+        console.error("❌ Resend Error:", error);
+        throw error;
+      }
+
+      console.log("✅ Email sent via Resend:", data.id);
+      return data;
+    } catch (err) {
+      console.error("❌ Resend Critical Failure:", err);
+      throw err;
     }
-
-    console.log("✅ Reset email sent via Resend:", data.id);
-    return { success: true };
-  } catch (err) {
-    console.error("❌ Critical Email Failure:", err);
-    return { success: false };
   }
 };
+
+export default transporter;
