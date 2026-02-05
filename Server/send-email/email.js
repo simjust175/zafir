@@ -185,7 +185,7 @@ async function sendInvoiceByEmail({
 
   try {
     const email = await resend.emails.send({
-      from: process.env.USER_EMAIL || "ZAFIR TOTAAL PROJECTEN <info@zafir.be>",
+      from: `ZAFIR TOTAAL PROJECTEN <billing@zafir.uk>`,
       to,
       subject: isDutch
         ? `Factuuroverzicht - ${projectName} [${invoiceNumber}]`
