@@ -1274,7 +1274,9 @@ const submitSendEmail = async () => {
         groupedInvoices: groupedInvoices.value,
         groupedPayments: paymentEntries.value,
         invoicingEntries: invoicingEntries.value,
-        projectMargin: currentProjectMargin.value
+        projectMargin: currentProjectMargin.value,
+        totalInvoiced: totalInvoiced.value,
+        outstanding: outstanding.value
       })
     })
     
